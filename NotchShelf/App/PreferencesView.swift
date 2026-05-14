@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct PreferencesView: View {
@@ -9,9 +10,20 @@ struct PreferencesView: View {
                 .onChange(of: copyOnDrag) { _, value in
                     Preferences.shared.copyOnDrag = value
                 }
+
+            Divider()
+
+            HStack {
+                Spacer()
+                Button("Zamknij aplikację", role: .destructive, action: quitApplication)
+            }
         }
         .formStyle(.grouped)
         .padding(20)
         .frame(width: 420)
+    }
+
+    private func quitApplication() {
+        NSApp.terminate(nil)
     }
 }
