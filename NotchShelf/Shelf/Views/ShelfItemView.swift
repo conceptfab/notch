@@ -202,7 +202,15 @@ private struct DraggableClickHandler: NSViewRepresentable {
                 draggingItems.append(draggingItem)
             }
             guard !draggingItems.isEmpty else { return }
+            removeDraggedItemsFromShelf()
             beginDraggingSession(with: draggingItems, event: event, source: self)
+        }
+
+        private func removeDraggedItemsFromShelf() {
+            for item in draggedItems {
+                ShelfStore.shared.remove(item)
+            }
+            ShelfSelection.shared.clear()
         }
 
         private func pasteboardItem(for item: ShelfItem) -> NSPasteboardItem? {
@@ -247,10 +255,6 @@ private struct DraggableClickHandler: NSViewRepresentable {
             ShelfSelection.shared.endDrag()
             for url in draggedURLs { url.stopAccessingSecurityScopedResource() }
             draggedURLs.removeAll()
-
-            if !operation.isEmpty {
-                for item in draggedItems { ShelfStore.shared.remove(item) }
-            }
             draggedItems.removeAll()
         }
 

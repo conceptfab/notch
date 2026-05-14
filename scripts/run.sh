@@ -13,5 +13,11 @@ if [[ ! -d "$APP_PATH" ]]; then
   scripts/build.sh
 fi
 
+if /usr/bin/pgrep -x NotchShelf >/dev/null 2>&1; then
+  echo "Stopping existing NotchShelf..."
+  /usr/bin/killall NotchShelf
+  sleep 0.5
+fi
+
 echo "Opening: $APP_PATH"
 open "$APP_PATH"
