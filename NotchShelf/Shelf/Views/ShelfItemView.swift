@@ -225,7 +225,6 @@ private struct StackFileRowView: View {
         }
         .padding(.horizontal, 8)
         .frame(height: 32)
-        .background(.quaternary.opacity(0.6), in: RoundedRectangle(cornerRadius: 6))
         .contentShape(Rectangle())
         .overlay {
             StackFileDragHandler(sourceItem: sourceItem, entry: entry, previewImage: icon)
