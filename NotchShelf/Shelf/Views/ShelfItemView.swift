@@ -63,8 +63,8 @@ struct ShelfItemView: View {
             }
         }
         .onAppear {
-            Task {
-                await viewModel.loadThumbnail()
+            viewModel.loadThumbnail()
+            Task { @MainActor in
                 if cachedPreviewImage == nil {
                     cachedPreviewImage = await renderDragPreview()
                 }
@@ -168,10 +168,7 @@ private struct StackMenuEntry {
     let id: Int
     let title: String
     let bookmarkData: Data
-
-    var fileURL: URL? {
-        Bookmark(data: bookmarkData).resolveURL()
-    }
+    let fileURL: URL?
 }
 
 private struct StackFileListView: View {
@@ -183,7 +180,8 @@ private struct StackFileListView: View {
             return StackMenuEntry(
                 id: index,
                 title: url?.lastPathComponent ?? "Unknown file",
-                bookmarkData: data
+                bookmarkData: data,
+                fileURL: url
             )
         }
     }

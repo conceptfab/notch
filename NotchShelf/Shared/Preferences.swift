@@ -7,7 +7,6 @@ final class Preferences: @unchecked Sendable {
     private let defaults: UserDefaults
     private enum Key {
         static let copyOnDrag = "copyOnDrag"
-        static let autoRemoveShelfItems = "autoRemoveShelfItems"
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -18,11 +17,5 @@ final class Preferences: @unchecked Sendable {
     var copyOnDrag: Bool {
         get { defaults.bool(forKey: Key.copyOnDrag) }
         set { defaults.set(newValue, forKey: Key.copyOnDrag) }
-    }
-
-    /// When true, a successful drag-out removes the item from the shelf.
-    var autoRemoveShelfItems: Bool {
-        get { defaults.bool(forKey: Key.autoRemoveShelfItems) }
-        set { defaults.set(newValue, forKey: Key.autoRemoveShelfItems) }
     }
 }

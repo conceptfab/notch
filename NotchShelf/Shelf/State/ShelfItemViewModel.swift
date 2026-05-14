@@ -12,17 +12,18 @@ final class ShelfItemViewModel: ObservableObject {
     @Published var isDropTargeted: Bool = false
 
     private let selection = ShelfSelection.shared
+    private var thumbnailTask: Task<Void, Never>?
 
     init(item: ShelfItem) {
         self.item = item
-        Task { await loadThumbnail() }
+        loadThumbnail()
     }
 
     func update(item: ShelfItem) {
         guard self.item != item else { return }
         self.item = item
         thumbnail = nil
-        Task { await loadThumbnail() }
+        loadThumbnail()
     }
 
     var isSelected: Bool { selection.isSelected(item.id) }
@@ -35,13 +36,25 @@ final class ShelfItemViewModel: ObservableObject {
         return NSWorkspace.shared.icon(for: .data)
     }
 
-    func loadThumbnail() async {
-        guard let url = item.fileURL else { return }
-        if let image = await ThumbnailService.shared.thumbnail(
-            for: url, size: CGSize(width: 56, height: 56)
-        ) {
-            thumbnail = image
+    func loadThumbnail() {
+        thumbnailTask?.cancel()
+        guard let url = item.fileURL else {
+            thumbnailTask = nil
+            return
         }
+        let itemID = item.id
+        thumbnailTask = Task { @MainActor [weak self] in
+            let image = await ThumbnailService.shared.thumbnail(
+                for: url, size: CGSize(width: 56, height: 56)
+            )
+            guard !Task.isCancelled else { return }
+            guard let self, self.item.id == itemID else { return }
+            self.thumbnail = image
+        }
+    }
+
+    deinit {
+        thumbnailTask?.cancel()
     }
 
     func handleClick(event: NSEvent, view: NSView) {

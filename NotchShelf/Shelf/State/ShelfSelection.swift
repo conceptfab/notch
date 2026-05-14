@@ -1,5 +1,4 @@
 import Foundation
-import Combine
 
 /// Multi-selection state for the shelf, with shift-range support and a drag flag.
 @MainActor

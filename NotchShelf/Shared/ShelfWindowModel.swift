@@ -15,8 +15,6 @@ final class ShelfWindowModel: ObservableObject {
     /// Pulsed to `true` by the shelf drop handler so the drag pipeline knows a drop landed.
     @Published var dropEvent: Bool = false
 
-    let animation: Animation = .spring(response: 0.35, dampingFraction: 0.85)
-
     private var collapseTask: Task<Void, Never>?
 
     func expand() {

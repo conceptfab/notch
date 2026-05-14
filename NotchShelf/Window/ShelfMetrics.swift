@@ -14,7 +14,6 @@ enum ShelfMetrics {
     static let itemSpacing: CGFloat = 6
     static let contentPadding: CGFloat = 10
     static let shelfPanelBottomPadding: CGFloat = 13
-    static let menuButtonSize: CGFloat = 24
     /// Corner radii for the continuous shape.
     static let topCornerRadius: CGFloat = 6
     /// Larger top corners when expanded, for more pronounced "ears".

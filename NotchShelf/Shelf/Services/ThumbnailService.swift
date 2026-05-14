@@ -19,14 +19,12 @@ actor ThumbnailService {
         if let cached = cache[key] { return cached }
         if let pendingTask = pending[key] { return await pendingTask.value }
 
-        let task = Task<NSImage?, Never> {
-            let image = await generate(for: url, size: size)
-            if let image { cache[key] = image }
-            pending[key] = nil
-            return image
-        }
+        let task = Task<NSImage?, Never> { await generate(for: url, size: size) }
         pending[key] = task
-        return await task.value
+        let image = await task.value
+        if let image { cache[key] = image }
+        pending[key] = nil
+        return image
     }
 
     func clearCache() {

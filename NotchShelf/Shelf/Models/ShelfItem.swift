@@ -73,11 +73,6 @@ struct ShelfItem: Identifiable, Codable, Equatable, Sendable {
         return "file://missing/" + bookmarkData.base64EncodedString()
     }
 
-    func containsSameFile(as other: ShelfItem) -> Bool {
-        let existing = Set(fileURLs.map { $0.standardizedFileURL.path })
-        return other.fileURLs.contains { existing.contains($0.standardizedFileURL.path) }
-    }
-
     func merging(with other: ShelfItem) -> ShelfItem {
         var mergedData: [Data] = []
         var seen: Set<String> = []

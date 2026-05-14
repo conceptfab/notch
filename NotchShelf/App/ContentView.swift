@@ -7,7 +7,9 @@ import AppKit
 struct ContentView: View {
     @EnvironmentObject private var windowModel: ShelfWindowModel
     @Environment(\.openSettings) private var openSettings
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ObservedObject private var store = ShelfStore.shared
+    @State private var showingShelfMenu = false
 
     private var geometry: NotchGeometry { NotchGeometry.current() }
 
@@ -42,6 +44,28 @@ struct ContentView: View {
             : ShelfMetrics.topCornerRadius
     }
 
+    private var shelfMenuTopPadding: CGFloat {
+        geometry.notchHeight + 4
+    }
+
+    private var shelfAnimation: Animation {
+        if reduceMotion {
+            return .easeInOut(duration: 0.14)
+        }
+        return .spring(response: 0.32, dampingFraction: 0.86, blendDuration: 0.08)
+    }
+
+    private var shelfContentTransition: AnyTransition {
+        guard !reduceMotion else { return .opacity }
+        return .asymmetric(
+            insertion: .opacity
+                .combined(with: .move(edge: .top))
+                .combined(with: .scale(scale: 0.97, anchor: .top)),
+            removal: .opacity
+                .combined(with: .scale(scale: 0.98, anchor: .top))
+        )
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             ZStack {
@@ -65,34 +89,42 @@ struct ContentView: View {
                         .padding(.horizontal, currentTopCornerRadius + 12)
                         .padding(.top, geometry.notchHeight + 12)
                         .padding(.bottom, ShelfMetrics.shelfPanelBottomPadding)
-                        .transition(.opacity)
+                        .transition(shelfContentTransition)
+                        .zIndex(1)
 
-                    // Gear icon — absolute top-right corner of the application shape
                     shelfMenu
-                        .padding(.top, 8)
+                        .padding(.top, shelfMenuTopPadding)
                         .padding(.trailing, currentTopCornerRadius + 8)
-                        .transition(.opacity)
+                        .transition(shelfContentTransition)
+                        .zIndex(2)
                 } else if hasItems {
                     collapsedIndicators
                         .transition(.opacity)
+                        .zIndex(1)
                 }
             }
             .frame(width: shapeSize.width, height: shapeSize.height)
-            .onHover { hovering in
-                if hovering {
-                    windowModel.expand()
-                } else if windowModel.expansion == .expanded {
-                    windowModel.scheduleCollapse()
-                }
-            }
+            .clipped()
+            .animation(shelfAnimation, value: windowModel.expansion)
+            .animation(shelfAnimation, value: store.items.count)
+            .animation(shelfAnimation, value: showingShelfMenu)
+            .onHover(perform: handleHover)
             Spacer(minLength: 0)
         }
         .frame(width: ShelfMetrics.windowSize.width,
                height: ShelfMetrics.windowSize.height,
                alignment: .top)
         .background(Color.clear.allowsHitTesting(false))
-        .animation(windowModel.animation, value: windowModel.expansion)
         .onAppear { ShelfStore.shared.cleanupInvalidItems() }
+    }
+
+    private func handleHover(_ hovering: Bool) {
+        if hovering {
+            windowModel.expand()
+        } else if windowModel.expansion == .expanded {
+            showingShelfMenu = false
+            windowModel.scheduleCollapse()
+        }
     }
 
     // MARK: - Collapsed Indicators
@@ -136,30 +168,55 @@ struct ContentView: View {
         VStack {
             HStack {
                 Spacer()
-                Menu {
-                    Button("Preferencje") {
-                        openSettings()
+                VStack(alignment: .trailing, spacing: 6) {
+                    Button("Menu półki", systemImage: "gearshape.fill", action: toggleShelfMenu)
+                        .labelStyle(.iconOnly)
+                        .buttonStyle(.plain)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.88))
+                        .frame(width: 28, height: 28)
+                        .contentShape(Rectangle())
+
+                    if showingShelfMenu {
+                        shelfMenuPanel
+                            .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .topTrailing)))
                     }
-                    Divider()
-                    Button("Zamknij aplikację") {
-                        NSApp.terminate(nil)
-                    }
-                } label: {
-                    HStack(spacing: 2) {
-                        Image(systemName: "gearshape.fill")
-                            .font(.system(size: 11, weight: .semibold))
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: 7, weight: .bold))
-                    }
-                    .foregroundStyle(.white.opacity(0.85))
-                    .padding(4)
-                    .contentShape(Rectangle())
                 }
-                .menuStyle(.borderlessButton)
-                .menuIndicator(.hidden)
-                .buttonStyle(.plain)
             }
             Spacer()
         }
+    }
+
+    private var shelfMenuPanel: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Button("Preferencje", action: showPreferences)
+                .buttonStyle(ShelfMenuButtonStyle())
+            Divider()
+                .overlay(.white.opacity(0.12))
+            Button("Zamknij aplikację", action: quitApplication)
+                .buttonStyle(ShelfMenuButtonStyle())
+        }
+        .frame(width: 148)
+        .padding(.vertical, 6)
+        .background(.black.opacity(0.92), in: RoundedRectangle(cornerRadius: 10))
+        .overlay {
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(.white.opacity(0.16), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.32), radius: 12, x: 0, y: 8)
+    }
+
+    private func toggleShelfMenu() {
+        showingShelfMenu.toggle()
+    }
+
+    private func showPreferences() {
+        showingShelfMenu = false
+        openSettings()
+    }
+
+    private func quitApplication() {
+        showingShelfMenu = false
+        NSApp.terminate(nil)
     }
 }
