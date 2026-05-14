@@ -14,6 +14,15 @@ import Testing
     #expect(geometry.notchRect.height == 38)
 }
 
+@Test func notchGeometryUsesAuxAreaEdgeForAsymmetricRects() {
+    let screen = CGRect(x: 0, y: 0, width: 1512, height: 982)
+    let geometry = NotchGeometry(screenFrame: screen, safeAreaTop: 38,
+                                 auxLeftWidth: 600, auxRightWidth: 650)
+    #expect(geometry.notchWidth == CGFloat(1512 - 600 - 650 + 4))
+    #expect(geometry.notchRect.minX == 598)
+    #expect(geometry.notchRect.midX != screen.midX)
+}
+
 @Test func notchGeometryFallsBackWhenNoAuxAreas() {
     let screen = CGRect(x: 0, y: 0, width: 1440, height: 900)
     let geometry = NotchGeometry(screenFrame: screen, safeAreaTop: 0,

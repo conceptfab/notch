@@ -37,10 +37,11 @@ final class NotchWindowController: NSObject {
     /// screen's top edge.
     func reposition() {
         let screen = NotchGeometry.notchScreen
+        let geometry = NotchGeometry.current()
         let frame = screen.frame
         let size = ShelfMetrics.windowSize
         let origin = NSPoint(
-            x: frame.midX - size.width / 2,
+            x: geometry.notchRect.midX - size.width / 2,
             y: frame.maxY - size.height
         )
         panel.setFrame(NSRect(origin: origin, size: size), display: true)

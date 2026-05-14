@@ -26,7 +26,6 @@ struct ContentView: View {
         let itemWidth = itemCount * ShelfMetrics.itemWidth
         let spacingWidth = max(0, itemCount - 1) * ShelfMetrics.itemSpacing
         let contentWidth = itemWidth + spacingWidth + ShelfMetrics.contentPadding * 2
-            + ShelfMetrics.menuButtonSize
         return CGSize(
             width: min(ShelfMetrics.expandedSize.width, max(emptyWidth, contentWidth)),
             height: ShelfMetrics.expandedSize.height

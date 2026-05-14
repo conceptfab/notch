@@ -12,14 +12,17 @@ struct NotchGeometry: Equatable {
     init(screenFrame: CGRect, safeAreaTop: CGFloat,
          auxLeftWidth: CGFloat?, auxRightWidth: CGFloat?) {
         hasNotch = safeAreaTop > 0
+        let notchOriginX: CGFloat
         if let left = auxLeftWidth, let right = auxRightWidth {
             notchWidth = screenFrame.width - left - right + 4
+            notchOriginX = screenFrame.minX + left - 2
         } else {
             notchWidth = 185
+            notchOriginX = screenFrame.midX - notchWidth / 2
         }
         notchHeight = safeAreaTop > 0 ? safeAreaTop : 32
         notchRect = CGRect(
-            x: screenFrame.midX - notchWidth / 2,
+            x: notchOriginX,
             y: screenFrame.maxY - notchHeight,
             width: notchWidth,
             height: notchHeight
