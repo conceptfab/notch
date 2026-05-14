@@ -1,0 +1,82 @@
+# =========================
+# macOS
+# =========================
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# =========================
+# Xcode
+# =========================
+*.xcuserstate
+*.xcuserdata/
+*.xcuserdatad/
+*.xcscheme
+*.pbxuser
+*.xccheckout
+*.xcplayground
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcuserdata/
+*.xcodeproj/xcshareddata/WorkspaceSettings.xcsettings
+xcuserdata/
+
+# =========================
+# Derived Data & Build
+# =========================
+DerivedData/
+build/
+*.app
+*.ipa
+*.dSYM
+*.dSYM.zip
+*.xcarchive
+
+# =========================
+# Swift Package Manager
+# =========================
+.swiftpm/
+.build/
+Package.resolved
+
+# =========================
+# CocoaPods
+# =========================
+Pods/
+Podfile.lock
+
+# =========================
+# Carthage
+# =========================
+Carthage/Build/
+Carthage/Checkouts/
+
+# =========================
+# Temporary & Editor Files
+# =========================
+*.swp
+*.swo
+*.tmp
+*.log
+*~
+
+# =========================
+# IDE / Editors
+# =========================
+.vscode/
+.idea/
+
+# =========================
+# Secrets & Environment
+# =========================
+*.env
+*.env.local
+
+# =========================
+# Misc
+# =========================
+*.orig
+.superpowers/
+boring.notch-main/
