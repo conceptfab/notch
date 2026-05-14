@@ -5,19 +5,25 @@ import Foundation
 @MainActor
 enum ShelfActionService {
     static func open(_ item: ShelfItem) {
-        handleBookmarkedFile(item.bookmarkData) { NSWorkspace.shared.open($0) }
+        for bookmarkData in item.allBookmarkData {
+            handleBookmarkedFile(bookmarkData) { NSWorkspace.shared.open($0) }
+        }
+    }
+
+    static func open(bookmarkData: Data) {
+        handleBookmarkedFile(bookmarkData) { NSWorkspace.shared.open($0) }
     }
 
     static func reveal(_ item: ShelfItem) {
-        handleBookmarkedFile(item.bookmarkData) {
-            NSWorkspace.shared.activateFileViewerSelecting([$0])
+        handleBookmarkedFiles(item.allBookmarkData) {
+            NSWorkspace.shared.activateFileViewerSelecting($0)
         }
     }
 
     static func copyPath(_ item: ShelfItem) {
-        handleBookmarkedFile(item.bookmarkData) { url in
+        handleBookmarkedFiles(item.allBookmarkData) { urls in
             NSPasteboard.general.clearContents()
-            NSPasteboard.general.setString(url.path, forType: .string)
+            NSPasteboard.general.setString(urls.map(\.path).joined(separator: "\n"), forType: .string)
         }
     }
 
@@ -32,6 +38,19 @@ enum ShelfActionService {
         Task {
             guard let url = Bookmark(data: bookmarkData).resolveURL() else { return }
             url.accessSecurityScopedResource { action($0) }
+        }
+    }
+
+    private static func handleBookmarkedFiles(
+        _ bookmarkData: [Data],
+        action: @escaping @Sendable ([URL]) -> Void
+    ) {
+        Task {
+            let urls = bookmarkData.compactMap { Bookmark(data: $0).resolveURL() }
+            guard !urls.isEmpty else { return }
+            let scoped = urls.filter { $0.startAccessingSecurityScopedResource() }
+            defer { scoped.forEach { $0.stopAccessingSecurityScopedResource() } }
+            action(urls)
         }
     }
 }

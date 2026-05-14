@@ -42,3 +42,24 @@ private func makeTempFile(named name: String) throws -> URL {
     let decoded = try JSONDecoder().decode(ShelfItem.self, from: encoded)
     #expect(decoded == item)
 }
+
+@Test func shelfItemStackExposesAllFiles() throws {
+    let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent(UUID().uuidString, isDirectory: true)
+    try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: dir) }
+    let first = dir.appendingPathComponent("a.txt")
+    let second = dir.appendingPathComponent("b.txt")
+    try "a".write(to: first, atomically: true, encoding: .utf8)
+    try "b".write(to: second, atomically: true, encoding: .utf8)
+
+    let item = ShelfItem(stackBookmarkData: [
+        try Bookmark(url: first).data,
+        try Bookmark(url: second).data
+    ])
+
+    #expect(item.isStack)
+    #expect(item.stackCount == 2)
+    #expect(item.fileURLs.map(\.lastPathComponent).sorted() == ["a.txt", "b.txt"])
+    #expect(item.displayName == "\(dir.lastPathComponent) (2)")
+}

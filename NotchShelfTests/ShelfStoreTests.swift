@@ -65,3 +65,24 @@ private func makeFileItem(named name: String = "f.txt") throws -> ShelfItem {
     store.add([a])
     #expect(store.resolveFileURL(for: a) != nil)
 }
+
+@MainActor @Test func storeMergesSameFolderItemsIntoStack() throws {
+    let store = storeWithTempPersistence()
+    let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent(UUID().uuidString, isDirectory: true)
+    try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: dir) }
+    let first = dir.appendingPathComponent("first.txt")
+    let second = dir.appendingPathComponent("second.txt")
+    try "1".write(to: first, atomically: true, encoding: .utf8)
+    try "2".write(to: second, atomically: true, encoding: .utf8)
+    let single = ShelfItem(bookmarkData: try Bookmark(url: first).data)
+    let stack = ShelfDropService.items(from: [first, second])
+
+    store.add([single])
+    store.add(stack)
+
+    #expect(store.items.count == 1)
+    #expect(store.items.first?.isStack == true)
+    #expect(store.items.first?.stackCount == 2)
+}

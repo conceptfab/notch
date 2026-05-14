@@ -33,7 +33,18 @@ final class ShelfStore: ObservableObject {
         guard !newItems.isEmpty else { return }
         var merged = items
         var seen = Set(merged.map(\.identityKey))
-        for item in newItems where !seen.contains(item.identityKey) {
+        for item in newItems {
+            if let folderKey = item.sourceFolderKey,
+               let idx = merged.firstIndex(where: {
+                   $0.sourceFolderKey == folderKey && ($0.isStack || item.isStack)
+               }) {
+                let updated = merged[idx].merging(with: item)
+                seen.remove(merged[idx].identityKey)
+                merged[idx] = updated
+                seen.insert(updated.identityKey)
+                continue
+            }
+            guard !seen.contains(item.identityKey) else { continue }
             merged.append(item)
             seen.insert(item.identityKey)
         }
@@ -116,5 +127,9 @@ final class ShelfStore: ObservableObject {
             updateBookmark(for: item, bookmark: refreshed)
         }
         return result.url
+    }
+
+    func resolveFileURLs(for item: ShelfItem) -> [URL] {
+        item.allBookmarkData.compactMap { Bookmark(data: $0).resolveURL() }
     }
 }

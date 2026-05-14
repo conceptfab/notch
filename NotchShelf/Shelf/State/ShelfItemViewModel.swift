@@ -18,6 +18,13 @@ final class ShelfItemViewModel: ObservableObject {
         Task { await loadThumbnail() }
     }
 
+    func update(item: ShelfItem) {
+        guard self.item != item else { return }
+        self.item = item
+        thumbnail = nil
+        Task { await loadThumbnail() }
+    }
+
     var isSelected: Bool { selection.isSelected(item.id) }
 
     /// The file's Finder icon, used as a fallback before the thumbnail loads.

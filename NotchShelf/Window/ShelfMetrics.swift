@@ -10,7 +10,7 @@ enum ShelfMetrics {
     /// The panel stays fixed at this size and remains transparent outside the shape.
     static let windowSize = CGSize(width: 560, height: 140)
     static let itemWidth: CGFloat = 56
-    static let itemHeight: CGFloat = 58
+    static let itemHeight: CGFloat = 62
     static let itemSpacing: CGFloat = 6
     static let contentPadding: CGFloat = 10
     static let menuButtonSize: CGFloat = 24

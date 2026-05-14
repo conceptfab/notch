@@ -22,6 +22,9 @@ struct ShelfItemView: View {
         ZStack {
             VStack(alignment: .center, spacing: 2) {
                 iconView
+                if item.isStack {
+                    Color.clear.frame(width: 14, height: 14)
+                }
                 textView
             }
             .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemHeight)
@@ -37,6 +40,14 @@ struct ShelfItemView: View {
                 onClick: { event, nsView in viewModel.handleClick(event: event, view: nsView) },
                 onRightClick: { event, nsView in viewModel.handleRightClick(event: event, view: nsView) }
             )
+
+            if item.isStack {
+                VStack(spacing: 0) {
+                    Spacer().frame(height: 29)
+                    stackMenu
+                    Spacer(minLength: 0)
+                }
+            }
         }
         .onChange(of: viewModel.isDropTargeted) { _, targeted in
             windowModel.dragTargeting = targeted
@@ -56,25 +67,72 @@ struct ShelfItemView: View {
         .onChange(of: viewModel.thumbnail) { _, _ in
             Task { cachedPreviewImage = await renderDragPreview() }
         }
+        .onChange(of: item) { _, updated in
+            viewModel.update(item: updated)
+            Task { cachedPreviewImage = await renderDragPreview() }
+        }
     }
 
     private var iconView: some View {
-        Image(nsImage: viewModel.thumbnail ?? viewModel.icon)
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .frame(width: ShelfMetrics.iconSize, height: ShelfMetrics.iconSize)
-            .clipShape(RoundedRectangle(cornerRadius: 5))
-            .shadow(color: .black.opacity(0.15), radius: 2, x: 0, y: 1)
+        ZStack {
+            if item.isStack {
+                RoundedRectangle(cornerRadius: 5)
+                    .fill(.white.opacity(0.16))
+                    .frame(width: ShelfMetrics.iconSize, height: ShelfMetrics.iconSize)
+                    .offset(x: 3, y: -3)
+                RoundedRectangle(cornerRadius: 5)
+                    .fill(.white.opacity(0.22))
+                    .frame(width: ShelfMetrics.iconSize, height: ShelfMetrics.iconSize)
+                    .offset(x: 1.5, y: -1.5)
+            }
+            Image(nsImage: viewModel.thumbnail ?? viewModel.icon)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: ShelfMetrics.iconSize, height: ShelfMetrics.iconSize)
+                .clipShape(RoundedRectangle(cornerRadius: 5))
+                .shadow(color: .black.opacity(0.15), radius: 2, x: 0, y: 1)
+        }
+        .frame(width: ShelfMetrics.iconSize + (item.isStack ? 4 : 0),
+               height: ShelfMetrics.iconSize + (item.isStack ? 4 : 0))
+    }
+
+    private var stackMenu: some View {
+        Menu {
+            ForEach(stackMenuEntries, id: \.id) { entry in
+                Button(entry.title) {
+                    ShelfActionService.open(bookmarkData: entry.bookmarkData)
+                }
+            }
+        } label: {
+            Image(systemName: "list.bullet.circle.fill")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.9))
+                .frame(width: 14, height: 14)
+                .contentShape(Circle())
+        }
+        .menuStyle(.borderlessButton)
+        .buttonStyle(.plain)
+    }
+
+    private var stackMenuEntries: [StackMenuEntry] {
+        item.allBookmarkData.enumerated().map { index, data in
+            let url = Bookmark(data: data).resolveURL()
+            return StackMenuEntry(
+                id: index,
+                title: url?.lastPathComponent ?? "Unknown file",
+                bookmarkData: data
+            )
+        }
     }
 
     private var textView: some View {
         Text(item.displayName)
-            .font(.system(size: 12, weight: .medium))
+            .font(.system(size: item.isStack ? 10 : 12, weight: .medium))
             .foregroundStyle(.primary)
-            .lineLimit(2)
+            .lineLimit(item.isStack ? 1 : 2)
             .truncationMode(.middle)
             .multilineTextAlignment(.center)
-            .frame(height: 28, alignment: .top)
+            .frame(height: item.isStack ? 16 : 28, alignment: .top)
     }
 
     private var backgroundView: some View {
@@ -114,6 +172,12 @@ struct ShelfItemView: View {
         renderer.scale = NSScreen.main?.backingScaleFactor ?? 2.0
         return renderer.nsImage ?? (viewModel.thumbnail ?? viewModel.icon)
     }
+}
+
+private struct StackMenuEntry {
+    let id: Int
+    let title: String
+    let bookmarkData: Data
 }
 
 // MARK: - AppKit drag source
@@ -190,18 +254,31 @@ private struct DraggableClickHandler: NSViewRepresentable {
 
             var draggingItems: [NSDraggingItem] = []
             for dragItem in itemsToDrag {
-                guard let pasteboardItem = pasteboardItem(for: dragItem) else { continue }
-                let draggingItem = NSDraggingItem(pasteboardWriter: pasteboardItem)
-                let image = dragPreviewImage ?? viewModel?.icon ?? NSImage()
-                draggingItem.setDraggingFrame(
-                    NSRect(origin: .zero, size: image.size),
-                    contents: image
-                )
-                draggingItems.append(draggingItem)
+                let urls = ShelfStore.shared.resolveFileURLs(for: dragItem)
+                if urls.isEmpty {
+                    if let pasteboardItem = pasteboardItem(displayName: dragItem.displayName) {
+                        draggingItems.append(draggingItem(for: pasteboardItem))
+                    }
+                    continue
+                }
+                for url in urls {
+                    guard let pasteboardItem = pasteboardItem(for: url) else { continue }
+                    draggingItems.append(draggingItem(for: pasteboardItem))
+                }
             }
             guard !draggingItems.isEmpty else { return }
             removeDraggedItemsFromShelf()
             beginDraggingSession(with: draggingItems, event: event, source: self)
+        }
+
+        private func draggingItem(for pasteboardItem: NSPasteboardItem) -> NSDraggingItem {
+            let draggingItem = NSDraggingItem(pasteboardWriter: pasteboardItem)
+            let image = dragPreviewImage ?? viewModel?.icon ?? NSImage()
+            draggingItem.setDraggingFrame(
+                NSRect(origin: .zero, size: image.size),
+                contents: image
+            )
+            return draggingItem
         }
 
         private func removeDraggedItemsFromShelf() {
@@ -211,13 +288,14 @@ private struct DraggableClickHandler: NSViewRepresentable {
             ShelfSelection.shared.clear()
         }
 
-        private func pasteboardItem(for item: ShelfItem) -> NSPasteboardItem? {
+        private func pasteboardItem(displayName: String) -> NSPasteboardItem? {
             let pasteboardItem = NSPasteboardItem()
-            guard let url = ShelfStore.shared.resolveAndUpdateBookmark(for: item) else {
-                pasteboardItem.setString(item.displayName, forType: .string)
-                return pasteboardItem
-            }
+            pasteboardItem.setString(displayName, forType: .string)
+            return pasteboardItem
+        }
 
+        private func pasteboardItem(for url: URL) -> NSPasteboardItem? {
+            let pasteboardItem = NSPasteboardItem()
             if url.startAccessingSecurityScopedResource() {
                 draggedURLs.append(url)
             }
