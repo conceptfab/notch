@@ -7,7 +7,7 @@ struct ShelfView: View {
     @EnvironmentObject var windowModel: ShelfWindowModel
     @ObservedObject var store = ShelfStore.shared
     @ObservedObject var selection = ShelfSelection.shared
-    private let spacing: CGFloat = 8
+    private let spacing: CGFloat = ShelfMetrics.itemSpacing
 
     var body: some View {
         panel
@@ -35,9 +35,9 @@ struct ShelfView: View {
                 windowModel.dragTargeting
                     ? Color.accentColor.opacity(0.9)
                     : Color.white.opacity(0.12),
-                style: StrokeStyle(lineWidth: 3, lineCap: .round, dash: [10])
+                style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [7])
             )
-            .overlay { content.padding() }
+            .overlay { content.padding(ShelfMetrics.contentPadding) }
             .contentShape(Rectangle())
             .onTapGesture { selection.clear() }
     }
@@ -45,15 +45,15 @@ struct ShelfView: View {
     @ViewBuilder
     private var content: some View {
         if store.isEmpty {
-            VStack(spacing: 10) {
+            VStack(spacing: 4) {
                 Image(systemName: "tray.and.arrow.down")
                     .symbolVariant(.fill)
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(.white, .gray)
-                    .imageScale(.large)
+                    .font(.system(size: ShelfMetrics.iconSize))
                 Text("Drop files here")
                     .foregroundStyle(.gray)
-                    .font(.system(.title3, design: .rounded))
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
                     .fontWeight(.medium)
             }
         } else {
@@ -63,6 +63,7 @@ struct ShelfView: View {
                         ShelfItemView(item: item)
                     }
                 }
+                .frame(height: ShelfMetrics.itemHeight)
             }
             .scrollIndicators(.never)
         }

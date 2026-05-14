@@ -7,6 +7,7 @@ import AppKit
 struct ContentView: View {
     @EnvironmentObject private var windowModel: ShelfWindowModel
     @Environment(\.openSettings) private var openSettings
+    @ObservedObject private var store = ShelfStore.shared
 
     private var geometry: NotchGeometry { NotchGeometry.current() }
 
@@ -15,8 +16,21 @@ struct ContentView: View {
         case .collapsed:
             return CGSize(width: geometry.notchWidth, height: geometry.notchHeight)
         case .expanded:
-            return ShelfMetrics.expandedSize
+            return expandedShapeSize
         }
+    }
+
+    private var expandedShapeSize: CGSize {
+        let emptyWidth = geometry.notchWidth + ShelfMetrics.sideExpansion * 2
+        let itemCount = CGFloat(store.items.count)
+        let itemWidth = itemCount * ShelfMetrics.itemWidth
+        let spacingWidth = max(0, itemCount - 1) * ShelfMetrics.itemSpacing
+        let contentWidth = itemWidth + spacingWidth + ShelfMetrics.contentPadding * 2
+            + ShelfMetrics.menuButtonSize
+        return CGSize(
+            width: min(ShelfMetrics.expandedSize.width, max(emptyWidth, contentWidth)),
+            height: ShelfMetrics.expandedSize.height
+        )
     }
 
     var body: some View {
@@ -32,14 +46,14 @@ struct ContentView: View {
                 if windowModel.expansion == .expanded {
                     ShelfView()
                         .environmentObject(windowModel)
-                        .padding(.horizontal, 16)
+                        .padding(.horizontal, ShelfMetrics.contentPadding)
                         .padding(.top, geometry.notchHeight)
-                        .padding(.bottom, 14)
+                        .padding(.bottom, 8)
                         .transition(.opacity)
 
                     shelfMenu
-                        .padding(.top, 10)
-                        .padding(.trailing, 16)
+                        .padding(.top, 8)
+                        .padding(.trailing, 10)
                         .transition(.opacity)
                 }
             }
@@ -75,9 +89,10 @@ struct ContentView: View {
                     }
                 } label: {
                     Image(systemName: "gearshape.fill")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.9))
-                        .frame(width: 28, height: 28)
+                        .frame(width: ShelfMetrics.menuButtonSize,
+                               height: ShelfMetrics.menuButtonSize)
                         .background(.white.opacity(0.12), in: Circle())
                         .contentShape(Circle())
                 }

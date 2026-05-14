@@ -24,9 +24,7 @@ struct ShelfItemView: View {
                 iconView
                 textView
             }
-            .frame(width: 105)
-            .padding(.vertical, 10)
-            .padding(.horizontal, 5)
+            .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemHeight)
             .background(backgroundView)
             .contentShape(Rectangle())
             .animation(.easeInOut(duration: 0.1), value: debouncedDropTarget)
@@ -64,9 +62,9 @@ struct ShelfItemView: View {
         Image(nsImage: viewModel.thumbnail ?? viewModel.icon)
             .resizable()
             .aspectRatio(contentMode: .fit)
-            .frame(width: 56, height: 56)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .shadow(color: .black.opacity(0.15), radius: 3, x: 0, y: 2)
+            .frame(width: ShelfMetrics.iconSize, height: ShelfMetrics.iconSize)
+            .clipShape(RoundedRectangle(cornerRadius: 5))
+            .shadow(color: .black.opacity(0.15), radius: 2, x: 0, y: 1)
     }
 
     private var textView: some View {
@@ -76,7 +74,7 @@ struct ShelfItemView: View {
             .lineLimit(2)
             .truncationMode(.middle)
             .multilineTextAlignment(.center)
-            .frame(height: 30, alignment: .top)
+            .frame(height: 28, alignment: .top)
     }
 
     private var backgroundView: some View {
