@@ -46,15 +46,13 @@ struct ShelfView: View {
     private var content: some View {
         if store.isEmpty {
             VStack(spacing: 4) {
-                Image(systemName: "tray.and.arrow.down")
-                    .symbolVariant(.fill)
+                Image(systemName: "tray.fill")
                     .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(.white, .gray)
+                    .foregroundStyle(.white.opacity(0.5))
                     .font(.system(size: ShelfMetrics.iconSize))
-                Text("Drop files here")
-                    .foregroundStyle(.gray)
+                Text("Schowek plików")
+                    .foregroundStyle(.white.opacity(0.4))
                     .font(.system(size: 11, weight: .medium, design: .rounded))
-                    .fontWeight(.medium)
             }
         } else {
             ScrollView(.horizontal) {

@@ -50,6 +50,11 @@ struct ShelfItemView: View {
                 }
             }
         }
+        .background {
+            if item.isStack {
+                StackFileListPanelPresenter(item: item, isPresented: $showingStackList)
+            }
+        }
         .onChange(of: viewModel.isDropTargeted) { _, targeted in
             windowModel.dragTargeting = targeted
             Task { @MainActor in
@@ -108,7 +113,6 @@ struct ShelfItemView: View {
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .background(StackFileListPanelPresenter(item: item, isPresented: $showingStackList))
     }
 
     private var textView: some View {
@@ -185,7 +189,7 @@ private struct StackFileListView: View {
     }
 
     var body: some View {
-        ScrollView {
+        ScrollView(.vertical, showsIndicators: false) {
             VStack(spacing: 2) {
                 ForEach(entries, id: \.id) { entry in
                     StackFileRowView(sourceItem: item, entry: entry)
@@ -194,6 +198,7 @@ private struct StackFileListView: View {
             .padding(6)
         }
         .frame(maxHeight: 220)
+        .scrollIndicators(.never)
         .background(Color.clear)
     }
 }

@@ -11,10 +11,14 @@ struct ContentView: View {
 
     private var geometry: NotchGeometry { NotchGeometry.current() }
 
+    private var hasItems: Bool { !store.items.isEmpty }
+
     private var shapeSize: CGSize {
         switch windowModel.expansion {
         case .collapsed:
-            return CGSize(width: geometry.notchWidth, height: geometry.notchHeight)
+            let baseWidth = geometry.notchWidth
+            let width = hasItems ? baseWidth + ShelfMetrics.collapsedExtraWidth : baseWidth
+            return CGSize(width: width, height: geometry.notchHeight)
         case .expanded:
             return expandedShapeSize
         }
@@ -32,27 +36,44 @@ struct ContentView: View {
         )
     }
 
+    private var currentTopCornerRadius: CGFloat {
+        windowModel.expansion == .expanded
+            ? ShelfMetrics.topCornerRadiusExpanded
+            : ShelfMetrics.topCornerRadius
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             ZStack {
                 NotchShelfShape(
-                    topCornerRadius: ShelfMetrics.topCornerRadius,
+                    topCornerRadius: currentTopCornerRadius,
                     bottomCornerRadius: windowModel.expansion == .expanded
                         ? ShelfMetrics.bottomCornerRadius : 8
                 )
                 .fill(Color.black)
+                .overlay(alignment: .top) {
+                    // Seamless connection to top screen edge
+                    Rectangle()
+                        .fill(Color.black)
+                        .frame(height: 1)
+                        .padding(.horizontal, currentTopCornerRadius)
+                }
 
                 if windowModel.expansion == .expanded {
                     ShelfView()
                         .environmentObject(windowModel)
-                        .padding(.horizontal, ShelfMetrics.contentPadding)
-                        .padding(.top, geometry.notchHeight)
-                        .padding(.bottom, 8)
+                        .padding(.horizontal, currentTopCornerRadius + 12)
+                        .padding(.top, geometry.notchHeight + 12)
+                        .padding(.bottom, ShelfMetrics.shelfPanelBottomPadding)
                         .transition(.opacity)
 
+                    // Gear icon — absolute top-right corner of the application shape
                     shelfMenu
                         .padding(.top, 8)
-                        .padding(.trailing, 10)
+                        .padding(.trailing, currentTopCornerRadius + 8)
+                        .transition(.opacity)
+                } else if hasItems {
+                    collapsedIndicators
                         .transition(.opacity)
                 }
             }
@@ -74,6 +95,43 @@ struct ContentView: View {
         .onAppear { ShelfStore.shared.cleanupInvalidItems() }
     }
 
+    // MARK: - Collapsed Indicators
+
+    private var collapsedIndicators: some View {
+        HStack(spacing: 0) {
+            // Tray icon on the left — outside physical notch
+            Image(systemName: "tray.fill")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.85))
+                .frame(width: 26, height: 22)
+                .background(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(.white.opacity(0.08))
+                )
+
+            Spacer(minLength: 0)
+
+            // Item count badge on the right — outside physical notch
+            HStack(spacing: 3) {
+                Text("\(store.items.count)")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.85))
+                Image(systemName: "doc.fill")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.85))
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .background(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(.white.opacity(0.08))
+            )
+        }
+        .padding(.horizontal, ShelfMetrics.collapsedIndicatorPadding + ShelfMetrics.topCornerRadius)
+    }
+
+    // MARK: - Shelf Menu
+
     private var shelfMenu: some View {
         VStack {
             HStack {
@@ -87,15 +145,18 @@ struct ContentView: View {
                         NSApp.terminate(nil)
                     }
                 } label: {
-                    Image(systemName: "gearshape.fill")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.9))
-                        .frame(width: ShelfMetrics.menuButtonSize,
-                               height: ShelfMetrics.menuButtonSize)
-                        .background(.white.opacity(0.12), in: Circle())
-                        .contentShape(Circle())
+                    HStack(spacing: 2) {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 11, weight: .semibold))
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 7, weight: .bold))
+                    }
+                    .foregroundStyle(.white.opacity(0.85))
+                    .padding(4)
+                    .contentShape(Rectangle())
                 }
                 .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
                 .buttonStyle(.plain)
             }
             Spacer()
