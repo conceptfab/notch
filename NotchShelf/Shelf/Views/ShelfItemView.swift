@@ -248,7 +248,7 @@ private struct DraggableClickHandler: NSViewRepresentable {
             for url in draggedURLs { url.stopAccessingSecurityScopedResource() }
             draggedURLs.removeAll()
 
-            if Preferences.shared.autoRemoveShelfItems && !operation.isEmpty {
+            if !operation.isEmpty {
                 for item in draggedItems { ShelfStore.shared.remove(item) }
             }
             draggedItems.removeAll()
