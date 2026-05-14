@@ -6,10 +6,10 @@ import AppKit
 /// the shape when expanded.
 struct ContentView: View {
     @EnvironmentObject private var windowModel: ShelfWindowModel
-    @Environment(\.openSettings) private var openSettings
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ObservedObject private var store = ShelfStore.shared
     @State private var showingShelfMenu = false
+    @State private var showingPreferences = false
 
     private var geometry: NotchGeometry { NotchGeometry.current() }
 
@@ -96,7 +96,13 @@ struct ContentView: View {
                         .padding(.top, shelfMenuTopPadding)
                         .padding(.trailing, currentTopCornerRadius + 8)
                         .transition(shelfContentTransition)
-                        .zIndex(2)
+                        .zIndex(3)
+
+                    if showingPreferences {
+                        preferencesPanel
+                            .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .top)))
+                            .zIndex(2)
+                    }
                 } else if hasItems {
                     collapsedIndicators
                         .transition(.opacity)
@@ -108,6 +114,7 @@ struct ContentView: View {
             .animation(shelfAnimation, value: windowModel.expansion)
             .animation(shelfAnimation, value: store.items.count)
             .animation(shelfAnimation, value: showingShelfMenu)
+            .animation(shelfAnimation, value: showingPreferences)
             .onHover(perform: handleHover)
             Spacer(minLength: 0)
         }
@@ -123,6 +130,7 @@ struct ContentView: View {
             windowModel.expand()
         } else if windowModel.expansion == .expanded {
             showingShelfMenu = false
+            showingPreferences = false
             windowModel.scheduleCollapse()
         }
     }
@@ -206,13 +214,35 @@ struct ContentView: View {
         .shadow(color: .black.opacity(0.32), radius: 12, x: 0, y: 8)
     }
 
+    private var preferencesPanel: some View {
+        VStack {
+            PreferencesView(onClose: hidePreferences)
+                .frame(width: min(shapeSize.width - 48, 360))
+                .padding(12)
+                .background(.black.opacity(0.94), in: RoundedRectangle(cornerRadius: 12))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(.white.opacity(0.16), lineWidth: 1)
+                }
+                .shadow(color: .black.opacity(0.34), radius: 14, x: 0, y: 8)
+                .padding(.top, geometry.notchHeight + 10)
+
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, currentTopCornerRadius + 16)
+    }
+
     private func toggleShelfMenu() {
         showingShelfMenu.toggle()
     }
 
     private func showPreferences() {
         showingShelfMenu = false
-        openSettings()
+        showingPreferences = true
+    }
+
+    private func hidePreferences() {
+        showingPreferences = false
     }
 
     private func quitApplication() {
