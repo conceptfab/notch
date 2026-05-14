@@ -265,6 +265,7 @@ private struct StackFileDragHandler: NSViewRepresentable {
         private let dragThreshold: CGFloat = 3.0
         private var draggedURL: URL?
         private var didStartDrag = false
+        private var removedFromShelf = false
 
         override func mouseDown(with event: NSEvent) {
             mouseDownEvent = event
@@ -311,8 +312,7 @@ private struct StackFileDragHandler: NSViewRepresentable {
                 contents: previewImage
             )
 
-            ShelfStore.shared.remove(bookmarkData: bookmarkData, from: sourceItem)
-            ShelfSelection.shared.clear()
+            removedFromShelf = false
             beginDraggingSession(with: [draggingItem], event: event, source: self)
         }
 
@@ -333,6 +333,10 @@ private struct StackFileDragHandler: NSViewRepresentable {
 
         func draggingSession(_ session: NSDraggingSession, willBeginAt screenPoint: NSPoint) {
             ShelfSelection.shared.beginDrag()
+            guard !removedFromShelf else { return }
+            ShelfStore.shared.remove(bookmarkData: bookmarkData, from: sourceItem)
+            ShelfSelection.shared.clear()
+            removedFromShelf = true
         }
 
         func draggingSession(
@@ -343,6 +347,7 @@ private struct StackFileDragHandler: NSViewRepresentable {
             ShelfSelection.shared.endDrag()
             draggedURL?.stopAccessingSecurityScopedResource()
             draggedURL = nil
+            removedFromShelf = false
         }
 
         func ignoreModifierKeys(for session: NSDraggingSession) -> Bool { false }
@@ -434,7 +439,6 @@ private struct DraggableClickHandler: NSViewRepresentable {
                 }
             }
             guard !draggingItems.isEmpty else { return }
-            removeDraggedItemsFromShelf()
             beginDraggingSession(with: draggingItems, event: event, source: self)
         }
 
@@ -488,6 +492,7 @@ private struct DraggableClickHandler: NSViewRepresentable {
 
         func draggingSession(_ session: NSDraggingSession, willBeginAt screenPoint: NSPoint) {
             ShelfSelection.shared.beginDrag()
+            removeDraggedItemsFromShelf()
         }
 
         func draggingSession(
