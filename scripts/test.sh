@@ -4,11 +4,10 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
-CONFIGURATION="${CONFIGURATION:-Debug}"
 DERIVED_DATA_PATH="${DERIVED_DATA_PATH:-.build}"
 PROJECT_PATH="NotchShelf.xcodeproj"
 SCHEME="NotchShelf"
-APP_PATH="$DERIVED_DATA_PATH/Build/Products/$CONFIGURATION/NotchShelf.app"
+DESTINATION="${DESTINATION:-platform=macOS}"
 
 if ! command -v xcodegen >/dev/null 2>&1; then
   echo "error: xcodegen is required. Install it with: brew install xcodegen" >&2
@@ -16,12 +15,8 @@ if ! command -v xcodegen >/dev/null 2>&1; then
 fi
 
 xcodegen generate
-xcodebuild \
+xcodebuild test \
   -project "$PROJECT_PATH" \
   -scheme "$SCHEME" \
-  -configuration "$CONFIGURATION" \
-  -derivedDataPath "$DERIVED_DATA_PATH" \
-  build
-
-echo "Built: $APP_PATH"
-echo "Run with: scripts/run.sh"
+  -destination "$DESTINATION" \
+  -derivedDataPath "$DERIVED_DATA_PATH"
