@@ -5,14 +5,12 @@ import AppKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let windowModel = ShelfWindowModel()
     private var windowController: NotchWindowController?
-    private var menuBarController: MenuBarController?
     private var dragMonitor: DragMonitor?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         guard !Self.isRunningTests else { return }
         NSApp.setActivationPolicy(.accessory)
         windowController = NotchWindowController(windowModel: windowModel)
-        menuBarController = MenuBarController()
         setupDragMonitor()
     }
 
