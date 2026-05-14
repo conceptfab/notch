@@ -10,6 +10,7 @@ struct ShelfItemView: View {
     @StateObject private var viewModel: ShelfItemViewModel
     @State private var cachedPreviewImage: NSImage?
     @State private var debouncedDropTarget = false
+    @State private var showingStackList = false
 
     private var isSelected: Bool { viewModel.isSelected }
 
@@ -44,7 +45,7 @@ struct ShelfItemView: View {
             if item.isStack {
                 VStack(spacing: 0) {
                     Spacer().frame(height: 29)
-                    stackMenu
+                    stackListButton
                     Spacer(minLength: 0)
                 }
             }
@@ -96,13 +97,9 @@ struct ShelfItemView: View {
                height: ShelfMetrics.iconSize + (item.isStack ? 4 : 0))
     }
 
-    private var stackMenu: some View {
-        Menu {
-            ForEach(stackMenuEntries, id: \.id) { entry in
-                Button(entry.title) {
-                    ShelfActionService.open(bookmarkData: entry.bookmarkData)
-                }
-            }
+    private var stackListButton: some View {
+        Button {
+            showingStackList.toggle()
         } label: {
             Image(systemName: "list.bullet.circle.fill")
                 .font(.system(size: 11, weight: .semibold))
@@ -110,18 +107,10 @@ struct ShelfItemView: View {
                 .frame(width: 14, height: 14)
                 .contentShape(Circle())
         }
-        .menuStyle(.borderlessButton)
         .buttonStyle(.plain)
-    }
-
-    private var stackMenuEntries: [StackMenuEntry] {
-        item.allBookmarkData.enumerated().map { index, data in
-            let url = Bookmark(data: data).resolveURL()
-            return StackMenuEntry(
-                id: index,
-                title: url?.lastPathComponent ?? "Unknown file",
-                bookmarkData: data
-            )
+        .popover(isPresented: $showingStackList, arrowEdge: .bottom) {
+            StackFileListView(item: item)
+                .frame(width: 240)
         }
     }
 
@@ -178,9 +167,188 @@ private struct StackMenuEntry {
     let id: Int
     let title: String
     let bookmarkData: Data
+
+    var fileURL: URL? {
+        Bookmark(data: bookmarkData).resolveURL()
+    }
+}
+
+private struct StackFileListView: View {
+    let item: ShelfItem
+
+    private var entries: [StackMenuEntry] {
+        item.allBookmarkData.enumerated().map { index, data in
+            let url = Bookmark(data: data).resolveURL()
+            return StackMenuEntry(
+                id: index,
+                title: url?.lastPathComponent ?? "Unknown file",
+                bookmarkData: data
+            )
+        }
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 2) {
+                ForEach(entries, id: \.id) { entry in
+                    StackFileRowView(sourceItem: item, entry: entry)
+                }
+            }
+            .padding(6)
+        }
+        .frame(maxHeight: 220)
+    }
+}
+
+private struct StackFileRowView: View {
+    let sourceItem: ShelfItem
+    let entry: StackMenuEntry
+
+    private var icon: NSImage {
+        if let url = entry.fileURL {
+            return NSWorkspace.shared.icon(forFile: url.path)
+        }
+        return NSWorkspace.shared.icon(for: .data)
+    }
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(nsImage: icon)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 20, height: 20)
+            Text(entry.title)
+                .font(.system(size: 12, weight: .medium))
+                .lineLimit(1)
+                .truncationMode(.middle)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 8)
+        .frame(height: 32)
+        .background(.quaternary.opacity(0.6), in: RoundedRectangle(cornerRadius: 6))
+        .contentShape(Rectangle())
+        .overlay {
+            StackFileDragHandler(sourceItem: sourceItem, entry: entry, previewImage: icon)
+        }
+    }
 }
 
 // MARK: - AppKit drag source
+
+private struct StackFileDragHandler: NSViewRepresentable {
+    let sourceItem: ShelfItem
+    let entry: StackMenuEntry
+    let previewImage: NSImage
+
+    func makeNSView(context: Context) -> StackFileDragView {
+        let view = StackFileDragView()
+        view.sourceItem = sourceItem
+        view.bookmarkData = entry.bookmarkData
+        view.title = entry.title
+        view.previewImage = previewImage
+        return view
+    }
+
+    func updateNSView(_ nsView: StackFileDragView, context: Context) {
+        nsView.sourceItem = sourceItem
+        nsView.bookmarkData = entry.bookmarkData
+        nsView.title = entry.title
+        nsView.previewImage = previewImage
+    }
+
+    final class StackFileDragView: NSView, NSDraggingSource {
+        var sourceItem: ShelfItem!
+        var bookmarkData = Data()
+        var title = ""
+        var previewImage = NSImage()
+
+        private var mouseDownEvent: NSEvent?
+        private let dragThreshold: CGFloat = 3.0
+        private var draggedURL: URL?
+        private var didStartDrag = false
+
+        override func mouseDown(with event: NSEvent) {
+            mouseDownEvent = event
+            didStartDrag = false
+        }
+
+        override func mouseUp(with event: NSEvent) {
+            guard !didStartDrag else { return }
+            ShelfActionService.open(bookmarkData: bookmarkData)
+            mouseDownEvent = nil
+        }
+
+        override func mouseDragged(with event: NSEvent) {
+            guard let down = mouseDownEvent else {
+                super.mouseDragged(with: event)
+                return
+            }
+            let distance = hypot(
+                event.locationInWindow.x - down.locationInWindow.x,
+                event.locationInWindow.y - down.locationInWindow.y
+            )
+            if distance > dragThreshold {
+                startDragSession(with: event)
+                mouseDownEvent = nil
+                didStartDrag = true
+            } else {
+                super.mouseDragged(with: event)
+            }
+        }
+
+        private func startDragSession(with event: NSEvent) {
+            guard let url = Bookmark(data: bookmarkData).resolveURL() else { return }
+            let pasteboardItem = NSPasteboardItem()
+            pasteboardItem.setString(url.absoluteString, forType: .fileURL)
+            pasteboardItem.setString(url.path, forType: .string)
+
+            if url.startAccessingSecurityScopedResource() {
+                draggedURL = url
+            }
+
+            let draggingItem = NSDraggingItem(pasteboardWriter: pasteboardItem)
+            draggingItem.setDraggingFrame(
+                NSRect(origin: .zero, size: previewImage.size),
+                contents: previewImage
+            )
+
+            ShelfStore.shared.remove(bookmarkData: bookmarkData, from: sourceItem)
+            ShelfSelection.shared.clear()
+            beginDraggingSession(with: [draggingItem], event: event, source: self)
+        }
+
+        func draggingSession(
+            _ session: NSDraggingSession,
+            sourceOperationMaskFor context: NSDraggingContext
+        ) -> NSDragOperation {
+            if Preferences.shared.copyOnDrag { return [.copy] }
+            switch context {
+            case .outsideApplication:
+                return [.copy, .move]
+            case .withinApplication:
+                return [.copy, .move, .generic]
+            @unknown default:
+                return [.copy]
+            }
+        }
+
+        func draggingSession(_ session: NSDraggingSession, willBeginAt screenPoint: NSPoint) {
+            ShelfSelection.shared.beginDrag()
+        }
+
+        func draggingSession(
+            _ session: NSDraggingSession,
+            endedAt screenPoint: NSPoint,
+            operation: NSDragOperation
+        ) {
+            ShelfSelection.shared.endDrag()
+            draggedURL?.stopAccessingSecurityScopedResource()
+            draggedURL = nil
+        }
+
+        func ignoreModifierKeys(for session: NSDraggingSession) -> Bool { false }
+    }
+}
 
 /// Hosts an `NSView` that turns a press-and-drag into an `NSDraggingSession`.
 private struct DraggableClickHandler: NSViewRepresentable {

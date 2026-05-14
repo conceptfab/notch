@@ -55,6 +55,20 @@ final class ShelfStore: ObservableObject {
         items.removeAll { $0.id == item.id }
     }
 
+    func remove(bookmarkData: Data, from item: ShelfItem) {
+        guard let idx = items.firstIndex(where: { $0.id == item.id }) else { return }
+        var remaining = items[idx].allBookmarkData
+        remaining.removeAll { $0 == bookmarkData }
+        switch remaining.count {
+        case 0:
+            items.remove(at: idx)
+        case 1:
+            items[idx] = ShelfItem(id: item.id, bookmarkData: remaining[0])
+        default:
+            items[idx] = ShelfItem(id: item.id, stackBookmarkData: remaining)
+        }
+    }
+
     /// Immediately replaces an item's bookmark (used for user-initiated actions).
     func updateBookmark(for item: ShelfItem, bookmark: Data) {
         guard let idx = items.firstIndex(where: { $0.id == item.id }) else { return }

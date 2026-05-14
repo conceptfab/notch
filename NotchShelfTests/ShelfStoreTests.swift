@@ -86,3 +86,25 @@ private func makeFileItem(named name: String = "f.txt") throws -> ShelfItem {
     #expect(store.items.first?.isStack == true)
     #expect(store.items.first?.stackCount == 2)
 }
+
+@MainActor @Test func storeRemoveBookmarkFromStackKeepsRemainingFiles() throws {
+    let store = storeWithTempPersistence()
+    let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent(UUID().uuidString, isDirectory: true)
+    try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: dir) }
+    let first = dir.appendingPathComponent("first.txt")
+    let second = dir.appendingPathComponent("second.txt")
+    try "1".write(to: first, atomically: true, encoding: .utf8)
+    try "2".write(to: second, atomically: true, encoding: .utf8)
+    let firstBookmark = try Bookmark(url: first).data
+    let secondBookmark = try Bookmark(url: second).data
+    let stack = ShelfItem(stackBookmarkData: [firstBookmark, secondBookmark])
+
+    store.add([stack])
+    store.remove(bookmarkData: firstBookmark, from: stack)
+
+    #expect(store.items.count == 1)
+    #expect(store.items.first?.isStack == false)
+    #expect(store.items.first?.allBookmarkData == [secondBookmark])
+}
