@@ -1,0 +1,46 @@
+name: NotchShelf
+options:
+  bundleIdPrefix: com.notchshelf
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
+    CODE_SIGN_IDENTITY: "-"
+targets:
+  NotchShelf:
+    type: application
+    platform: macOS
+    sources:
+      - path: NotchShelf
+    settings:
+      base:
+        INFOPLIST_FILE: NotchShelf/Info.plist
+        CODE_SIGN_ENTITLEMENTS: NotchShelf/NotchShelf.entitlements
+        PRODUCT_BUNDLE_IDENTIFIER: com.notchshelf.NotchShelf
+        ENABLE_HARDENED_RUNTIME: YES
+        ENABLE_APP_SANDBOX: YES
+  NotchShelfTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: NotchShelfTests
+    dependencies:
+      - target: NotchShelf
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.notchshelf.NotchShelfTests
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  NotchShelf:
+    build:
+      targets:
+        NotchShelf: all
+        NotchShelfTests: [test]
+    test:
+      targets:
+        - NotchShelfTests
