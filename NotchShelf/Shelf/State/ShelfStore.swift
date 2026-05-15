@@ -15,6 +15,7 @@ final class ShelfStore: ObservableObject {
     @Published var isLoading: Bool = false
 
     private var saveTask: Task<Void, Never>?
+    private var inflightWrite: Task<Void, Never>?
     private let saveDebounce: Duration = .milliseconds(200)
 
     var isEmpty: Bool { items.isEmpty }
@@ -146,19 +147,49 @@ final class ShelfStore: ObservableObject {
         let snapshot = items
         let persistence = self.persistence
         let debounce = saveDebounce
-        saveTask = Task { @MainActor in
+        saveTask = Task { @MainActor [weak self] in
             try? await Task.sleep(for: debounce)
             guard !Task.isCancelled else { return }
-            await Task.detached { persistence.save(snapshot) }.value
+            await self?.inflightWrite?.value
+            let write = Task.detached { persistence.save(snapshot) }
+            self?.inflightWrite = write
+            await write.value
+            if self?.inflightWrite == write { self?.inflightWrite = nil }
         }
     }
 
-    /// Flushes any pending debounced save synchronously. Intended for tests and
-    /// `applicationWillTerminate`.
+    /// Flushes any pending debounced save asynchronously. Intended for tests.
+    /// For app termination, see `flushPendingSaveSync()`.
     func flushPendingSave() async {
         saveTask?.cancel()
         saveTask = nil
+        await inflightWrite?.value
         let snapshot = items
-        await Task.detached { [persistence] in persistence.save(snapshot) }.value
+        let write = Task.detached { [persistence] in persistence.save(snapshot) }
+        inflightWrite = write
+        await write.value
+        if inflightWrite == write { inflightWrite = nil }
+    }
+
+    /// Synchronously flushes the most recent shelf state to disk. Intended only for
+    /// `applicationWillTerminate`, where a brief main-thread block at quit is acceptable.
+    /// Must be called from the main actor.
+    nonisolated func flushPendingSaveSync() {
+        MainActor.assumeIsolated {
+            saveTask?.cancel()
+            saveTask = nil
+            // Wait inline for any in-flight detached write to settle so the
+            // synchronous save below is unambiguously the last to land on disk.
+            if let inflight = inflightWrite {
+                let semaphore = DispatchSemaphore(value: 0)
+                Task.detached {
+                    await inflight.value
+                    semaphore.signal()
+                }
+                _ = semaphore.wait(timeout: .now() + 2.0)
+                inflightWrite = nil
+            }
+            persistence.save(items)
+        }
     }
 }

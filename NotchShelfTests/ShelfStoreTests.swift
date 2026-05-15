@@ -132,3 +132,26 @@ private func makeFileItem(named name: String = "f.txt") throws -> ShelfItem {
     let flushed = ShelfPersistenceService(directory: dir).load()
     #expect(flushed.count == 2)
 }
+
+@MainActor @Test func storeFlushPendingSaveIsIdempotentUnderRapidMutations() async throws {
+    let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent(UUID().uuidString, isDirectory: true)
+    let persistence = ShelfPersistenceService(directory: dir)
+    let store = ShelfStore(persistence: persistence)
+
+    let a = try makeFileItem(named: "a.txt")
+    let b = try makeFileItem(named: "b.txt")
+    let c = try makeFileItem(named: "c.txt")
+
+    store.add([a])
+    store.add([b])
+    store.add([c])
+
+    // Multiple flushes in quick succession should all converge to the latest state.
+    await store.flushPendingSave()
+    await store.flushPendingSave()
+    await store.flushPendingSave()
+
+    let loaded = ShelfPersistenceService(directory: dir).load()
+    #expect(loaded.count == 3)
+}

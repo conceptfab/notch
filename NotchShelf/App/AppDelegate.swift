@@ -18,14 +18,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         dragMonitor?.stopMonitoring()
         dragMonitor = nil
-        // Block until the most recent shelf state is on disk so a clean quit
-        // never loses items added moments before quit.
-        let semaphore = DispatchSemaphore(value: 0)
-        Task { @MainActor in
-            await ShelfStore.shared.flushPendingSave()
-            semaphore.signal()
-        }
-        _ = semaphore.wait(timeout: .now() + 1.0)
+        ShelfStore.shared.flushPendingSaveSync()
     }
 
     private static var isRunningTests: Bool {
