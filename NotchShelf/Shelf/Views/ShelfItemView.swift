@@ -133,17 +133,14 @@ struct ShelfItemView: View {
         if viewModel.viewData.isStack {
             HStack(spacing: 0) {
                 stackListButton
-                Spacer(minLength: 0)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 copyModeButton
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
             .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemToggleHeight)
         } else {
-            HStack {
-                Spacer(minLength: 0)
-                copyModeButton
-                Spacer(minLength: 0)
-            }
-            .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemToggleHeight)
+            copyModeButton
+                .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemToggleHeight)
         }
     }
 
