@@ -32,10 +32,28 @@ import Testing
     )
 }
 
-@Test func shelfDragOperationPolicyRemovesOnlyAfterMove() {
+@Test func shelfDragOperationPolicyRemovesOnlyAfterMoveWithinApplication() {
     #expect(ShelfDragOperationPolicy.shouldRemoveFromShelf(after: .move))
     #expect(!ShelfDragOperationPolicy.shouldRemoveFromShelf(after: .copy))
     #expect(!ShelfDragOperationPolicy.shouldRemoveFromShelf(after: []))
+}
+
+@Test func outsideApplicationCopyRemovesShelfEntryAfterSuccessfulDrop() {
+    #expect(
+        ShelfDragOperationPolicy.shouldRemoveFromShelf(
+            after: .copy,
+            context: .outsideApplication
+        )
+    )
+}
+
+@Test func withinApplicationCopyKeepsShelfEntry() {
+    #expect(
+        !ShelfDragOperationPolicy.shouldRemoveFromShelf(
+            after: .copy,
+            context: .withinApplication
+        )
+    )
 }
 
 @Test func outsideApplicationAlwaysReturnsCopyOnly() {

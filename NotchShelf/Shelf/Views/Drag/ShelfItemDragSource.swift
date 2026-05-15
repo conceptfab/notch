@@ -38,6 +38,7 @@ struct DraggableClickHandler: NSViewRepresentable {
         private var draggedURLs: [URL] = []
         private var draggedItems: [ShelfItem] = []
         private var didStartDrag = false
+        private var lastDragContext: NSDraggingContext = .withinApplication
 
         override func rightMouseDown(with event: NSEvent) {
             onRightClick?(event, self)
@@ -138,7 +139,8 @@ struct DraggableClickHandler: NSViewRepresentable {
             _ session: NSDraggingSession,
             sourceOperationMaskFor context: NSDraggingContext
         ) -> NSDragOperation {
-            ShelfDragOperationPolicy.sourceOperationMask(
+            lastDragContext = context
+            return ShelfDragOperationPolicy.sourceOperationMask(
                 copyOnDrag: UserDefaults.standard.bool(forKey: UserDefaultsKey.copyOnDrag),
                 context: context
             )
@@ -156,7 +158,7 @@ struct DraggableClickHandler: NSViewRepresentable {
             if operation.contains(.move) {
                 AppLogger.drag.notice("Drag session ended with .move operation (within-app only path)")
             }
-            if ShelfDragOperationPolicy.shouldRemoveFromShelf(after: operation) {
+            if ShelfDragOperationPolicy.shouldRemoveFromShelf(after: operation, context: lastDragContext) {
                 removeDraggedItemsFromShelf()
             }
             ShelfSelection.shared.endDrag()
@@ -164,6 +166,7 @@ struct DraggableClickHandler: NSViewRepresentable {
             draggedURLs.removeAll()
             draggedItems.removeAll()
             didStartDrag = false
+            lastDragContext = .withinApplication
         }
 
         func ignoreModifierKeys(for session: NSDraggingSession) -> Bool { false }

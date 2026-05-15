@@ -14,7 +14,23 @@ enum ShelfDragOperationPolicy {
         }
     }
 
+    static func shouldRemoveFromShelf(
+        after operation: NSDragOperation,
+        context: NSDraggingContext
+    ) -> Bool {
+        if operation.contains(.move) { return true }
+
+        switch context {
+        case .outsideApplication:
+            return operation.contains(.copy)
+        case .withinApplication:
+            return false
+        @unknown default:
+            return false
+        }
+    }
+
     static func shouldRemoveFromShelf(after operation: NSDragOperation) -> Bool {
-        operation.contains(.move)
+        shouldRemoveFromShelf(after: operation, context: .withinApplication)
     }
 }
