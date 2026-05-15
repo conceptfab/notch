@@ -10,6 +10,10 @@ struct ShelfView: View {
     @State private var localDropTargeting = false
     private let spacing: CGFloat = ShelfMetrics.itemSpacing
     private var isVisuallyTargeted: Bool { windowModel.dragTargeting || localDropTargeting }
+    private var dropZoneColor: Color {
+        Color(red: 0.0, green: 0.88, blue: 0.84)
+            .opacity(isVisuallyTargeted ? 0.95 : 0.68)
+    }
 
     private var rowCapacity: Int {
         Swift.max(UserDefaults.standard.integer(forKey: UserDefaultsKey.minSlotCount), 3)
@@ -45,11 +49,12 @@ struct ShelfView: View {
     private var panel: some View {
         RoundedRectangle(cornerRadius: 16)
             .stroke(
-                Color.clear,
-                style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [7])
+                dropZoneColor,
+                style: StrokeStyle(lineWidth: isVisuallyTargeted ? 2.5 : 2, lineCap: .round, dash: [7])
             )
             .overlay { content.padding(ShelfMetrics.contentPadding) }
             .contentShape(Rectangle())
+            .animation(.easeInOut(duration: 0.12), value: isVisuallyTargeted)
             .onTapGesture { selection.clear() }
     }
 
