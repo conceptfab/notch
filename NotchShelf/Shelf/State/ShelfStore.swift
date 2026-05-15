@@ -13,13 +13,21 @@ final class ShelfStore: ObservableObject {
     }
 
     @Published var isLoading: Bool = false
+    @Published private(set) var lastError: String?
 
     private var saveTask: Task<Void, Never>?
-    private var inflightWrite: Task<Void, Never>?
+    private var inflightWrite: Task<String?, Never>?
     private var loadTask: Task<Void, Never>?
     private let saveDebounce: Duration = .milliseconds(200)
 
     var isEmpty: Bool { items.isEmpty }
+
+    /// Composite load state derived from `items` and `isLoading`.
+    var state: Loadable<[ShelfItem]> {
+        if isLoading && items.isEmpty { return .loading }
+        if let lastError { return .failed(lastError) }
+        return .loaded(items)
+    }
 
     /// Deferred bookmark refreshes, applied off the current run loop turn so we never
     /// mutate `items` while SwiftUI is reading it.
@@ -175,10 +183,14 @@ final class ShelfStore: ObservableObject {
         saveTask = Task { @MainActor [weak self] in
             try? await Task.sleep(for: debounce)
             guard !Task.isCancelled else { return }
-            await self?.inflightWrite?.value
-            let write = Task.detached { persistence.save(snapshot) }
+            if let inflightWrite = self?.inflightWrite {
+                _ = await inflightWrite.value
+            }
+            let write = Task.detached {
+                persistence.save(snapshot).errorMessage
+            }
             self?.inflightWrite = write
-            await write.value
+            self?.lastError = await write.value
             if self?.inflightWrite == write { self?.inflightWrite = nil }
         }
     }
@@ -188,11 +200,15 @@ final class ShelfStore: ObservableObject {
     func flushPendingSave() async {
         saveTask?.cancel()
         saveTask = nil
-        await inflightWrite?.value
+        if let inflightWrite {
+            _ = await inflightWrite.value
+        }
         let snapshot = items
-        let write = Task.detached { [persistence] in persistence.save(snapshot) }
+        let write = Task.detached { [persistence] in
+            persistence.save(snapshot).errorMessage
+        }
         inflightWrite = write
-        await write.value
+        lastError = await write.value
         if inflightWrite == write { inflightWrite = nil }
     }
 
@@ -208,13 +224,22 @@ final class ShelfStore: ObservableObject {
             if let inflight = inflightWrite {
                 let semaphore = DispatchSemaphore(value: 0)
                 Task.detached {
-                    await inflight.value
+                    _ = await inflight.value
                     semaphore.signal()
                 }
                 _ = semaphore.wait(timeout: .now() + 2.0)
                 inflightWrite = nil
             }
-            persistence.save(items)
+            lastError = persistence.save(items).errorMessage
         }
+    }
+}
+
+private extension Result where Success == Void, Failure == Error {
+    var errorMessage: String? {
+        if case .failure(let error) = self {
+            return error.localizedDescription
+        }
+        return nil
     }
 }

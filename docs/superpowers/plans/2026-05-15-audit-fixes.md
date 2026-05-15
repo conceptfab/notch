@@ -1545,7 +1545,7 @@ git commit -m "refactor: extract presentation formatting into ShelfItemViewData"
 - Modify: `NotchShelf/Shelf/Views/ShelfView.swift`
 - Modify: `NotchShelfTests/ShelfStoreTests.swift`
 
-- [ ] **Step 1: Create `Loadable.swift`**
+- [x] **Step 1: Create `Loadable.swift`**
 
 ```swift
 import Foundation
@@ -1567,7 +1567,7 @@ enum Loadable<Value> {
 extension Loadable: Equatable where Value: Equatable {}
 ```
 
-- [ ] **Step 2: Refactor `ShelfStore` to expose `state` while keeping the existing API**
+- [x] **Step 2: Refactor `ShelfStore` to expose `state` while keeping the existing API**
 
 Add a derived `state` property without removing `items`/`isLoading` outright — callers still depend on them. Append at the bottom of `ShelfStore`:
 
@@ -1632,7 +1632,7 @@ Update `ShelfStore.flushPendingSave` and `schedulePersistenceSave` to propagate 
     }
 ```
 
-- [ ] **Step 3: Add a test for the failure path**
+- [x] **Step 3: Add a test for the failure path**
 
 In `ShelfStoreTests.swift`:
 
@@ -1651,7 +1651,7 @@ In `ShelfStoreTests.swift`:
 }
 ```
 
-- [ ] **Step 4: Build & test**
+- [x] **Step 4: Build & test**
 
 ```bash
 xcodegen generate
@@ -1659,7 +1659,7 @@ xcodegen generate
 ```
 Expected: all tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add NotchShelf NotchShelfTests NotchShelf.xcodeproj

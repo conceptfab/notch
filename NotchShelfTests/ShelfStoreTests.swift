@@ -155,3 +155,17 @@ private func makeFileItem(named name: String = "f.txt") throws -> ShelfItem {
     let loaded = ShelfPersistenceService(directory: dir).load()
     #expect(loaded.count == 3)
 }
+
+@MainActor @Test func storeRecordsLastErrorWhenPersistenceWriteFails() async throws {
+    // Use a path that points to a non-existent parent so the write fails.
+    let bogusDir = URL(fileURLWithPath: "/dev/null/cannot-create")
+    let persistence = ShelfPersistenceService(directory: bogusDir)
+    let store = ShelfStore(persistence: persistence)
+
+    let item = try makeFileItem(named: "a.txt")
+    store.add([item])
+    await store.flushPendingSave()
+
+    #expect(store.lastError != nil)
+    #expect(store.state == .failed(store.lastError ?? ""))
+}

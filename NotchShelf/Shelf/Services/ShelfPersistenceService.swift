@@ -56,12 +56,15 @@ final class ShelfPersistenceService: @unchecked Sendable {
         return valid
     }
 
-    func save(_ items: [ShelfItem]) {
+    @discardableResult
+    func save(_ items: [ShelfItem]) -> Result<Void, Error> {
         do {
             let data = try encoder.encode(items)
             try data.write(to: fileURL, options: .atomic)
+            return .success(())
         } catch {
             NSLog("Failed to save shelf items: \(error.localizedDescription)")
+            return .failure(error)
         }
     }
 }
