@@ -15,6 +15,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ShelfStore.shared.cleanupInvalidItems()
     }
 
+    func applicationWillTerminate(_ notification: Notification) {
+        dragMonitor?.stopMonitoring()
+        dragMonitor = nil
+    }
+
     private static var isRunningTests: Bool {
         ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
     }

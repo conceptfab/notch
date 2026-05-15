@@ -88,10 +88,8 @@ final class DragMonitor {
     }
 
     deinit {
-        MainActor.assumeIsolated {
-            for monitor in [downMonitor, draggedMonitor, upMonitor].compactMap({ $0 }) {
-                NSEvent.removeMonitor(monitor)
-            }
-        }
+        // Caller must invoke stopMonitoring() before releasing the last reference.
+        // We intentionally do not touch NSEvent monitors here because Swift 6 does
+        // not guarantee deinit runs on the MainActor.
     }
 }
