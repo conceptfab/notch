@@ -16,6 +16,7 @@ final class ShelfStore: ObservableObject {
 
     private var saveTask: Task<Void, Never>?
     private var inflightWrite: Task<Void, Never>?
+    private var loadTask: Task<Void, Never>?
     private let saveDebounce: Duration = .milliseconds(200)
 
     var isEmpty: Bool { items.isEmpty }
@@ -106,17 +107,19 @@ final class ShelfStore: ObservableObject {
         }
     }
 
-    /// Loads dropped providers into the shelf asynchronously.
+    /// Loads dropped providers into the shelf asynchronously. Cancels any in-flight load.
     func load(_ providers: [NSItemProvider]) {
         guard !providers.isEmpty else { return }
+        loadTask?.cancel()
         isLoading = true
         // Wrap in a nonisolated(unsafe) box so Swift 6 does not flag the
         // NSItemProvider (non-Sendable) transfer across the actor boundary.
         // NSItemProvider is thread-safe in practice; the providers are only
         // read inside the Task, never mutated after capture.
         nonisolated(unsafe) let sendableProviders = providers
-        Task { @MainActor [weak self] in
+        loadTask = Task { @MainActor [weak self] in
             let dropped = await ShelfDropService.items(from: sendableProviders)
+            guard !Task.isCancelled else { return }
             self?.add(dropped)
             self?.isLoading = false
         }
