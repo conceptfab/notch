@@ -33,6 +33,7 @@ struct ShelfView: View {
                 handleDrop(providers: providers, slotIndex: nil)
             }
             .focusable()
+            .focusEffectDisabled()
             .onDeleteCommand {
                 for item in selection.selectedItems(in: store.items) {
                     ShelfActionService.remove(item)

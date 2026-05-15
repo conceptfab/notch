@@ -2,3 +2,4 @@
 - kolor linii przerywanej ma byc do zmiany w preferencjach
 - trzeba przerobic wyglada slotu - obok ikony plusa na jego lewej stronie ma byc ikona stosu jesli jest potrzeba - jesli sa dwie ikony to obie sa symetrycznie wobec slotu, jesli tylko plus to plus jest na srodku slotu. na gorze ma byc info o liczbie plikow, nazwa pod ikona nie jest potrzebna, ikona ma byc większa - wg szkicu @Untitled-1.jpg
 - w tej chwiii pliki w slotach nie wysuwaja sie, tylko sa i pojawia sie tlo okna aplikacji - powinna wysuwac sie półka z plikami - animacja to ma byc wysuwanie z gory do dolu, potem wsuwanie do gory!
+- zamien ikone szczotki na plik @icon.svg
