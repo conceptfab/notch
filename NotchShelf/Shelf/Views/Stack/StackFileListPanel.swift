@@ -199,7 +199,10 @@ struct StackFileListPanelPresenter: NSViewRepresentable {
             panel.isOpaque = false
             panel.hasShadow = false
             panel.hidesOnDeactivate = false
-            panel.level = .floating
+            // Must sit ABOVE NotchPanel (which uses .mainMenu + 3) so the stack
+            // file list isn't visually clipped by the notch window's transparent
+            // chrome area below the visible shape.
+            panel.level = .mainMenu + 4
             panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
             return panel
         }
