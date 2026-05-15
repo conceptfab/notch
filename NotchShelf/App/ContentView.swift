@@ -30,7 +30,9 @@ struct ContentView: View {
         let slotCount = store.visibleSlotCount
         let rows = Swift.max(Int((Double(slotCount) / Double(baseRow)).rounded(.up)), 1)
         let rowHeight = ShelfMetrics.itemHeight + ShelfMetrics.itemSpacing
-        let chromeHeight = geometry.notchHeight + 24 + ShelfMetrics.shelfPanelBottomPadding
+        let chromeHeight = geometry.notchHeight
+            + ShelfMetrics.shelfTopChromeHeight
+            + ShelfMetrics.shelfPanelBottomPadding
         let height = chromeHeight + CGFloat(rows) * rowHeight
 
         let emptyWidth = geometry.notchWidth + ShelfMetrics.sideExpansion * 2
@@ -106,7 +108,7 @@ struct ContentView: View {
                     ShelfView()
                         .environmentObject(windowModel)
                         .padding(.horizontal, currentTopCornerRadius + 12)
-                        .padding(.top, geometry.notchHeight + 12)
+                        .padding(.top, geometry.notchHeight + ShelfMetrics.shelfTopChromeHeight)
                         .padding(.bottom, ShelfMetrics.shelfPanelBottomPadding)
                         .transition(shelfContentTransition)
                         .zIndex(1)

@@ -16,6 +16,9 @@ enum ShelfMetrics {
     static let itemSpacing: CGFloat = 6
     static let contentPadding: CGFloat = 10
     static let shelfPanelBottomPadding: CGFloat = 13
+    /// Vertical space reserved for the top chrome row (Clear button + Preferences button)
+    /// so the dashed shelf outline never crosses underneath either icon.
+    static let shelfTopChromeHeight: CGFloat = 32
     /// Corner radii for the continuous shape.
     static let topCornerRadius: CGFloat = 6
     /// Larger top corners when expanded, for more pronounced "ears".
