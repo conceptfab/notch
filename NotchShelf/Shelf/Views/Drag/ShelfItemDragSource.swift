@@ -7,6 +7,7 @@ struct DraggableClickHandler: NSViewRepresentable {
     @Binding var cachedPreviewImage: NSImage?
     let onClick: (NSEvent, NSView) -> Void
     let onRightClick: (NSEvent, NSView) -> Void
+    var preferences: PreferenceProviding = Preferences.shared
 
     func makeNSView(context: Context) -> DraggableClickView {
         let view = DraggableClickView()
@@ -15,6 +16,7 @@ struct DraggableClickHandler: NSViewRepresentable {
         view.dragPreviewImage = cachedPreviewImage ?? viewModel.icon
         view.onClick = onClick
         view.onRightClick = onRightClick
+        view.preferences = preferences
         return view
     }
 
@@ -24,6 +26,7 @@ struct DraggableClickHandler: NSViewRepresentable {
         if let cached = cachedPreviewImage { nsView.dragPreviewImage = cached }
         nsView.onClick = onClick
         nsView.onRightClick = onRightClick
+        nsView.preferences = preferences
     }
 
     final class DraggableClickView: NSView, NSDraggingSource {
@@ -32,6 +35,7 @@ struct DraggableClickHandler: NSViewRepresentable {
         var dragPreviewImage: NSImage?
         var onClick: ((NSEvent, NSView) -> Void)?
         var onRightClick: ((NSEvent, NSView) -> Void)?
+        var preferences: PreferenceProviding = Preferences.shared
 
         private var mouseDownEvent: NSEvent?
         private let dragThreshold: CGFloat = 3.0
@@ -127,7 +131,7 @@ struct DraggableClickHandler: NSViewRepresentable {
             _ session: NSDraggingSession,
             sourceOperationMaskFor context: NSDraggingContext
         ) -> NSDragOperation {
-            if Preferences.shared.copyOnDrag { return [.copy] }
+            if preferences.copyOnDrag { return [.copy] }
             switch context {
             case .outsideApplication:
                 return [.copy, .move]

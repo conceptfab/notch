@@ -1808,7 +1808,7 @@ git commit -m "refactor: introduce PreferenceProviding/ShelfStoring/SelectionSto
 - Modify: `NotchShelf/Shelf/Views/Drag/StackFileDragSource.swift`
 - Modify: `NotchShelf/Shelf/Views/Drag/ShelfItemDragSource.swift`
 
-- [ ] **Step 1: Pass `PreferenceProviding` through `StackFileDragHandler` → `StackFileDragView`**
+- [x] **Step 1: Pass `PreferenceProviding` through `StackFileDragHandler` → `StackFileDragView`**
 
 ```swift
 struct StackFileDragHandler: NSViewRepresentable {
@@ -1863,7 +1863,7 @@ struct StackFileDragHandler: NSViewRepresentable {
 }
 ```
 
-- [ ] **Step 2: Mirror the change in `DraggableClickHandler`**
+- [x] **Step 2: Mirror the change in `DraggableClickHandler`**
 
 ```swift
 struct DraggableClickHandler: NSViewRepresentable {
@@ -1922,7 +1922,7 @@ struct DraggableClickHandler: NSViewRepresentable {
 }
 ```
 
-- [ ] **Step 3: Build & test**
+- [x] **Step 3: Build & test**
 
 ```bash
 ./scripts/test.sh
@@ -1931,9 +1931,13 @@ Expected: all tests pass.
 
 - [ ] **Step 4: Manual smoke check**
 
+Agent note: automated verification passed on 2026-05-15 with `./scripts/test.sh`
+(49 Swift Testing tests). This manual GUI smoke check still needs real drag
+coverage for copy/move behavior.
+
 Toggle `copyOnDrag` in Preferences, drag a file out, confirm copy. Toggle off, confirm copy/move behavior returns. Repeat for stack popover row drag.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add NotchShelf/Shelf/Views/Drag/

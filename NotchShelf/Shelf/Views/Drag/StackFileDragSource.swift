@@ -5,6 +5,7 @@ struct StackFileDragHandler: NSViewRepresentable {
     let sourceItem: ShelfItem
     let entry: StackMenuEntry
     let previewImage: NSImage
+    var preferences: PreferenceProviding = Preferences.shared
 
     func makeNSView(context: Context) -> StackFileDragView {
         let view = StackFileDragView()
@@ -12,6 +13,7 @@ struct StackFileDragHandler: NSViewRepresentable {
         view.bookmarkData = entry.bookmarkData
         view.title = entry.title
         view.previewImage = previewImage
+        view.preferences = preferences
         return view
     }
 
@@ -20,6 +22,7 @@ struct StackFileDragHandler: NSViewRepresentable {
         nsView.bookmarkData = entry.bookmarkData
         nsView.title = entry.title
         nsView.previewImage = previewImage
+        nsView.preferences = preferences
     }
 
     final class StackFileDragView: NSView, NSDraggingSource {
@@ -27,6 +30,7 @@ struct StackFileDragHandler: NSViewRepresentable {
         var bookmarkData = Data()
         var title = ""
         var previewImage = NSImage()
+        var preferences: PreferenceProviding = Preferences.shared
 
         private var mouseDownEvent: NSEvent?
         private let dragThreshold: CGFloat = 3.0
@@ -87,7 +91,7 @@ struct StackFileDragHandler: NSViewRepresentable {
             _ session: NSDraggingSession,
             sourceOperationMaskFor context: NSDraggingContext
         ) -> NSDragOperation {
-            if Preferences.shared.copyOnDrag { return [.copy] }
+            if preferences.copyOnDrag { return [.copy] }
             switch context {
             case .outsideApplication:
                 return [.copy, .move]
