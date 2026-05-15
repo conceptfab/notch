@@ -8,11 +8,12 @@ struct ShelfView: View {
     @ObservedObject var store = ShelfStore.shared
     @ObservedObject var selection = ShelfSelection.shared
     @State private var localDropTargeting = false
+    @State private var dropZoneRGBA: RGBAColor = ShelfView.loadDropZoneColor()
     private let spacing: CGFloat = ShelfMetrics.itemSpacing
     private var isVisuallyTargeted: Bool { windowModel.dragTargeting || localDropTargeting }
     private var dropZoneColor: Color {
-        Color(red: 0.0, green: 0.88, blue: 0.84)
-            .opacity(isVisuallyTargeted ? 0.95 : 0.68)
+        let base = dropZoneRGBA.color
+        return base.opacity(isVisuallyTargeted ? 0.95 : 0.68)
     }
 
     private var rowCapacity: Int {
@@ -37,6 +38,16 @@ struct ShelfView: View {
                     ShelfActionService.remove(item)
                 }
             }
+            .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in
+                let next = Self.loadDropZoneColor()
+                if next != dropZoneRGBA { dropZoneRGBA = next }
+            }
+    }
+
+    private static func loadDropZoneColor() -> RGBAColor {
+        let components = UserDefaults.standard.array(forKey: UserDefaultsKey.dropZoneColor) as? [Double]
+            ?? RGBAColor.defaultDropZone.components
+        return RGBAColor(components: components)
     }
 
     private func handleDrop(providers: [NSItemProvider], slotIndex: Int?) -> Bool {
