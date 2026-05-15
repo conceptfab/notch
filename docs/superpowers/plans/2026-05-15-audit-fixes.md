@@ -1133,7 +1133,7 @@ git commit -m "refactor: extract stack-file drag source into Shelf/Views/Drag/"
 - Create: `NotchShelf/Shelf/Views/Drag/ShelfItemDragSource.swift`
 - Modify: `NotchShelf/Shelf/Views/ShelfItemView.swift`
 
-- [ ] **Step 1: Create the new file**
+- [x] **Step 1: Create the new file**
 
 Move `DraggableClickHandler` + its inner `DraggableClickView` (no `private`) into `NotchShelf/Shelf/Views/Drag/ShelfItemDragSource.swift`:
 
@@ -1298,7 +1298,7 @@ struct DraggableClickHandler: NSViewRepresentable {
 }
 ```
 
-- [ ] **Step 2: Delete `DraggableClickHandler` from `ShelfItemView.swift`**
+- [x] **Step 2: Delete `DraggableClickHandler` from `ShelfItemView.swift`**
 
 `ShelfItemView.swift` should now contain only:
 - `import AppKit`, `import SwiftUI`
@@ -1306,7 +1306,7 @@ struct DraggableClickHandler: NSViewRepresentable {
 
 The file should drop from 643 lines to roughly 165.
 
-- [ ] **Step 3: Regenerate the project & test**
+- [x] **Step 3: Regenerate the project & test**
 
 ```bash
 xcodegen generate
@@ -1316,12 +1316,16 @@ Expected: all tests pass.
 
 - [ ] **Step 4: Manual smoke check**
 
+Agent note: automated verification passed on 2026-05-15 with `./scripts/test.sh`
+after `xcodegen generate` (47 Swift Testing tests). This manual GUI smoke check
+still needs a real Finder drag/right-click pass.
+
 Drag a single item out → Finder receives the file, shelf removes it.
 Drag a multi-selection out → all files end up at the drop target.
 Right-click an item → context menu appears.
 Click the stack-list button on a stack → popover appears and dismisses on outside click.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add NotchShelf/Shelf/Views/Drag/ NotchShelf/Shelf/Views/ShelfItemView.swift NotchShelf.xcodeproj
