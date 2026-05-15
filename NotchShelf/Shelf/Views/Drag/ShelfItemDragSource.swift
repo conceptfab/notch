@@ -41,6 +41,7 @@ struct DraggableClickHandler: NSViewRepresentable {
         private let dragThreshold: CGFloat = 3.0
         private var draggedURLs: [URL] = []
         private var draggedItems: [ShelfItem] = []
+        private var didStartDrag = false
 
         override func rightMouseDown(with event: NSEvent) {
             onRightClick?(event, self)
@@ -48,7 +49,13 @@ struct DraggableClickHandler: NSViewRepresentable {
 
         override func mouseDown(with event: NSEvent) {
             mouseDownEvent = event
+            didStartDrag = false
             onClick?(event, self)
+        }
+
+        override func mouseUp(with event: NSEvent) {
+            guard !didStartDrag else { return }
+            mouseDownEvent = nil
         }
 
         override func mouseDragged(with event: NSEvent) {
@@ -61,15 +68,18 @@ struct DraggableClickHandler: NSViewRepresentable {
                 event.locationInWindow.y - down.locationInWindow.y
             )
             if distance > dragThreshold {
-                startDragSession(with: event)
-                mouseDownEvent = nil
+                if startDragSession(with: event) {
+                    mouseDownEvent = nil
+                    didStartDrag = true
+                }
             } else {
                 super.mouseDragged(with: event)
             }
         }
 
-        private func startDragSession(with event: NSEvent) {
-            guard let item else { return }
+        @discardableResult
+        private func startDragSession(with event: NSEvent) -> Bool {
+            guard let item else { return false }
             let selected = ShelfSelection.shared.selectedItems(in: ShelfStore.shared.items)
             let itemsToDrag: [ShelfItem] =
                 (selected.count > 1 && selected.contains { $0.id == item.id }) ? selected : [item]
@@ -90,8 +100,9 @@ struct DraggableClickHandler: NSViewRepresentable {
                     draggingItems.append(draggingItem(for: pasteboardItem))
                 }
             }
-            guard !draggingItems.isEmpty else { return }
+            guard !draggingItems.isEmpty else { return false }
             beginDraggingSession(with: draggingItems, event: event, source: self)
+            return true
         }
 
         private func draggingItem(for pasteboardItem: NSPasteboardItem) -> NSDraggingItem {
@@ -144,7 +155,6 @@ struct DraggableClickHandler: NSViewRepresentable {
 
         func draggingSession(_ session: NSDraggingSession, willBeginAt screenPoint: NSPoint) {
             ShelfSelection.shared.beginDrag()
-            removeDraggedItemsFromShelf()
         }
 
         func draggingSession(
@@ -152,10 +162,14 @@ struct DraggableClickHandler: NSViewRepresentable {
             endedAt screenPoint: NSPoint,
             operation: NSDragOperation
         ) {
+            if !operation.isEmpty {
+                removeDraggedItemsFromShelf()
+            }
             ShelfSelection.shared.endDrag()
             for url in draggedURLs { url.stopAccessingSecurityScopedResource() }
             draggedURLs.removeAll()
             draggedItems.removeAll()
+            didStartDrag = false
         }
 
         func ignoreModifierKeys(for session: NSDraggingSession) -> Bool { false }

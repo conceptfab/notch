@@ -28,6 +28,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupDragMonitor() {
         let monitor = DragMonitor(regionProvider: { [weak self] in
             guard let self else { return .zero }
+            guard !ShelfSelection.shared.isDragging else { return .zero }
             switch self.windowModel.expansion {
             case .collapsed:
                 return NotchGeometry.current().dragCatchRegion()

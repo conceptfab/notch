@@ -36,7 +36,8 @@ struct StackFileDragHandler: NSViewRepresentable {
         private let dragThreshold: CGFloat = 3.0
         private var draggedURL: URL?
         private var didStartDrag = false
-        private var removedFromShelf = false
+        private var draggedSourceItem: ShelfItem?
+        private var draggedBookmarkData = Data()
 
         override func mouseDown(with event: NSEvent) {
             mouseDownEvent = event
@@ -59,16 +60,18 @@ struct StackFileDragHandler: NSViewRepresentable {
                 event.locationInWindow.y - down.locationInWindow.y
             )
             if distance > dragThreshold {
-                startDragSession(with: event)
-                mouseDownEvent = nil
-                didStartDrag = true
+                if startDragSession(with: event) {
+                    mouseDownEvent = nil
+                    didStartDrag = true
+                }
             } else {
                 super.mouseDragged(with: event)
             }
         }
 
-        private func startDragSession(with event: NSEvent) {
-            guard let url = Bookmark(data: bookmarkData).resolveURL() else { return }
+        @discardableResult
+        private func startDragSession(with event: NSEvent) -> Bool {
+            guard let url = Bookmark(data: bookmarkData).resolveURL() else { return false }
             let pasteboardItem = NSPasteboardItem()
             pasteboardItem.setString(url.absoluteString, forType: .fileURL)
             pasteboardItem.setString(url.path, forType: .string)
@@ -83,8 +86,10 @@ struct StackFileDragHandler: NSViewRepresentable {
                 contents: previewImage
             )
 
-            removedFromShelf = false
+            draggedSourceItem = sourceItem
+            draggedBookmarkData = bookmarkData
             beginDraggingSession(with: [draggingItem], event: event, source: self)
+            return true
         }
 
         func draggingSession(
@@ -104,10 +109,6 @@ struct StackFileDragHandler: NSViewRepresentable {
 
         func draggingSession(_ session: NSDraggingSession, willBeginAt screenPoint: NSPoint) {
             ShelfSelection.shared.beginDrag()
-            guard !removedFromShelf, let sourceItem else { return }
-            ShelfStore.shared.remove(bookmarkData: bookmarkData, from: sourceItem)
-            ShelfSelection.shared.clear()
-            removedFromShelf = true
         }
 
         func draggingSession(
@@ -115,10 +116,16 @@ struct StackFileDragHandler: NSViewRepresentable {
             endedAt screenPoint: NSPoint,
             operation: NSDragOperation
         ) {
+            if !operation.isEmpty, let draggedSourceItem {
+                ShelfStore.shared.remove(bookmarkData: draggedBookmarkData, from: draggedSourceItem)
+                ShelfSelection.shared.clear()
+            }
             ShelfSelection.shared.endDrag()
             draggedURL?.stopAccessingSecurityScopedResource()
             draggedURL = nil
-            removedFromShelf = false
+            draggedSourceItem = nil
+            draggedBookmarkData = Data()
+            didStartDrag = false
         }
 
         func ignoreModifierKeys(for session: NSDraggingSession) -> Bool { false }
