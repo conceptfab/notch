@@ -47,6 +47,16 @@ import Testing
     )
 }
 
+@Test func outsideApplicationCopyKeepsShelfEntryWhenSlotCopyModeIsEnabled() {
+    #expect(
+        !ShelfDragOperationPolicy.shouldRemoveFromShelf(
+            after: .copy,
+            context: .outsideApplication,
+            keepAfterExternalDrop: true
+        )
+    )
+}
+
 @Test func withinApplicationCopyKeepsShelfEntry() {
     #expect(
         !ShelfDragOperationPolicy.shouldRemoveFromShelf(

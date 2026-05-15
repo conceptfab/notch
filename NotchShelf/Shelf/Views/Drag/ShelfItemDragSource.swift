@@ -37,6 +37,7 @@ struct DraggableClickHandler: NSViewRepresentable {
         private let dragThreshold: CGFloat = 3.0
         private var draggedURLs: [URL] = []
         private var draggedItems: [ShelfItem] = []
+        private var draggedItemIDsToKeepAfterExternalDrop: Set<ShelfItem.ID> = []
         private var didStartDrag = false
         private var lastDragContext: NSDraggingContext = .withinApplication
 
@@ -81,6 +82,11 @@ struct DraggableClickHandler: NSViewRepresentable {
             let itemsToDrag: [ShelfItem] =
                 (selected.count > 1 && selected.contains { $0.id == item.id }) ? selected : [item]
             draggedItems = itemsToDrag
+            draggedItemIDsToKeepAfterExternalDrop = Set(
+                itemsToDrag
+                    .filter { ShelfStore.shared.keepsItemAfterExternalDrop($0) }
+                    .map(\.id)
+            )
 
             var draggingItems: [NSDraggingItem] = []
             for dragItem in itemsToDrag {
@@ -112,8 +118,16 @@ struct DraggableClickHandler: NSViewRepresentable {
             return draggingItem
         }
 
-        private func removeDraggedItemsFromShelf() {
+        private func removeDraggedItemsFromShelf(after operation: NSDragOperation) {
             for item in draggedItems {
+                let keepAfterExternalDrop = draggedItemIDsToKeepAfterExternalDrop.contains(item.id)
+                guard ShelfDragOperationPolicy.shouldRemoveFromShelf(
+                    after: operation,
+                    context: lastDragContext,
+                    keepAfterExternalDrop: keepAfterExternalDrop
+                ) else {
+                    continue
+                }
                 ShelfStore.shared.remove(item)
             }
             ShelfSelection.shared.clear()
@@ -158,13 +172,12 @@ struct DraggableClickHandler: NSViewRepresentable {
             if operation.contains(.move) {
                 AppLogger.drag.notice("Drag session ended with .move operation (within-app only path)")
             }
-            if ShelfDragOperationPolicy.shouldRemoveFromShelf(after: operation, context: lastDragContext) {
-                removeDraggedItemsFromShelf()
-            }
+            removeDraggedItemsFromShelf(after: operation)
             ShelfSelection.shared.endDrag()
             for url in draggedURLs { url.stopAccessingSecurityScopedResource() }
             draggedURLs.removeAll()
             draggedItems.removeAll()
+            draggedItemIDsToKeepAfterExternalDrop.removeAll()
             didStartDrag = false
             lastDragContext = .withinApplication
         }

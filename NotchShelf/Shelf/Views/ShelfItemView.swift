@@ -5,6 +5,8 @@ import SwiftUI
 /// source for dragging the file back out into Finder.
 struct ShelfItemView: View {
     let item: ShelfItem
+    let keepsItemAfterExternalDrop: Bool
+    let onToggleKeepsItemAfterExternalDrop: () -> Void
     @ObservedObject var selection = ShelfSelection.shared
     @StateObject private var viewModel: ShelfItemViewModel
     @State private var cachedPreviewImage: NSImage?
@@ -15,8 +17,14 @@ struct ShelfItemView: View {
 
     private var isSelected: Bool { viewModel.isSelected }
 
-    init(item: ShelfItem) {
+    init(
+        item: ShelfItem,
+        keepsItemAfterExternalDrop: Bool = false,
+        onToggleKeepsItemAfterExternalDrop: @escaping () -> Void = {}
+    ) {
         self.item = item
+        self.keepsItemAfterExternalDrop = keepsItemAfterExternalDrop
+        self.onToggleKeepsItemAfterExternalDrop = onToggleKeepsItemAfterExternalDrop
         _viewModel = StateObject(wrappedValue: ShelfItemViewModel(item: item))
     }
 
@@ -36,36 +44,40 @@ struct ShelfItemView: View {
     }
 
     private var itemContent: some View {
-        ZStack {
-            VStack(alignment: .center, spacing: 2) {
-                iconView
+        VStack(spacing: 2) {
+            ZStack {
+                VStack(alignment: .center, spacing: 2) {
+                    iconView
+                    if item.isStack {
+                        Color.clear.frame(width: 14, height: 14)
+                    }
+                    textView
+                }
+                .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemBodyHeight)
+                .background(backgroundView)
+                .contentShape(Rectangle())
+                .animation(.easeInOut(duration: 0.1), value: debouncedDropTarget)
+                .animation(.easeInOut(duration: 0.1), value: isSelected)
+
+                DraggableClickHandler(
+                    item: item,
+                    viewModel: viewModel,
+                    cachedPreviewImage: $cachedPreviewImage,
+                    onClick: { event, nsView in viewModel.handleClick(event: event, view: nsView) },
+                    onRightClick: { event, nsView in viewModel.handleRightClick(event: event, view: nsView) }
+                )
+
                 if item.isStack {
-                    Color.clear.frame(width: 14, height: 14)
-                }
-                textView
-            }
-            .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemHeight)
-            .background(backgroundView)
-            .contentShape(Rectangle())
-            .animation(.easeInOut(duration: 0.1), value: debouncedDropTarget)
-            .animation(.easeInOut(duration: 0.1), value: isSelected)
-
-            DraggableClickHandler(
-                item: item,
-                viewModel: viewModel,
-                cachedPreviewImage: $cachedPreviewImage,
-                onClick: { event, nsView in viewModel.handleClick(event: event, view: nsView) },
-                onRightClick: { event, nsView in viewModel.handleRightClick(event: event, view: nsView) }
-            )
-
-            if item.isStack {
-                VStack(spacing: 0) {
-                    Spacer().frame(height: 29)
-                    stackListButton
-                    Spacer(minLength: 0)
+                    VStack(spacing: 0) {
+                        Spacer().frame(height: 29)
+                        stackListButton
+                        Spacer(minLength: 0)
+                    }
                 }
             }
+            copyModeButton
         }
+        .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemHeight)
         .onChange(of: viewModel.isDropTargeted) { _, targeted in
             dropTargetDebounceTask?.cancel()
             dropTargetDebounceTask = Task { @MainActor in
@@ -126,6 +138,19 @@ struct ShelfItemView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Show stack files")
+    }
+
+    private var copyModeButton: some View {
+        Button(action: onToggleKeepsItemAfterExternalDrop) {
+            Image(systemName: keepsItemAfterExternalDrop ? "plus.circle.fill" : "plus.circle")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(keepsItemAfterExternalDrop ? Color.accentColor : .white.opacity(0.72))
+                .frame(width: ShelfMetrics.itemToggleHeight, height: ShelfMetrics.itemToggleHeight)
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .help(keepsItemAfterExternalDrop ? "Copy from this slot" : "Move from this slot")
+        .accessibilityLabel(keepsItemAfterExternalDrop ? "Copy from this slot" : "Move from this slot")
     }
 
     private var textView: some View {

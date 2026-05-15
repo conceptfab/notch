@@ -64,6 +64,30 @@ private func makeFileItem(named name: String = "f.txt") throws -> ShelfItem {
     #expect(store.items.isEmpty)
 }
 
+@MainActor @Test func storeTogglesCopyModeForOccupiedSlot() throws {
+    let store = storeWithTempPersistence()
+    let item = try makeFileItem()
+    store.add([item], atSlot: 0)
+
+    let slotID = store.slots[0].id
+    #expect(store.keepsItemAfterExternalDrop(item) == false)
+
+    store.toggleKeepsItemAfterExternalDrop(forSlotID: slotID)
+    #expect(store.keepsItemAfterExternalDrop(item) == true)
+
+    store.toggleKeepsItemAfterExternalDrop(forSlotID: slotID)
+    #expect(store.keepsItemAfterExternalDrop(item) == false)
+}
+
+@MainActor @Test func storeIgnoresCopyModeToggleForEmptySlot() {
+    let store = storeWithTempPersistence()
+    let slotID = store.slots[0].id
+
+    store.toggleKeepsItemAfterExternalDrop(forSlotID: slotID)
+
+    #expect(store.slots[0].keepsItemAfterExternalDrop == false)
+}
+
 @MainActor @Test func storePersistsAcrossInstances() async throws {
     let dir = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent(UUID().uuidString, isDirectory: true)

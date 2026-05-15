@@ -57,7 +57,12 @@ struct ShelfView: View {
         LazyVGrid(columns: gridColumns, alignment: .center, spacing: spacing) {
             ForEach(Array(store.visibleSlots.enumerated()), id: \.element.id) { index, slot in
                 if let item = slot.item {
-                    ShelfItemView(item: item)
+                    ShelfItemView(
+                        item: item,
+                        keepsItemAfterExternalDrop: slot.keepsItemAfterExternalDrop
+                    ) {
+                        store.toggleKeepsItemAfterExternalDrop(forSlotID: slot.id)
+                    }
                 } else {
                     ShelfSlotPlaceholderView(
                         isPanelTargeted: isVisuallyTargeted

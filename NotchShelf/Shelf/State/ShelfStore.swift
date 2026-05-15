@@ -159,6 +159,24 @@ final class ShelfStore: ObservableObject, ShelfStoring {
         slots = reslot(updated)
     }
 
+    func setKeepsItemAfterExternalDrop(_ keepsItem: Bool, forSlotID slotID: ShelfSlot.ID) {
+        guard let index = slots.firstIndex(where: { $0.id == slotID && $0.item != nil }) else {
+            return
+        }
+        var updated = slots
+        updated[index].keepsItemAfterExternalDrop = keepsItem
+        slots = updated
+    }
+
+    func toggleKeepsItemAfterExternalDrop(forSlotID slotID: ShelfSlot.ID) {
+        guard let slot = slots.first(where: { $0.id == slotID }) else { return }
+        setKeepsItemAfterExternalDrop(!slot.keepsItemAfterExternalDrop, forSlotID: slotID)
+    }
+
+    func keepsItemAfterExternalDrop(_ item: ShelfItem) -> Bool {
+        slots.first { $0.item?.id == item.id }?.keepsItemAfterExternalDrop ?? false
+    }
+
     /// Empties every slot. Persistence flushes via the existing `slots` didSet
     /// debounced save pipeline.
     func clearAll() {
