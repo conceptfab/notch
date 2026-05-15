@@ -117,15 +117,26 @@ final class ShelfStore: ObservableObject {
         Task { @MainActor [weak self] in
             guard let self else { return }
             let snapshot = self.items
-            var validIDs: Set<ShelfItem.ID> = []
-            for item in snapshot {
-                if await Bookmark(data: item.bookmarkData).validate() {
-                    validIDs.insert(item.id)
-                }
-            }
+            let validIDs = await Self.validateInParallel(snapshot)
             let snapshotIDs = Set(snapshot.map(\.id))
             // Keep validated items, plus anything added since the snapshot.
             self.items = self.items.filter { validIDs.contains($0.id) || !snapshotIDs.contains($0.id) }
+        }
+    }
+
+    private static func validateInParallel(_ snapshot: [ShelfItem]) async -> Set<ShelfItem.ID> {
+        await withTaskGroup(of: (ShelfItem.ID, Bool).self) { group in
+            for item in snapshot {
+                group.addTask {
+                    let isValid = await Bookmark(data: item.bookmarkData).validate()
+                    return (item.id, isValid)
+                }
+            }
+            var validIDs: Set<ShelfItem.ID> = []
+            for await (id, isValid) in group where isValid {
+                validIDs.insert(id)
+            }
+            return validIDs
         }
     }
 
