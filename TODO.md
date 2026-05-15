@@ -1,10 +1,13 @@
 - aplikacja nie moze wplywac na stan systemu - po kilku probach uzycia stwierdzono problem przy przenoszeniu elementów w systemie - do potwierdzenia.
-- prawdziwe ikony plikow i folderów
-- panel preferencji - przygotowanie bazy/layoutu pod panel preferencji aplikacji zgodny z standardami mac os tahoe. planowane opcje
+- prawdziwe ikony plikow i folderów / jesli to realne
+- panel preferencji - przygotowanie bazy/layoutu pod panel preferencji aplikacji zgodny z standardami mac os tahoe. planowane opcje w preferencjach
     - czas autoznikania przy nieaktywnosci
-    - opcja kopiowania plikow przy przenoszeniu
+    - opcja kopiowania plikow przy przenoszeniu - domyslnie off
     = zamykniecie aplikacji
+    - dodawanie aplikacji do autostartu
     - about - informacje o wersji, autorze, licencji etc.
     - min ilosc slotów i max ilosc slotow, automatyczne dodawanie wiersza gdy bazowa ilosc slotów jest zajeta
+    - jesli ilosc slotow bedzie wieksza od 5 - aplikacja pokazuje dodatkowe sloty gdy zostana dwa wolne sloty
 - optymalizacja, minimalizacja uzycia procesowa i pamięci
-- dodanie funkcji czyszczenia polki - ikona miotełki po lewej stronie
+- dodanie funkcji czyszczenia polki - ikona miotełki po lewej stronie prz gornej krawedzi ekranu - symetrycznie do ikony preferencji
+- przy stosie lista plikow jest dluzsza niz 5 elementow ma zamienic się w siatkę - maksymwalna ilosc plikow w liscie do ustalenia w preferencjach - zasada jest prosta wszystkie pliki ze stosu musza byc widoczne/dostepne, nie wolno ich ukrywac

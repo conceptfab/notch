@@ -11,16 +11,17 @@ struct ShelfSlotPlaceholderView: View {
     private var strokeColor: Color {
         isTargeted ? Color.accentColor.opacity(0.95) : Color.white.opacity(0.28)
     }
+    private var slotSize: CGFloat { ShelfMetrics.iconSize * 2 }
 
     var body: some View {
         ZStack {
             if isVisible {
-                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .strokeBorder(
                         strokeColor,
-                        style: StrokeStyle(lineWidth: isTargeted ? 2.5 : 1.5, lineCap: .round, dash: [5])
+                        style: StrokeStyle(lineWidth: isTargeted ? 2.5 : 1.5, lineCap: .round, dash: [8])
                     )
-                    .frame(width: ShelfMetrics.iconSize, height: ShelfMetrics.iconSize)
+                    .frame(width: slotSize, height: slotSize)
             }
         }
             .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemHeight)
