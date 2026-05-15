@@ -63,3 +63,18 @@ private func makeTempFile(named name: String) throws -> URL {
     #expect(item.fileURLs.map(\.lastPathComponent).sorted() == ["a.txt", "b.txt"])
     #expect(item.displayName == "\(dir.lastPathComponent) (2)")
 }
+
+@Test func shelfItemIdentityKeyIsStableAcrossReads() throws {
+    let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent(UUID().uuidString, isDirectory: true)
+    try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: dir) }
+    let file = dir.appendingPathComponent("a.txt")
+    try "x".write(to: file, atomically: true, encoding: .utf8)
+    let item = ShelfItem(bookmarkData: try Bookmark(url: file).data)
+
+    let first = item.identityKey
+    let second = item.identityKey
+    #expect(first == second)
+    #expect(first.hasPrefix("file://"))
+}

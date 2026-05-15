@@ -36,21 +36,32 @@ final class ShelfStore: ObservableObject {
     func add(_ newItems: [ShelfItem]) {
         guard !newItems.isEmpty else { return }
         var merged = items
-        var seen = Set(merged.map(\.identityKey))
+        // Pre-compute identity keys so we resolve each bookmark at most once per add().
+        var keys: [ShelfItem.ID: String] = [:]
+        for item in merged { keys[item.id] = item.identityKey }
+        var seen = Set(keys.values)
+
         for item in newItems {
-            if let folderKey = item.sourceFolderKey,
+            let folderKey = item.sourceFolderKey
+            if let folderKey,
                let idx = merged.firstIndex(where: {
                    $0.sourceFolderKey == folderKey && ($0.isStack || item.isStack)
                }) {
                 let updated = merged[idx].merging(with: item)
-                seen.remove(merged[idx].identityKey)
+                if let oldKey = keys[merged[idx].id] {
+                    seen.remove(oldKey)
+                }
                 merged[idx] = updated
-                seen.insert(updated.identityKey)
+                let newKey = updated.identityKey
+                keys[updated.id] = newKey
+                seen.insert(newKey)
                 continue
             }
-            guard !seen.contains(item.identityKey) else { continue }
+            let key = item.identityKey
+            guard !seen.contains(key) else { continue }
             merged.append(item)
-            seen.insert(item.identityKey)
+            keys[item.id] = key
+            seen.insert(key)
         }
         items = merged
     }
