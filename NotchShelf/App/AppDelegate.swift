@@ -8,11 +8,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var dragMonitor: DragMonitor?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        registerPreferenceDefaults()
         guard !Self.isRunningTests else { return }
         NSApp.setActivationPolicy(.accessory)
         windowController = NotchWindowController(windowModel: windowModel)
         setupDragMonitor()
         ShelfStore.shared.cleanupInvalidItems()
+        reconcileLaunchAtLoginPreference()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -52,10 +54,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if self.windowModel.dropEvent {
                 self.windowModel.dropEvent = false
             } else if !self.windowModel.dragTargeting {
-                self.windowModel.scheduleCollapse()
+                let delay = UserDefaults.standard.double(forKey: UserDefaultsKey.autoHideDelaySeconds)
+                self.windowModel.scheduleCollapse(after: delay > 0 ? delay : 1.5)
             }
         }
         monitor.startMonitoring()
         dragMonitor = monitor
+    }
+
+    private func reconcileLaunchAtLoginPreference() {
+        let storedPref = UserDefaults.standard.bool(forKey: UserDefaultsKey.launchAtLogin)
+        let actual = LaunchAtLoginService.shared.isCurrentlyEnabled
+        if storedPref != actual {
+            UserDefaults.standard.set(actual, forKey: UserDefaultsKey.launchAtLogin)
+        }
     }
 }

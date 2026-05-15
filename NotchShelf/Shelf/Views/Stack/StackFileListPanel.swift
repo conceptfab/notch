@@ -10,18 +10,25 @@ struct StackMenuEntry {
 
 struct StackFileListView: View {
     let item: ShelfItem
+    @AppStorage(UserDefaultsKey.stackListGridThreshold) private var gridThreshold = 5
     @State private var entries: [StackMenuEntry] = []
+
+    private var useGrid: Bool { entries.count > gridThreshold }
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
-            VStack(spacing: 2) {
-                ForEach(entries, id: \.id) { entry in
-                    StackFileRowView(sourceItem: item, entry: entry)
+            if useGrid {
+                StackFileGridView(item: item, entries: entries)
+            } else {
+                VStack(spacing: 2) {
+                    ForEach(entries, id: \.id) { entry in
+                        StackFileRowView(sourceItem: item, entry: entry)
+                    }
                 }
+                .padding(6)
             }
-            .padding(6)
         }
-        .frame(maxHeight: 220)
+        .frame(maxHeight: 320)
         .scrollIndicators(.never)
         .background(Color.clear)
         .onAppear { resolveEntries() }
@@ -158,9 +165,22 @@ struct StackFileListPanelPresenter: NSViewRepresentable {
         }
 
         private func makeContentController(for item: ShelfItem) -> NSHostingController<some View> {
-            let height = min(CGFloat(item.allBookmarkData.count) * 34 + 12, 220)
+            let count = item.allBookmarkData.count
+            let threshold = UserDefaults.standard.integer(forKey: UserDefaultsKey.stackListGridThreshold)
+            let usesGrid = count > Swift.max(threshold, 3)
+
+            let width: CGFloat = usesGrid ? 280 : 240
+            let height: CGFloat
+            if usesGrid {
+                let columns = 4.0
+                let rows = ceil(Double(count) / columns)
+                height = Swift.min(rows * 74 + 16, 320)
+            } else {
+                height = Swift.min(CGFloat(count) * 34 + 12, 320)
+            }
+
             let view = StackFileListView(item: item)
-                .frame(width: 240, height: height)
+                .frame(width: width, height: height)
                 .background(Color.clear)
             let controller = NSHostingController(rootView: view)
             controller.view.wantsLayer = true
@@ -170,8 +190,18 @@ struct StackFileListPanelPresenter: NSViewRepresentable {
 
         private func position(_ panel: NSPanel, anchoredTo anchorView: NSView, itemCount: Int) {
             guard let window = anchorView.window else { return }
-            let width: CGFloat = 240
-            let height = min(CGFloat(itemCount) * 34 + 12, 220)
+            let threshold = UserDefaults.standard.integer(forKey: UserDefaultsKey.stackListGridThreshold)
+            let usesGrid = itemCount > Swift.max(threshold, 3)
+
+            let width: CGFloat = usesGrid ? 280 : 240
+            let height: CGFloat
+            if usesGrid {
+                let columns = 4.0
+                let rows = ceil(Double(itemCount) / columns)
+                height = Swift.min(rows * 74 + 16, 320)
+            } else {
+                height = Swift.min(CGFloat(itemCount) * 34 + 12, 320)
+            }
             panel.setContentSize(NSSize(width: width, height: height))
 
             let anchorRect = anchorView.convert(anchorView.bounds, to: nil)

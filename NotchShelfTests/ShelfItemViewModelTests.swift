@@ -18,6 +18,17 @@ private func fileItem(named name: String = "vm.txt") throws -> ShelfItem {
     #expect(viewModel.icon.size.width > 0)
 }
 
+@MainActor @Test func iconMatchesNSWorkspaceForResolvedURL() throws {
+    let tempDir = try TempDir.make()
+    defer { try? FileManager.default.removeItem(at: tempDir.url) }
+    let url = try tempDir.url.appendingPathComponent("doc.txt").touch()
+    let item = ShelfItem(bookmarkData: try Bookmark(url: url).data)
+
+    let viewModel = ShelfItemViewModel(item: item)
+    let expected = NSWorkspace.shared.icon(forFile: url.path)
+    #expect(viewModel.icon.size == expected.size)
+}
+
 @MainActor @Test func itemViewModelStartsNotSelected() throws {
     let viewModel = ShelfItemViewModel(item: try fileItem())
     #expect(viewModel.isSelected == false)

@@ -6,7 +6,7 @@ struct NotchShelfApp: App {
 
     var body: some Scene {
         Settings {
-            PreferencesView()
+            PreferencesRootView()
         }
     }
 }

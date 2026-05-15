@@ -1,26 +1,17 @@
-import AppKit
 import SwiftUI
 
-struct PreferencesView: View {
-    @AppStorage(UserDefaultsKey.copyOnDrag) private var copyOnDrag = false
-
+struct PreferencesRootView: View {
     var body: some View {
-        Form {
-            Toggle("Always copy files when dragging off the shelf", isOn: $copyOnDrag)
+        TabView {
+            GeneralPreferencesView()
+                .tabItem { Label("General", systemImage: "gearshape") }
 
-            Divider()
+            ShelfPreferencesView()
+                .tabItem { Label("Shelf", systemImage: "tray.full") }
 
-            HStack {
-                Spacer()
-                Button("Quit NotchShelf", role: .destructive, action: quitApplication)
-            }
+            AboutPreferencesView()
+                .tabItem { Label("About", systemImage: "info.circle") }
         }
-        .formStyle(.grouped)
-        .padding(20)
-        .frame(width: 420)
-    }
-
-    private func quitApplication() {
-        NSApp.terminate(nil)
+        .frame(width: 460, height: 320)
     }
 }

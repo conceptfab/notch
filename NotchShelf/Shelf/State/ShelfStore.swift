@@ -1,5 +1,31 @@
 import Foundation
 
+/// Pure policy for how many slots the shelf should expose. Extracted from
+/// `ShelfStore` so it can be unit-tested without UserDefaults or persistence.
+enum SlotCountPolicy {
+    /// `filledItems`: how many slots currently hold a `ShelfItem`.
+    /// `currentVisible`: how many slots are presently rendered.
+    /// `min` / `max`: user-configured bounds.
+    static func visibleSlotCount(filledItems: Int, currentVisible: Int, min: Int, max: Int) -> Int {
+        let lowerBound = Swift.max(min, 1)
+        let upperBound = Swift.max(max, lowerBound)
+        let rowSize = lowerBound
+
+        var target = Swift.max(currentVisible, lowerBound)
+        let free = target - filledItems
+
+        if free <= 2 {
+            target = Swift.min(target + rowSize, upperBound)
+        } else {
+            while target - rowSize >= lowerBound,
+                  filledItems <= (target - rowSize) - 2 {
+                target -= rowSize
+            }
+        }
+        return Swift.max(Swift.min(target, upperBound), lowerBound)
+    }
+}
+
 /// The shelf's central state: the ordered list of items, persistence, and bookmark
 /// lifecycle (refreshing stale bookmarks, pruning dead ones).
 @MainActor
@@ -27,6 +53,25 @@ final class ShelfStore: ObservableObject, ShelfStoring {
         items.reduce(0) { $0 + $1.stackCount }
     }
 
+    private var defaultsMin: Int {
+        let value = UserDefaults.standard.integer(forKey: UserDefaultsKey.minSlotCount)
+        return value >= 3 ? value : Self.defaultSlotCount
+    }
+
+    private var defaultsMax: Int {
+        let value = UserDefaults.standard.integer(forKey: UserDefaultsKey.maxSlotCount)
+        return value >= defaultsMin ? value : 15
+    }
+
+    /// The number of slots the UI should render right now.
+    var visibleSlotCount: Int {
+        targetSlotCount(for: items.count, currentVisible: slots.count)
+    }
+
+    var visibleSlots: [ShelfSlot] {
+        Self.paddedSlots(slots, target: visibleSlotCount)
+    }
+
     /// Deferred bookmark refreshes, applied off the current run loop turn so we never
     /// mutate `items` while SwiftUI is reading it.
     private var pendingBookmarkUpdates: [ShelfItem.ID: Data] = [:]
@@ -34,7 +79,16 @@ final class ShelfStore: ObservableObject, ShelfStoring {
 
     init(persistence: ShelfPersistenceService = .shared) {
         self.persistence = persistence
-        let loaded = Self.paddedSlots(persistence.loadSlots())
+        let raw = persistence.loadSlots()
+        let min = UserDefaults.standard.integer(forKey: UserDefaultsKey.minSlotCount)
+        let max = UserDefaults.standard.integer(forKey: UserDefaultsKey.maxSlotCount)
+        let target = SlotCountPolicy.visibleSlotCount(
+            filledItems: raw.compactMap(\.item).count,
+            currentVisible: raw.count,
+            min: min >= 3 ? min : Self.defaultSlotCount,
+            max: max >= 3 ? max : 15
+        )
+        let loaded = Self.paddedSlots(raw, target: target)
         // Assigning to the backing storage bypasses didSet on initial load.
         _slots = Published(initialValue: loaded)
     }
@@ -46,7 +100,7 @@ final class ShelfStore: ObservableObject, ShelfStoring {
 
     func add(_ newItems: [ShelfItem], atSlot slotIndex: Int?) {
         guard !newItems.isEmpty else { return }
-        var mergedSlots = Self.paddedSlots(slots)
+        var mergedSlots = reslot(slots)
         // Pre-compute identity keys so we resolve each bookmark at most once per add().
         var keys: [ShelfItem.ID: String] = [:]
         for item in mergedSlots.compactMap(\.item) { keys[item.id] = item.identityKey }
@@ -77,7 +131,7 @@ final class ShelfStore: ObservableObject, ShelfStoring {
             keys[item.id] = key
             seen.insert(key)
         }
-        slots = Self.paddedSlots(mergedSlots)
+        slots = reslot(mergedSlots)
     }
 
     func remove(_ item: ShelfItem) {
@@ -85,7 +139,7 @@ final class ShelfStore: ObservableObject, ShelfStoring {
         for idx in updated.indices where updated[idx].item?.id == item.id {
             updated[idx].item = nil
         }
-        slots = Self.paddedSlots(updated)
+        slots = reslot(updated)
     }
 
     func remove(bookmarkData: Data, from item: ShelfItem) {
@@ -102,7 +156,13 @@ final class ShelfStore: ObservableObject, ShelfStoring {
         default:
             updated[idx].item = ShelfItem(id: item.id, stackBookmarkData: remaining)
         }
-        slots = Self.paddedSlots(updated)
+        slots = reslot(updated)
+    }
+
+    /// Empties every slot. Persistence flushes via the existing `slots` didSet
+    /// debounced save pipeline.
+    func clearAll() {
+        slots = reslot(slots.map { ShelfSlot(id: $0.id) })
     }
 
     /// Queues a stale-bookmark refresh to be applied after the current update cycle.
@@ -152,7 +212,7 @@ final class ShelfStore: ObservableObject, ShelfStoring {
             let validIDs = await Self.validateInParallel(snapshot)
             let snapshotIDs = Set(snapshot.map(\.id))
             // Keep validated items, plus anything added since the snapshot.
-            self.slots = Self.paddedSlots(self.slots.map { slot in
+            self.slots = self.reslot(self.slots.map { slot in
                 guard let item = slot.item else { return slot }
                 if validIDs.contains(item.id) || !snapshotIDs.contains(item.id) {
                     return slot
@@ -268,9 +328,39 @@ final class ShelfStore: ObservableObject, ShelfStoring {
         }
     }
 
-    private static func paddedSlots(_ slots: [ShelfSlot]) -> [ShelfSlot] {
-        guard slots.count < defaultSlotCount else { return slots }
-        return slots + (slots.count..<defaultSlotCount).map { _ in ShelfSlot() }
+    private static func paddedSlots(_ slots: [ShelfSlot], target: Int) -> [ShelfSlot] {
+        let target = Swift.max(target, 1)
+        if slots.count < target {
+            return slots + (slots.count..<target).map { _ in ShelfSlot() }
+        }
+        if slots.count == target { return slots }
+
+        var visible = Array(slots.prefix(target))
+        for overflowItem in slots.dropFirst(target).compactMap(\.item) {
+            if let index = visible.firstIndex(where: { $0.item == nil }) {
+                visible[index].item = overflowItem
+            } else {
+                visible.append(ShelfSlot(item: overflowItem))
+            }
+        }
+        return visible
+    }
+
+    private func targetSlotCount(for filled: Int, currentVisible: Int) -> Int {
+        SlotCountPolicy.visibleSlotCount(
+            filledItems: filled,
+            currentVisible: currentVisible,
+            min: defaultsMin,
+            max: defaultsMax
+        )
+    }
+
+    private func reslot(_ next: [ShelfSlot]) -> [ShelfSlot] {
+        let target = targetSlotCount(
+            for: next.compactMap(\.item).count,
+            currentVisible: next.count
+        )
+        return Self.paddedSlots(next, target: target)
     }
 
     private func firstEmptySlotIndex(in slots: [ShelfSlot]) -> Int? {

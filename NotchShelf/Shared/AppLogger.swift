@@ -10,7 +10,3 @@ enum AppLogger {
     static let drag = Logger(subsystem: subsystem, category: "drag")
     static let shelf = Logger(subsystem: subsystem, category: "shelf")
 }
-
-enum UserDefaultsKey {
-    static let copyOnDrag = "copyOnDrag"
-}

@@ -6,9 +6,9 @@ enum ShelfMetrics {
     /// Extra width on each side of the physical notch when the empty shelf opens.
     static let sideExpansion: CGFloat = 60
     /// The maximum expanded shelf shape's size.
-    static let expandedSize = CGSize(width: 584, height: 140)
+    static let expandedSize = CGSize(width: 584, height: 260)
     /// The panel stays fixed at this size and remains transparent outside the shape.
-    static let windowSize = CGSize(width: 624, height: 160)
+    static let windowSize = CGSize(width: 624, height: 280)
     static let itemWidth: CGFloat = 56
     static let itemHeight: CGFloat = 62
     static let itemSpacing: CGFloat = 6

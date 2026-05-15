@@ -22,7 +22,7 @@ import Testing
         ShelfDragOperationPolicy.sourceOperationMask(
             copyOnDrag: false,
             context: .outsideApplication
-        ) == [.copy, .move]
+        ) == [.copy]
     )
     #expect(
         ShelfDragOperationPolicy.sourceOperationMask(
@@ -36,4 +36,28 @@ import Testing
     #expect(ShelfDragOperationPolicy.shouldRemoveFromShelf(after: .move))
     #expect(!ShelfDragOperationPolicy.shouldRemoveFromShelf(after: .copy))
     #expect(!ShelfDragOperationPolicy.shouldRemoveFromShelf(after: []))
+}
+
+@Test func outsideApplicationAlwaysReturnsCopyOnly() {
+    let copyOnly = ShelfDragOperationPolicy.sourceOperationMask(
+        copyOnDrag: false,
+        context: .outsideApplication
+    )
+    #expect(copyOnly == [.copy])
+}
+
+@Test func outsideApplicationIgnoresCopyOnDragPreference() {
+    let copyOn = ShelfDragOperationPolicy.sourceOperationMask(
+        copyOnDrag: true,
+        context: .outsideApplication
+    )
+    #expect(copyOn == [.copy])
+}
+
+@Test func withinApplicationKeepsMoveByDefault() {
+    let mask = ShelfDragOperationPolicy.sourceOperationMask(
+        copyOnDrag: false,
+        context: .withinApplication
+    )
+    #expect(mask.contains(.move))
 }

@@ -52,7 +52,7 @@ struct ShelfItem: Identifiable, Codable, Equatable, Sendable {
             }
             return "stack://" + keys.sorted().joined(separator: "|")
         }
-        if let url = fileURL {
+        if let url = Bookmark(data: bookmarkData).resolveURL() {
             return "file://" + url.standardizedFileURL.path
         }
         return "file://missing/" + bookmarkData.base64EncodedString()

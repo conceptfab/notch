@@ -153,6 +153,9 @@ struct DraggableClickHandler: NSViewRepresentable {
             endedAt screenPoint: NSPoint,
             operation: NSDragOperation
         ) {
+            if operation.contains(.move) {
+                AppLogger.drag.notice("Drag session ended with .move operation (within-app only path)")
+            }
             if ShelfDragOperationPolicy.shouldRemoveFromShelf(after: operation) {
                 removeDraggedItemsFromShelf()
             }

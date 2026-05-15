@@ -7,6 +7,7 @@ import AppKit
 struct ContentView: View {
     @EnvironmentObject private var windowModel: ShelfWindowModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.openSettings) private var openSettings
     @ObservedObject private var store = ShelfStore.shared
 
     private var geometry: NotchGeometry { NotchGeometry.current() }
@@ -25,14 +26,20 @@ struct ContentView: View {
     }
 
     private var expandedShapeSize: CGSize {
+        let baseRow = Swift.max(UserDefaults.standard.integer(forKey: UserDefaultsKey.minSlotCount), 3)
+        let slotCount = store.visibleSlotCount
+        let rows = Swift.max(Int((Double(slotCount) / Double(baseRow)).rounded(.up)), 1)
+        let rowHeight = ShelfMetrics.itemHeight + ShelfMetrics.itemSpacing
+        let chromeHeight = geometry.notchHeight + 24 + ShelfMetrics.shelfPanelBottomPadding
+        let height = chromeHeight + CGFloat(rows) * rowHeight
+
         let emptyWidth = geometry.notchWidth + ShelfMetrics.sideExpansion * 2
-        let itemCount = CGFloat(store.items.count)
-        let itemWidth = itemCount * ShelfMetrics.itemWidth
-        let spacingWidth = max(0, itemCount - 1) * ShelfMetrics.itemSpacing
-        let contentWidth = itemWidth + spacingWidth + ShelfMetrics.contentPadding * 2
+        let rowWidth = CGFloat(baseRow) * ShelfMetrics.itemWidth
+            + CGFloat(baseRow - 1) * ShelfMetrics.itemSpacing
+            + ShelfMetrics.contentPadding * 2
         return CGSize(
-            width: min(ShelfMetrics.expandedSize.width, max(emptyWidth, contentWidth)),
-            height: ShelfMetrics.expandedSize.height
+            width: Swift.min(ShelfMetrics.expandedSize.width, Swift.max(emptyWidth, rowWidth)),
+            height: Swift.min(ShelfMetrics.expandedSize.height, height)
         )
     }
 
@@ -104,9 +111,8 @@ struct ContentView: View {
                         .transition(shelfContentTransition)
                         .zIndex(1)
 
-                    preferencesButton
+                    topBar
                         .padding(.top, preferencesButtonTopPadding)
-                        .padding(.trailing, currentTopCornerRadius + 8)
                         .transition(shelfContentTransition)
                         .zIndex(2)
                 } else if hasItems {
@@ -131,7 +137,8 @@ struct ContentView: View {
         if hovering {
             windowModel.expand()
         } else if windowModel.expansion == .expanded {
-            windowModel.scheduleCollapse()
+            let delay = UserDefaults.standard.double(forKey: UserDefaultsKey.autoHideDelaySeconds)
+            windowModel.scheduleCollapse(after: delay > 0 ? delay : 1.5)
         }
     }
 
@@ -176,9 +183,11 @@ struct ContentView: View {
 
     // MARK: - Preferences
 
-    private var preferencesButton: some View {
+    private var topBar: some View {
         VStack {
             HStack {
+                ShelfClearButton(action: clearShelf)
+                    .padding(.leading, currentTopCornerRadius + 8)
                 Spacer()
                 Button("Preferences", systemImage: "gearshape.fill", action: showPreferences)
                     .labelStyle(.iconOnly)
@@ -189,12 +198,18 @@ struct ContentView: View {
                     .contentShape(Rectangle())
                     .help("Preferences")
                     .accessibilityLabel("Preferences")
+                    .padding(.trailing, currentTopCornerRadius + 8)
             }
             Spacer()
         }
     }
 
+    private func clearShelf() {
+        store.clearAll()
+    }
+
     private func showPreferences() {
-        PreferencesWindowController.shared.show()
+        openSettings()
+        NSApp.activate(ignoringOtherApps: true)
     }
 }

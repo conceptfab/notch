@@ -1,8 +1,8 @@
 import AppKit
 import SwiftUI
 
-/// The shelf panel: a horizontally scrolling row of file slots. Empty slots accept
-/// drops and selected items can be removed with Delete.
+/// The shelf panel: a wrapping grid of file slots. Empty slots accept drops and
+/// selected items can be removed with Delete.
 struct ShelfView: View {
     @EnvironmentObject var windowModel: ShelfWindowModel
     @ObservedObject var store = ShelfStore.shared
@@ -10,6 +10,17 @@ struct ShelfView: View {
     @State private var localDropTargeting = false
     private let spacing: CGFloat = ShelfMetrics.itemSpacing
     private var isVisuallyTargeted: Bool { windowModel.dragTargeting || localDropTargeting }
+
+    private var rowCapacity: Int {
+        Swift.max(UserDefaults.standard.integer(forKey: UserDefaultsKey.minSlotCount), 3)
+    }
+
+    private var gridColumns: [GridItem] {
+        Array(
+            repeating: GridItem(.fixed(ShelfMetrics.itemWidth), spacing: spacing, alignment: .top),
+            count: rowCapacity
+        )
+    }
 
     var body: some View {
         panel
@@ -43,22 +54,19 @@ struct ShelfView: View {
     }
 
     private var content: some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: spacing) {
-                ForEach(Array(store.slots.enumerated()), id: \.element.id) { index, slot in
-                    if let item = slot.item {
-                        ShelfItemView(item: item)
-                    } else {
-                        ShelfSlotPlaceholderView(
-                            isPanelTargeted: isVisuallyTargeted
-                        ) { providers in
-                            handleDrop(providers: providers, slotIndex: index)
-                        }
+        LazyVGrid(columns: gridColumns, alignment: .center, spacing: spacing) {
+            ForEach(Array(store.visibleSlots.enumerated()), id: \.element.id) { index, slot in
+                if let item = slot.item {
+                    ShelfItemView(item: item)
+                } else {
+                    ShelfSlotPlaceholderView(
+                        isPanelTargeted: isVisuallyTargeted
+                    ) { providers in
+                        handleDrop(providers: providers, slotIndex: index)
                     }
                 }
             }
-            .frame(height: ShelfMetrics.itemHeight)
         }
-        .scrollIndicators(.never)
+        .padding(.horizontal, 2)
     }
 }
