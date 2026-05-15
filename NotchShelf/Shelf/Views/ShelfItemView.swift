@@ -131,11 +131,9 @@ struct ShelfItemView: View {
     @ViewBuilder
     private var bottomToggleRow: some View {
         if viewModel.viewData.isStack {
-            HStack(spacing: 0) {
+            HStack(spacing: 8) {
                 stackListButton
-                    .frame(maxWidth: .infinity, alignment: .leading)
                 copyModeButton
-                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
             .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemToggleHeight)
         } else {
