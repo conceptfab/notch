@@ -85,7 +85,7 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ZStack {
+            ZStack(alignment: .top) {
                 NotchShelfShape(
                     topCornerRadius: currentTopCornerRadius,
                     bottomCornerRadius: windowModel.expansion == .expanded
