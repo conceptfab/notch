@@ -18,6 +18,25 @@ struct PreferencesKeysTests {
         #expect(suite.integer(forKey: UserDefaultsKey.minSlotCount) == 5)
         #expect(suite.integer(forKey: UserDefaultsKey.maxSlotCount) == 15)
         #expect(suite.integer(forKey: UserDefaultsKey.stackListGridThreshold) == 5)
+        let storedColor = suite.array(forKey: UserDefaultsKey.dropZoneColor) as? [Double]
+        #expect(storedColor == [0.0, 0.88, 0.84, 1.0])
+    }
+
+    @Test
+    func registerPreferenceDefaultsInstallsDropZoneColor() {
+        let suiteName = "PreferencesKeysTests.\(UUID().uuidString)"
+        let suite = UserDefaults(suiteName: suiteName)!
+        defer { suite.removePersistentDomain(forName: suiteName) }
+
+        registerPreferenceDefaults(in: suite)
+
+        let stored = suite.array(forKey: UserDefaultsKey.dropZoneColor) as? [Double]
+        #expect(stored == RGBAColor.defaultDropZone.components)
+    }
+
+    @Test
+    func dropZoneColorKeyIsStable() {
+        #expect(UserDefaultsKey.dropZoneColor == "dropZoneColor")
     }
 
     @Test

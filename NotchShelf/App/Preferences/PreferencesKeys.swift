@@ -9,6 +9,7 @@ enum UserDefaultsKey {
     static let minSlotCount = "minSlotCount"
     static let maxSlotCount = "maxSlotCount"
     static let stackListGridThreshold = "stackListGridThreshold"
+    static let dropZoneColor = "dropZoneColor"
 }
 
 /// Installs default values for every preference. Must be called once at launch,
@@ -20,6 +21,7 @@ func registerPreferenceDefaults(in defaults: UserDefaults = .standard) {
         UserDefaultsKey.launchAtLogin: false,
         UserDefaultsKey.minSlotCount: 5,
         UserDefaultsKey.maxSlotCount: 15,
-        UserDefaultsKey.stackListGridThreshold: 5
+        UserDefaultsKey.stackListGridThreshold: 5,
+        UserDefaultsKey.dropZoneColor: RGBAColor.defaultDropZone.components
     ])
 }
