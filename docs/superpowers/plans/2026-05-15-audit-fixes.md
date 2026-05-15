@@ -1350,7 +1350,7 @@ git commit -m "refactor: extract DraggableClickHandler into Shelf/Views/Drag/"
 - Modify: `NotchShelf/Shelf/Views/Drag/StackFileDragSource.swift`
 - Modify: `NotchShelfTests/ShelfItemTests.swift`
 
-- [ ] **Step 1: Create `ShelfItemViewData.swift`**
+- [x] **Step 1: Create `ShelfItemViewData.swift`**
 
 ```swift
 import Foundation
@@ -1384,7 +1384,7 @@ struct ShelfItemViewData: Equatable, Hashable {
 }
 ```
 
-- [ ] **Step 2: Remove `displayName` from `ShelfItem`**
+- [x] **Step 2: Remove `displayName` from `ShelfItem`**
 
 In `NotchShelf/Shelf/Models/ShelfItem.swift`, delete this property:
 
@@ -1393,7 +1393,7 @@ In `NotchShelf/Shelf/Models/ShelfItem.swift`, delete this property:
     var displayName: String { ... }
 ```
 
-- [ ] **Step 3: Update `ShelfItemViewModel` to expose `viewData`**
+- [x] **Step 3: Update `ShelfItemViewModel` to expose `viewData`**
 
 Add `viewData` to `ShelfItemViewModel`:
 
@@ -1424,7 +1424,7 @@ func update(item: ShelfItem) {
 }
 ```
 
-- [ ] **Step 4: Update callsites that used `item.displayName`**
+- [x] **Step 4: Update callsites that used `item.displayName`**
 
 In `NotchShelf/Shelf/Views/ShelfItemView.swift`:
 
@@ -1468,7 +1468,7 @@ In `NotchShelf/Shelf/Views/Stack/StackFileListPanel.swift`, the `title` derives 
 
 In `NotchShelf/Shelf/Views/Drag/StackFileDragSource.swift`, the `title` field is informational only; leave as-is.
 
-- [ ] **Step 5: Update `ShelfItem` tests**
+- [x] **Step 5: Update `ShelfItem` tests**
 
 If `ShelfItemTests.swift` references `displayName`, move those assertions to a new file `NotchShelfTests/ShelfItemViewDataTests.swift`:
 
@@ -1517,7 +1517,7 @@ import Foundation
 
 Delete corresponding `displayName` assertions from `ShelfItemTests.swift` if present.
 
-- [ ] **Step 6: Regenerate and test**
+- [x] **Step 6: Regenerate and test**
 
 ```bash
 xcodegen generate
@@ -1525,7 +1525,7 @@ xcodegen generate
 ```
 Expected: all tests pass.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add NotchShelf NotchShelfTests NotchShelf.xcodeproj

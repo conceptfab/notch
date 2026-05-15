@@ -11,13 +11,6 @@ private func makeTempFile(named name: String) throws -> URL {
     return file
 }
 
-@Test func shelfItemDisplayNameMatchesFileName() throws {
-    let file = try makeTempFile(named: "Report.pdf")
-    defer { try? FileManager.default.removeItem(at: file.deletingLastPathComponent()) }
-    let item = ShelfItem(bookmarkData: try Bookmark(url: file).data)
-    #expect(item.displayName == "Report.pdf")
-}
-
 @Test func shelfItemFileURLResolvesToOriginal() throws {
     let file = try makeTempFile(named: "Photo.png")
     defer { try? FileManager.default.removeItem(at: file.deletingLastPathComponent()) }
@@ -61,7 +54,6 @@ private func makeTempFile(named name: String) throws -> URL {
     #expect(item.isStack)
     #expect(item.stackCount == 2)
     #expect(item.fileURLs.map(\.lastPathComponent).sorted() == ["a.txt", "b.txt"])
-    #expect(item.displayName == "\(dir.lastPathComponent) (2)")
 }
 
 @Test func shelfItemIdentityKeyIsStableAcrossReads() throws {

@@ -119,13 +119,13 @@ struct ShelfItemView: View {
     }
 
     private var textView: some View {
-        Text(item.displayName)
-            .font(.system(size: item.isStack ? 10 : 12, weight: .medium))
+        Text(viewModel.viewData.displayName)
+            .font(.system(size: viewModel.viewData.isStack ? 10 : 12, weight: .medium))
             .foregroundStyle(.primary)
-            .lineLimit(item.isStack ? 1 : 2)
+            .lineLimit(viewModel.viewData.isStack ? 1 : 2)
             .truncationMode(.middle)
             .multilineTextAlignment(.center)
-            .frame(height: item.isStack ? 16 : 28, alignment: .top)
+            .frame(height: viewModel.viewData.isStack ? 16 : 28, alignment: .top)
     }
 
     private var backgroundView: some View {
@@ -159,7 +159,7 @@ struct ShelfItemView: View {
     private func renderDragPreview() async -> NSImage {
         let content = DragPreviewView(
             thumbnail: viewModel.thumbnail ?? viewModel.icon,
-            displayName: item.displayName
+            displayName: viewModel.viewData.displayName
         )
         let renderer = ImageRenderer(content: content)
         renderer.scale = NSScreen.main?.backingScaleFactor ?? 2.0

@@ -8,6 +8,7 @@ import SwiftUI
 @MainActor
 final class ShelfItemViewModel: ObservableObject {
     @Published private(set) var item: ShelfItem
+    @Published private(set) var viewData: ShelfItemViewData
     @Published var thumbnail: NSImage?
     @Published var isDropTargeted: Bool = false
 
@@ -16,12 +17,14 @@ final class ShelfItemViewModel: ObservableObject {
 
     init(item: ShelfItem) {
         self.item = item
+        self.viewData = ShelfItemViewData.build(from: item)
         loadThumbnail()
     }
 
     func update(item: ShelfItem) {
         guard self.item != item else { return }
         self.item = item
+        self.viewData = ShelfItemViewData.build(from: item)
         thumbnail = nil
         loadThumbnail()
     }

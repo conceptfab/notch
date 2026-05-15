@@ -75,7 +75,8 @@ struct DraggableClickHandler: NSViewRepresentable {
             for dragItem in itemsToDrag {
                 let urls = ShelfStore.shared.resolveFileURLs(for: dragItem)
                 if urls.isEmpty {
-                    if let pasteboardItem = pasteboardItem(displayName: dragItem.displayName) {
+                    let viewData = ShelfItemViewData.build(from: dragItem)
+                    if let pasteboardItem = pasteboardItem(displayName: viewData.displayName) {
                         draggingItems.append(draggingItem(for: pasteboardItem))
                     }
                     continue

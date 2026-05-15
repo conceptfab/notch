@@ -39,17 +39,6 @@ struct ShelfItem: Identifiable, Codable, Equatable, Sendable {
         Bookmark(data: bookmarkData).resolveURL()
     }
 
-    /// Finder-style display name, falling back to the last path component.
-    var displayName: String {
-        guard let url = fileURL else { return "Unknown file" }
-        if isStack {
-            let folder = url.deletingLastPathComponent().lastPathComponent
-            return "\(folder) (\(stackCount))"
-        }
-        return (try? url.resourceValues(forKeys: [.localizedNameKey]).localizedName)
-            ?? url.lastPathComponent
-    }
-
     var sourceFolderKey: String? {
         guard let url = fileURL else { return nil }
         return url.deletingLastPathComponent().standardizedFileURL.path
