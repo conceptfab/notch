@@ -66,13 +66,6 @@ struct ContentView: View {
         return .spring(response: 0.32, dampingFraction: 0.86, blendDuration: 0.08)
     }
 
-    private var shelfContentTransition: AnyTransition {
-        guard !reduceMotion else { return .opacity }
-        let slide = AnyTransition.move(edge: .top)
-            .combined(with: .opacity)
-        return .asymmetric(insertion: slide, removal: slide)
-    }
-
     private struct AnimationSignature: Hashable {
         let expansion: ShelfWindowModel.Expansion
         let itemCount: Int
@@ -89,6 +82,7 @@ struct ContentView: View {
 
     var body: some View {
         let currentShapeSize = shapeSize
+        let expandedContentSize = expandedShapeSize
         ZStack(alignment: .top) {
             if isStartupGlowVisible {
                 StartupGlowView(
@@ -117,23 +111,26 @@ struct ContentView: View {
                             .padding(.horizontal, currentTopCornerRadius)
                     }
 
-                    if windowModel.expansion == .expanded {
-                        ShelfView()
-                            .environmentObject(windowModel)
-                            .padding(.horizontal, currentTopCornerRadius + 12)
-                            .padding(.top, geometry.notchHeight + ShelfMetrics.shelfTopChromeHeight)
-                            .padding(.bottom, ShelfMetrics.shelfPanelBottomPadding)
-                            .transition(shelfContentTransition)
-                            .zIndex(1)
+                    ShelfRevealContent(
+                        topCornerRadius: currentTopCornerRadius,
+                        notchHeight: geometry.notchHeight,
+                        preferencesButtonTopPadding: preferencesButtonTopPadding,
+                        hiddenOffset: geometry.notchHeight + ShelfMetrics.shelfTopChromeHeight,
+                        contentHeight: expandedContentSize.height,
+                        reduceMotion: reduceMotion,
+                        clearShelf: clearShelf,
+                        showPreferences: showPreferences
+                    )
+                    .environmentObject(windowModel)
+                    .frame(width: expandedContentSize.width,
+                           height: expandedContentSize.height,
+                           alignment: .top)
+                    .zIndex(1)
 
-                        topBar
-                            .padding(.top, preferencesButtonTopPadding)
-                            .transition(shelfContentTransition)
-                            .zIndex(2)
-                    } else if hasItems {
+                    if windowModel.expansion == .collapsed && hasItems {
                         collapsedIndicators
                             .transition(.opacity)
-                            .zIndex(1)
+                            .zIndex(2)
                     }
                 }
                 .frame(width: currentShapeSize.width, height: currentShapeSize.height)
@@ -227,29 +224,6 @@ struct ContentView: View {
         }
         .padding(.horizontal, ShelfMetrics.collapsedIndicatorPadding + ShelfMetrics.topCornerRadius)
         .frame(height: geometry.notchHeight, alignment: .center)
-    }
-
-    // MARK: - Preferences
-
-    private var topBar: some View {
-        VStack {
-            HStack {
-                ShelfClearButton(action: clearShelf)
-                    .padding(.leading, currentTopCornerRadius + 8)
-                Spacer()
-                Button("Preferences", systemImage: "gearshape.fill", action: showPreferences)
-                    .labelStyle(.iconOnly)
-                    .buttonStyle(.plain)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.88))
-                    .frame(width: 28, height: 28)
-                    .contentShape(Rectangle())
-                    .help("Preferences")
-                    .accessibilityLabel("Preferences")
-                    .padding(.trailing, currentTopCornerRadius + 8)
-            }
-            Spacer()
-        }
     }
 
     private func clearShelf() {
