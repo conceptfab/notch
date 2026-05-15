@@ -10,6 +10,7 @@ struct ShelfItemView: View {
     @StateObject private var viewModel: ShelfItemViewModel
     @State private var cachedPreviewImage: NSImage?
     @State private var debouncedDropTarget = false
+    @State private var dropTargetDebounceTask: Task<Void, Never>?
     @State private var showingStackList = false
 
     private var isSelected: Bool { viewModel.isSelected }
@@ -57,8 +58,10 @@ struct ShelfItemView: View {
         }
         .onChange(of: viewModel.isDropTargeted) { _, targeted in
             windowModel.dragTargeting = targeted
-            Task { @MainActor in
+            dropTargetDebounceTask?.cancel()
+            dropTargetDebounceTask = Task { @MainActor in
                 try? await Task.sleep(for: .milliseconds(50))
+                guard !Task.isCancelled else { return }
                 debouncedDropTarget = targeted
             }
         }
