@@ -9,6 +9,8 @@ struct ContentView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.openSettings) private var openSettings
     @ObservedObject private var store = ShelfStore.shared
+    @State private var isStartupGlowVisible = false
+    @State private var didPlayStartupGlow = false
 
     private var geometry: NotchGeometry { NotchGeometry.current() }
 
@@ -87,58 +89,75 @@ struct ContentView: View {
 
     var body: some View {
         let currentShapeSize = shapeSize
-        VStack(spacing: 0) {
-            ZStack(alignment: .top) {
-                NotchShelfShape(
+        ZStack(alignment: .top) {
+            if isStartupGlowVisible {
+                StartupGlowView(
                     topCornerRadius: currentTopCornerRadius,
                     bottomCornerRadius: windowModel.expansion == .expanded
                         ? ShelfMetrics.bottomCornerRadius : 8
                 )
-                .fill(Color.black)
-                .overlay(alignment: .top) {
-                    // Seamless connection to top screen edge
-                    Rectangle()
-                        .fill(Color.black)
-                        .frame(height: 1)
-                        .padding(.horizontal, currentTopCornerRadius)
-                }
-
-                if windowModel.expansion == .expanded {
-                    ShelfView()
-                        .environmentObject(windowModel)
-                        .padding(.horizontal, currentTopCornerRadius + 12)
-                        .padding(.top, geometry.notchHeight + ShelfMetrics.shelfTopChromeHeight)
-                        .padding(.bottom, ShelfMetrics.shelfPanelBottomPadding)
-                        .transition(shelfContentTransition)
-                        .zIndex(1)
-
-                    topBar
-                        .padding(.top, preferencesButtonTopPadding)
-                        .transition(shelfContentTransition)
-                        .zIndex(2)
-                } else if hasItems {
-                    collapsedIndicators
-                        .transition(.opacity)
-                        .zIndex(1)
-                }
+                    .frame(width: currentShapeSize.width, height: currentShapeSize.height)
+                    .transition(.opacity)
+                    .zIndex(0)
             }
-            .frame(width: currentShapeSize.width, height: currentShapeSize.height)
-            .clipShape(
-                NotchShelfShape(
-                    topCornerRadius: currentTopCornerRadius,
-                    bottomCornerRadius: windowModel.expansion == .expanded
-                        ? ShelfMetrics.bottomCornerRadius : 8
+
+            VStack(spacing: 0) {
+                ZStack(alignment: .top) {
+                    NotchShelfShape(
+                        topCornerRadius: currentTopCornerRadius,
+                        bottomCornerRadius: windowModel.expansion == .expanded
+                            ? ShelfMetrics.bottomCornerRadius : 8
+                    )
+                    .fill(Color.black)
+                    .overlay(alignment: .top) {
+                        // Seamless connection to top screen edge
+                        Rectangle()
+                            .fill(Color.black)
+                            .frame(height: 1)
+                            .padding(.horizontal, currentTopCornerRadius)
+                    }
+
+                    if windowModel.expansion == .expanded {
+                        ShelfView()
+                            .environmentObject(windowModel)
+                            .padding(.horizontal, currentTopCornerRadius + 12)
+                            .padding(.top, geometry.notchHeight + ShelfMetrics.shelfTopChromeHeight)
+                            .padding(.bottom, ShelfMetrics.shelfPanelBottomPadding)
+                            .transition(shelfContentTransition)
+                            .zIndex(1)
+
+                        topBar
+                            .padding(.top, preferencesButtonTopPadding)
+                            .transition(shelfContentTransition)
+                            .zIndex(2)
+                    } else if hasItems {
+                        collapsedIndicators
+                            .transition(.opacity)
+                            .zIndex(1)
+                    }
+                }
+                .frame(width: currentShapeSize.width, height: currentShapeSize.height)
+                .clipShape(
+                    NotchShelfShape(
+                        topCornerRadius: currentTopCornerRadius,
+                        bottomCornerRadius: windowModel.expansion == .expanded
+                            ? ShelfMetrics.bottomCornerRadius : 8
+                    )
                 )
-            )
-            .animation(shelfAnimation, value: animationSignature)
-            .onHover(perform: handleHover)
-            Spacer(minLength: 0)
+                .animation(shelfAnimation, value: animationSignature)
+                .onHover(perform: handleHover)
+                .zIndex(1)
+                Spacer(minLength: 0)
+            }
         }
         .frame(width: ShelfMetrics.windowSize.width,
                height: ShelfMetrics.windowSize.height,
                alignment: .top)
         .background(Color.clear.allowsHitTesting(false))
-        .onAppear { windowModel.shapeSize = currentShapeSize }
+        .onAppear {
+            windowModel.shapeSize = currentShapeSize
+            playStartupGlow()
+        }
         .onChange(of: currentShapeSize) { _, newSize in
             windowModel.shapeSize = newSize
         }
@@ -153,6 +172,31 @@ struct ContentView: View {
         }
     }
 
+    private func playStartupGlow() {
+        guard !didPlayStartupGlow else { return }
+        didPlayStartupGlow = true
+
+        if reduceMotion {
+            isStartupGlowVisible = true
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(700))
+                isStartupGlowVisible = false
+            }
+            return
+        }
+
+        withAnimation(.easeOut(duration: 0.18)) {
+            isStartupGlowVisible = true
+        }
+
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(650))
+            withAnimation(.easeOut(duration: 0.55)) {
+                isStartupGlowVisible = false
+            }
+        }
+    }
+
     // MARK: - Collapsed Indicators
 
     private var collapsedIndicators: some View {
@@ -162,10 +206,6 @@ struct ContentView: View {
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.white.opacity(0.85))
                 .frame(width: 26, height: 22)
-                .background(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(.white.opacity(0.08))
-                )
                 .accessibilityLabel("NotchShelf")
                 .accessibilityHidden(false)
 
@@ -182,14 +222,11 @@ struct ContentView: View {
             }
             .padding(.horizontal, 6)
             .padding(.vertical, 3)
-            .background(
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .fill(.white.opacity(0.08))
-            )
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("\(store.totalFileCount) files on shelf")
         }
         .padding(.horizontal, ShelfMetrics.collapsedIndicatorPadding + ShelfMetrics.topCornerRadius)
+        .frame(height: geometry.notchHeight, alignment: .center)
     }
 
     // MARK: - Preferences
