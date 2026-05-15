@@ -29,6 +29,21 @@ private func makeItem() throws -> ShelfItem {
     #expect(loaded == items)
 }
 
+@Test func persistenceSaveThenLoadSlotsRoundTripsWithEmptySlots() throws {
+    let service = ShelfPersistenceService(directory: tempDir())
+    let item = try makeItem()
+    let slots = [
+        ShelfSlot(),
+        ShelfSlot(item: item),
+        ShelfSlot()
+    ]
+
+    service.save(slots)
+
+    #expect(service.loadSlots() == slots)
+    #expect(service.load() == [item])
+}
+
 @Test func persistenceSkipsCorruptedEntries() throws {
     let dir = tempDir()
     let service = ShelfPersistenceService(directory: dir)

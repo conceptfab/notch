@@ -96,15 +96,10 @@ struct StackFileDragHandler: NSViewRepresentable {
             _ session: NSDraggingSession,
             sourceOperationMaskFor context: NSDraggingContext
         ) -> NSDragOperation {
-            if preferences.copyOnDrag { return [.copy] }
-            switch context {
-            case .outsideApplication:
-                return [.copy, .move]
-            case .withinApplication:
-                return [.copy, .move, .generic]
-            @unknown default:
-                return [.copy]
-            }
+            ShelfDragOperationPolicy.sourceOperationMask(
+                copyOnDrag: preferences.copyOnDrag,
+                context: context
+            )
         }
 
         func draggingSession(_ session: NSDraggingSession, willBeginAt screenPoint: NSPoint) {
@@ -116,7 +111,8 @@ struct StackFileDragHandler: NSViewRepresentable {
             endedAt screenPoint: NSPoint,
             operation: NSDragOperation
         ) {
-            if !operation.isEmpty, let draggedSourceItem {
+            if ShelfDragOperationPolicy.shouldRemoveFromShelf(after: operation),
+               let draggedSourceItem {
                 ShelfStore.shared.remove(bookmarkData: draggedBookmarkData, from: draggedSourceItem)
                 ShelfSelection.shared.clear()
             }

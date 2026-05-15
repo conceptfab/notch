@@ -142,15 +142,10 @@ struct DraggableClickHandler: NSViewRepresentable {
             _ session: NSDraggingSession,
             sourceOperationMaskFor context: NSDraggingContext
         ) -> NSDragOperation {
-            if preferences.copyOnDrag { return [.copy] }
-            switch context {
-            case .outsideApplication:
-                return [.copy, .move]
-            case .withinApplication:
-                return [.copy, .move, .generic]
-            @unknown default:
-                return [.copy]
-            }
+            ShelfDragOperationPolicy.sourceOperationMask(
+                copyOnDrag: preferences.copyOnDrag,
+                context: context
+            )
         }
 
         func draggingSession(_ session: NSDraggingSession, willBeginAt screenPoint: NSPoint) {
@@ -162,7 +157,7 @@ struct DraggableClickHandler: NSViewRepresentable {
             endedAt screenPoint: NSPoint,
             operation: NSDragOperation
         ) {
-            if !operation.isEmpty {
+            if ShelfDragOperationPolicy.shouldRemoveFromShelf(after: operation) {
                 removeDraggedItemsFromShelf()
             }
             ShelfSelection.shared.endDrag()

@@ -5,10 +5,11 @@ import Foundation
 @MainActor
 final class ShelfStore: ObservableObject, ShelfStoring {
     static let shared = ShelfStore()
+    static let defaultSlotCount = 5
 
     private let persistence: ShelfPersistenceService
 
-    @Published private(set) var items: [ShelfItem] = [] {
+    @Published private(set) var slots: [ShelfSlot] = [] {
         didSet { schedulePersistenceSave() }
     }
 
@@ -19,6 +20,8 @@ final class ShelfStore: ObservableObject, ShelfStoring {
     private var inflightWrite: Task<String?, Never>?
     private var loadTask: Task<Void, Never>?
     private let saveDebounce: Duration = .milliseconds(200)
+
+    var items: [ShelfItem] { slots.compactMap(\.item) }
 
     var isEmpty: Bool { items.isEmpty }
 
@@ -40,31 +43,38 @@ final class ShelfStore: ObservableObject, ShelfStoring {
 
     init(persistence: ShelfPersistenceService = .shared) {
         self.persistence = persistence
-        let loaded = persistence.load()
+        let loaded = Self.paddedSlots(persistence.loadSlots())
         // Assigning to the backing storage bypasses didSet on initial load.
-        _items = Published(initialValue: loaded)
+        _slots = Published(initialValue: loaded)
     }
 
     /// Appends new items, skipping any whose `identityKey` already exists.
     func add(_ newItems: [ShelfItem]) {
+        add(newItems, atSlot: nil)
+    }
+
+    func add(_ newItems: [ShelfItem], atSlot slotIndex: Int?) {
         guard !newItems.isEmpty else { return }
-        var merged = items
+        var mergedSlots = Self.paddedSlots(slots)
         // Pre-compute identity keys so we resolve each bookmark at most once per add().
         var keys: [ShelfItem.ID: String] = [:]
-        for item in merged { keys[item.id] = item.identityKey }
+        for item in mergedSlots.compactMap(\.item) { keys[item.id] = item.identityKey }
         var seen = Set(keys.values)
+        var nextSlotIndex = slotIndex ?? firstEmptySlotIndex(in: mergedSlots) ?? mergedSlots.count
 
         for item in newItems {
             let folderKey = item.sourceFolderKey
             if let folderKey,
-               let idx = merged.firstIndex(where: {
-                   $0.sourceFolderKey == folderKey && ($0.isStack || item.isStack)
+               let idx = mergedSlots.firstIndex(where: {
+                   guard let existing = $0.item else { return false }
+                   return existing.sourceFolderKey == folderKey && (existing.isStack || item.isStack)
                }) {
-                let updated = merged[idx].merging(with: item)
-                if let oldKey = keys[merged[idx].id] {
+                guard let existing = mergedSlots[idx].item else { continue }
+                let updated = existing.merging(with: item)
+                if let oldKey = keys[existing.id] {
                     seen.remove(oldKey)
                 }
-                merged[idx] = updated
+                mergedSlots[idx].item = updated
                 let newKey = updated.identityKey
                 keys[updated.id] = newKey
                 seen.insert(newKey)
@@ -72,35 +82,42 @@ final class ShelfStore: ObservableObject, ShelfStoring {
             }
             let key = item.identityKey
             guard !seen.contains(key) else { continue }
-            merged.append(item)
+            nextSlotIndex = place(item, in: &mergedSlots, startingAt: nextSlotIndex)
             keys[item.id] = key
             seen.insert(key)
         }
-        items = merged
+        slots = Self.paddedSlots(mergedSlots)
     }
 
     func remove(_ item: ShelfItem) {
-        items.removeAll { $0.id == item.id }
+        var updated = slots
+        for idx in updated.indices where updated[idx].item?.id == item.id {
+            updated[idx].item = nil
+        }
+        slots = Self.paddedSlots(updated)
     }
 
     func remove(bookmarkData: Data, from item: ShelfItem) {
-        guard let idx = items.firstIndex(where: { $0.id == item.id }) else { return }
-        var remaining = items[idx].allBookmarkData
+        guard let idx = slots.firstIndex(where: { $0.item?.id == item.id }),
+              let slotItem = slots[idx].item else { return }
+        var remaining = slotItem.allBookmarkData
         remaining.removeAll { $0 == bookmarkData }
+        var updated = slots
         switch remaining.count {
         case 0:
-            items.remove(at: idx)
+            updated[idx].item = nil
         case 1:
-            items[idx] = ShelfItem(id: item.id, bookmarkData: remaining[0])
+            updated[idx].item = ShelfItem(id: item.id, bookmarkData: remaining[0])
         default:
-            items[idx] = ShelfItem(id: item.id, stackBookmarkData: remaining)
+            updated[idx].item = ShelfItem(id: item.id, stackBookmarkData: remaining)
         }
+        slots = Self.paddedSlots(updated)
     }
 
     /// Immediately replaces an item's bookmark (used for user-initiated actions).
     func updateBookmark(for item: ShelfItem, bookmark: Data) {
-        guard let idx = items.firstIndex(where: { $0.id == item.id }) else { return }
-        items[idx].bookmarkData = bookmark
+        guard let idx = slots.firstIndex(where: { $0.item?.id == item.id }) else { return }
+        slots[idx].item?.bookmarkData = bookmark
     }
 
     /// Queues a stale-bookmark refresh to be applied after the current update cycle.
@@ -111,8 +128,8 @@ final class ShelfStore: ObservableObject, ShelfStoring {
             await Task.yield()
             guard let self else { return }
             for (id, data) in self.pendingBookmarkUpdates {
-                if let idx = self.items.firstIndex(where: { $0.id == id }) {
-                    self.items[idx].bookmarkData = data
+                if let idx = self.slots.firstIndex(where: { $0.item?.id == id }) {
+                    self.slots[idx].item?.bookmarkData = data
                 }
             }
             self.pendingBookmarkUpdates.removeAll()
@@ -121,6 +138,10 @@ final class ShelfStore: ObservableObject, ShelfStoring {
 
     /// Loads dropped providers into the shelf asynchronously. Cancels any in-flight load.
     func load(_ providers: [NSItemProvider]) {
+        load(providers, intoSlot: nil)
+    }
+
+    func load(_ providers: [NSItemProvider], intoSlot slotIndex: Int?) {
         guard !providers.isEmpty else { return }
         loadTask?.cancel()
         isLoading = true
@@ -132,7 +153,7 @@ final class ShelfStore: ObservableObject, ShelfStoring {
         loadTask = Task { @MainActor [weak self] in
             let dropped = await ShelfDropService.items(from: sendableProviders)
             guard !Task.isCancelled else { return }
-            self?.add(dropped)
+            self?.add(dropped, atSlot: slotIndex)
             self?.isLoading = false
         }
     }
@@ -146,7 +167,13 @@ final class ShelfStore: ObservableObject, ShelfStoring {
             let validIDs = await Self.validateInParallel(snapshot)
             let snapshotIDs = Set(snapshot.map(\.id))
             // Keep validated items, plus anything added since the snapshot.
-            self.items = self.items.filter { validIDs.contains($0.id) || !snapshotIDs.contains($0.id) }
+            self.slots = Self.paddedSlots(self.slots.map { slot in
+                guard let item = slot.item else { return slot }
+                if validIDs.contains(item.id) || !snapshotIDs.contains(item.id) {
+                    return slot
+                }
+                return ShelfSlot(id: slot.id)
+            })
         }
     }
 
@@ -181,7 +208,7 @@ final class ShelfStore: ObservableObject, ShelfStoring {
 
     private func schedulePersistenceSave() {
         saveTask?.cancel()
-        let snapshot = items
+        let snapshot = slots
         let persistence = self.persistence
         let debounce = saveDebounce
         saveTask = Task { @MainActor [weak self] in
@@ -207,7 +234,7 @@ final class ShelfStore: ObservableObject, ShelfStoring {
         if let inflightWrite {
             _ = await inflightWrite.value
         }
-        let snapshot = items
+        let snapshot = slots
         let write = Task.detached { [persistence] in
             persistence.save(snapshot).errorMessage
         }
@@ -234,7 +261,30 @@ final class ShelfStore: ObservableObject, ShelfStoring {
                 _ = semaphore.wait(timeout: .now() + 2.0)
                 inflightWrite = nil
             }
-            lastError = persistence.save(items).errorMessage
+            lastError = persistence.save(slots).errorMessage
+        }
+    }
+
+    private static func paddedSlots(_ slots: [ShelfSlot]) -> [ShelfSlot] {
+        guard slots.count < defaultSlotCount else { return slots }
+        return slots + (slots.count..<defaultSlotCount).map { _ in ShelfSlot() }
+    }
+
+    private func firstEmptySlotIndex(in slots: [ShelfSlot]) -> Int? {
+        slots.firstIndex { $0.item == nil }
+    }
+
+    private func place(_ item: ShelfItem, in slots: inout [ShelfSlot], startingAt startIndex: Int) -> Int {
+        if startIndex >= slots.count {
+            slots.append(ShelfSlot(item: item))
+            return slots.count
+        }
+        if let index = slots.indices.dropFirst(startIndex).first(where: { slots[$0].item == nil }) {
+            slots[index].item = item
+            return index + 1
+        } else {
+            slots.append(ShelfSlot(item: item))
+            return slots.count
         }
     }
 }

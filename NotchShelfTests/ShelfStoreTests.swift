@@ -25,6 +25,23 @@ private func makeFileItem(named name: String = "f.txt") throws -> ShelfItem {
     #expect(store.items == [a])
 }
 
+@MainActor @Test func storeStartsWithDefaultEmptySlots() {
+    let store = storeWithTempPersistence()
+    #expect(store.slots.count == ShelfStore.defaultSlotCount)
+    #expect(store.slots.allSatisfy { $0.item == nil })
+}
+
+@MainActor @Test func storeAddPlacesItemInChosenSlot() throws {
+    let store = storeWithTempPersistence()
+    let a = try makeFileItem(named: "a.txt")
+
+    store.add([a], atSlot: 4)
+
+    #expect(store.items == [a])
+    #expect(store.slots[4].item == a)
+    #expect(store.slots[0].item == nil)
+}
+
 @MainActor @Test func storeAddDeduplicatesBySamePath() throws {
     let store = storeWithTempPersistence()
     let dir = URL(fileURLWithPath: NSTemporaryDirectory())
@@ -58,6 +75,21 @@ private func makeFileItem(named name: String = "f.txt") throws -> ShelfItem {
 
     let store2 = ShelfStore(persistence: ShelfPersistenceService(directory: dir))
     #expect(store2.items == [a])
+}
+
+@MainActor @Test func storePersistsEmptySlotPositions() async throws {
+    let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent(UUID().uuidString, isDirectory: true)
+    let persistence = ShelfPersistenceService(directory: dir)
+    let store1 = ShelfStore(persistence: persistence)
+    let a = try makeFileItem(named: "a.txt")
+    store1.add([a], atSlot: 3)
+    await store1.flushPendingSave()
+
+    let store2 = ShelfStore(persistence: ShelfPersistenceService(directory: dir))
+    #expect(store2.items == [a])
+    #expect(store2.slots[3].item == a)
+    #expect(store2.slots[0].item == nil)
 }
 
 @MainActor @Test func storeResolveFileURLReturnsURL() throws {

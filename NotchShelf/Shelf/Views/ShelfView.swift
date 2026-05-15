@@ -1,8 +1,8 @@
 import AppKit
 import SwiftUI
 
-/// The shelf panel: a horizontally scrolling row of item cards, or a drop hint when
-/// empty. Accepts file drops and supports Delete-to-remove on selected items.
+/// The shelf panel: a horizontally scrolling row of file slots. Empty slots accept
+/// drops and selected items can be removed with Delete.
 struct ShelfView: View {
     @EnvironmentObject var windowModel: ShelfWindowModel
     @ObservedObject var store = ShelfStore.shared
@@ -14,7 +14,7 @@ struct ShelfView: View {
     var body: some View {
         panel
             .onDrop(of: [.fileURL], isTargeted: $localDropTargeting) { providers in
-                handleDrop(providers: providers)
+                handleDrop(providers: providers, slotIndex: nil)
             }
             .focusable()
             .onDeleteCommand {
@@ -24,19 +24,17 @@ struct ShelfView: View {
             }
     }
 
-    private func handleDrop(providers: [NSItemProvider]) -> Bool {
+    private func handleDrop(providers: [NSItemProvider], slotIndex: Int?) -> Bool {
         guard !selection.isDragging else { return false }
         windowModel.dropEvent = true
-        store.load(providers)
+        store.load(providers, intoSlot: slotIndex)
         return true
     }
 
     private var panel: some View {
         RoundedRectangle(cornerRadius: 16)
             .stroke(
-                isVisuallyTargeted
-                    ? Color.accentColor.opacity(0.9)
-                    : Color.white.opacity(0.12),
+                Color.clear,
                 style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [7])
             )
             .overlay { content.padding(ShelfMetrics.contentPadding) }
@@ -44,28 +42,23 @@ struct ShelfView: View {
             .onTapGesture { selection.clear() }
     }
 
-    @ViewBuilder
     private var content: some View {
-        if store.isEmpty {
-            VStack(spacing: 4) {
-                Image(systemName: "tray.fill")
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(.white.opacity(0.5))
-                    .font(.system(size: ShelfMetrics.iconSize))
-                Text("Schowek plików")
-                    .foregroundStyle(.white.opacity(0.4))
-                    .font(.system(size: 11, weight: .medium, design: .rounded))
-            }
-        } else {
-            ScrollView(.horizontal) {
-                HStack(spacing: spacing) {
-                    ForEach(store.items) { item in
+        ScrollView(.horizontal) {
+            HStack(spacing: spacing) {
+                ForEach(Array(store.slots.enumerated()), id: \.element.id) { index, slot in
+                    if let item = slot.item {
                         ShelfItemView(item: item)
+                    } else {
+                        ShelfSlotPlaceholderView(
+                            isPanelTargeted: isVisuallyTargeted
+                        ) { providers in
+                            handleDrop(providers: providers, slotIndex: index)
+                        }
                     }
                 }
-                .frame(height: ShelfMetrics.itemHeight)
             }
-            .scrollIndicators(.never)
+            .frame(height: ShelfMetrics.itemHeight)
         }
+        .scrollIndicators(.never)
     }
 }

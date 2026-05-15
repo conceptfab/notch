@@ -34,6 +34,9 @@ final class ShelfPersistenceService: @unchecked Sendable {
         if let items = try? decoder.decode([ShelfItem].self, from: data) {
             return items
         }
+        if let slots = try? decoder.decode([ShelfSlot].self, from: data) {
+            return slots.compactMap(\.item)
+        }
 
         guard let jsonArray = (try? JSONSerialization.jsonObject(with: data)) as? [Any] else {
             NSLog("Shelf persistence file is not a valid JSON array")
@@ -56,6 +59,15 @@ final class ShelfPersistenceService: @unchecked Sendable {
         return valid
     }
 
+    func loadSlots() -> [ShelfSlot] {
+        guard let data = try? Data(contentsOf: fileURL) else { return [] }
+
+        if let slots = try? decoder.decode([ShelfSlot].self, from: data) {
+            return slots
+        }
+        return load().map { ShelfSlot(item: $0) }
+    }
+
     @discardableResult
     func save(_ items: [ShelfItem]) -> Result<Void, Error> {
         do {
@@ -64,6 +76,18 @@ final class ShelfPersistenceService: @unchecked Sendable {
             return .success(())
         } catch {
             NSLog("Failed to save shelf items: \(error.localizedDescription)")
+            return .failure(error)
+        }
+    }
+
+    @discardableResult
+    func save(_ slots: [ShelfSlot]) -> Result<Void, Error> {
+        do {
+            let data = try encoder.encode(slots)
+            try data.write(to: fileURL, options: .atomic)
+            return .success(())
+        } catch {
+            NSLog("Failed to save shelf slots: \(error.localizedDescription)")
             return .failure(error)
         }
     }
