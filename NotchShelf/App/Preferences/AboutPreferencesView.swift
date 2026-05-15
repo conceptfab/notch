@@ -14,14 +14,28 @@ struct AboutPreferencesView: View {
         Bundle.main.infoDictionary?["NSHumanReadableCopyright"] as? String ?? ""
     }
 
+    private var appIcon: NSImage {
+        if
+            let iconURL = Bundle.main.url(forResource: "AppIcon", withExtension: "icns"),
+            let icon = NSImage(contentsOf: iconURL)
+        {
+            return icon
+        }
+
+        if let icon = NSApp.applicationIconImage, icon.isValid {
+            return icon
+        }
+
+        return NSWorkspace.shared.icon(forFile: Bundle.main.bundlePath)
+    }
+
     var body: some View {
         VStack(spacing: 14) {
-            if let icon = NSApp.applicationIconImage {
-                Image(nsImage: icon)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 96, height: 96)
-            }
+            Image(nsImage: appIcon)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 96, height: 96)
+                .accessibilityHidden(true)
 
             Text("NotchShelf")
                 .font(.title2.weight(.semibold))
