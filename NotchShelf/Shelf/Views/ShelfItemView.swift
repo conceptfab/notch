@@ -7,6 +7,7 @@ struct ShelfItemView: View {
     let item: ShelfItem
     let keepsItemAfterExternalDrop: Bool
     let onToggleKeepsItemAfterExternalDrop: () -> Void
+    @EnvironmentObject var windowModel: ShelfWindowModel
     @ObservedObject var selection = ShelfSelection.shared
     @StateObject private var viewModel: ShelfItemViewModel
     @State private var cachedPreviewImage: NSImage?
@@ -36,7 +37,11 @@ struct ShelfItemView: View {
     private var contentWithStackPresenter: some View {
         if viewModel.viewData.isStack {
             itemContent.background(
-                StackFileListPanelPresenter(item: item, isPresented: $showingStackList)
+                StackFileListPanelPresenter(
+                    item: item,
+                    isPresented: $showingStackList,
+                    windowModel: windowModel
+                )
             )
         } else {
             itemContent

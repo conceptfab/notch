@@ -14,6 +14,11 @@ final class ShelfWindowModel: ObservableObject {
     @Published var dragTargeting: Bool = false
     /// Pulsed to `true` by the shelf drop handler so the drag pipeline knows a drop landed.
     @Published var dropEvent: Bool = false
+    /// Current visible shape size (width/height of the rendered NotchShelfShape).
+    /// Published by `ContentView` whenever it recomputes layout. Consumed by
+    /// `StackFileListPanelPresenter` so the stack drawer can anchor itself just
+    /// below the shape, matching its width.
+    @Published var shapeSize: CGSize = .zero
 
     private var collapseTask: Task<Void, Never>?
 

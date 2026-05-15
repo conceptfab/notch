@@ -87,9 +87,10 @@ struct StackFileRowView: View {
 struct StackFileListPanelPresenter: NSViewRepresentable {
     let item: ShelfItem
     @Binding var isPresented: Bool
+    let windowModel: ShelfWindowModel
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(isPresented: $isPresented)
+        Coordinator(isPresented: $isPresented, windowModel: windowModel)
     }
 
     func makeNSView(context: Context) -> NSView {
@@ -110,12 +111,14 @@ struct StackFileListPanelPresenter: NSViewRepresentable {
     @MainActor
     final class Coordinator {
         private let isPresented: Binding<Bool>
+        private let windowModel: ShelfWindowModel
         private var panel: NSPanel?
         private var localMonitor: Any?
         private var globalMonitor: Any?
 
-        init(isPresented: Binding<Bool>) {
+        init(isPresented: Binding<Bool>, windowModel: ShelfWindowModel) {
             self.isPresented = isPresented
+            self.windowModel = windowModel
         }
 
         func update(item: ShelfItem, anchoredTo anchorView: NSView, isPresented: Bool) {
@@ -223,10 +226,22 @@ struct StackFileListPanelPresenter: NSViewRepresentable {
             guard let window = anchorView.window else {
                 return NSRect(origin: .zero, size: size)
             }
-            let anchorRect = anchorView.convert(anchorView.bounds, to: nil)
-            let screenRect = window.convertToScreen(anchorRect)
-            let x = screenRect.midX - size.width / 2
-            let y = screenRect.minY - size.height - 4
+            // Anchor the panel to the bottom edge of the visible NotchShelfShape,
+            // centered on the shape's horizontal axis. Falls back to the anchor
+            // view's bottom if shapeSize is not yet known (first-frame race).
+            let shapeBottomScreenY: CGFloat
+            let shapeMidXScreen: CGFloat
+            if windowModel.shapeSize.height > 0 {
+                shapeBottomScreenY = window.frame.maxY - windowModel.shapeSize.height
+                shapeMidXScreen = window.frame.midX
+            } else {
+                let anchorRect = anchorView.convert(anchorView.bounds, to: nil)
+                let screenRect = window.convertToScreen(anchorRect)
+                shapeBottomScreenY = screenRect.minY - 9
+                shapeMidXScreen = screenRect.midX
+            }
+            let x = shapeMidXScreen - size.width / 2
+            let y = shapeBottomScreenY - 4 - size.height
             return NSRect(x: x, y: y, width: size.width, height: size.height)
         }
 

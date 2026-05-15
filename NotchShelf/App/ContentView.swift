@@ -86,6 +86,7 @@ struct ContentView: View {
     }
 
     var body: some View {
+        let currentShapeSize = shapeSize
         VStack(spacing: 0) {
             ZStack(alignment: .top) {
                 NotchShelfShape(
@@ -121,7 +122,7 @@ struct ContentView: View {
                         .zIndex(1)
                 }
             }
-            .frame(width: shapeSize.width, height: shapeSize.height)
+            .frame(width: currentShapeSize.width, height: currentShapeSize.height)
             .clipShape(
                 NotchShelfShape(
                     topCornerRadius: currentTopCornerRadius,
@@ -137,6 +138,10 @@ struct ContentView: View {
                height: ShelfMetrics.windowSize.height,
                alignment: .top)
         .background(Color.clear.allowsHitTesting(false))
+        .onAppear { windowModel.shapeSize = currentShapeSize }
+        .onChange(of: currentShapeSize) { _, newSize in
+            windowModel.shapeSize = newSize
+        }
     }
 
     private func handleHover(_ hovering: Bool) {
