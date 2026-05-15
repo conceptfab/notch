@@ -44,7 +44,7 @@ struct ShelfItemView: View {
     }
 
     private var itemContent: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: ShelfMetrics.slotInnerSpacingBottom) {
             ZStack {
                 VStack(alignment: .center, spacing: ShelfMetrics.slotInnerSpacingTop) {
                     countLabel
@@ -107,7 +107,7 @@ struct ShelfItemView: View {
 
     private var iconView: some View {
         ZStack {
-            if item.isStack {
+            if viewModel.viewData.isStack {
                 RoundedRectangle(cornerRadius: 7)
                     .fill(.white.opacity(0.16))
                     .frame(width: ShelfMetrics.iconSizeLarge, height: ShelfMetrics.iconSizeLarge)
@@ -124,13 +124,13 @@ struct ShelfItemView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 7))
                 .shadow(color: .black.opacity(0.18), radius: 2, x: 0, y: 1)
         }
-        .frame(width: ShelfMetrics.iconSizeLarge + (item.isStack ? 6 : 0),
-               height: ShelfMetrics.iconSizeLarge + (item.isStack ? 6 : 0))
+        .frame(width: ShelfMetrics.iconSizeLarge + (viewModel.viewData.isStack ? 6 : 0),
+               height: ShelfMetrics.iconSizeLarge + (viewModel.viewData.isStack ? 6 : 0))
     }
 
     @ViewBuilder
     private var bottomToggleRow: some View {
-        if item.isStack {
+        if viewModel.viewData.isStack {
             HStack(spacing: 0) {
                 stackListButton
                 Spacer(minLength: 0)
