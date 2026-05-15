@@ -1,13 +1,4 @@
-- aplikacja nie moze wplywac na stan systemu - po kilku probach uzycia stwierdzono problem przy przenoszeniu elementów w systemie - do potwierdzenia.
-- prawdziwe ikony plikow i folderów / jesli to realne
-- panel preferencji - przygotowanie bazy/layoutu pod panel preferencji aplikacji zgodny z standardami mac os tahoe. planowane opcje w preferencjach
-    - czas autoznikania przy nieaktywnosci
-    - opcja kopiowania plikow przy przenoszeniu - domyslnie off
-    = zamykniecie aplikacji
-    - dodawanie aplikacji do autostartu
-    - about - informacje o wersji, autorze, licencji etc.
-    - min ilosc slotów i max ilosc slotow, automatyczne dodawanie wiersza gdy bazowa ilosc slotów jest zajeta
-    - jesli ilosc slotow bedzie wieksza od 5 - aplikacja pokazuje dodatkowe sloty gdy zostana dwa wolne sloty
-- optymalizacja, minimalizacja uzycia procesowa i pamięci
-- dodanie funkcji czyszczenia polki - ikona miotełki po lewej stronie prz gornej krawedzi ekranu - symetrycznie do ikony preferencji
-- przy stosie lista plikow jest dluzsza niz 5 elementow ma zamienic się w siatkę - maksymwalna ilosc plikow w liscie do ustalenia w preferencjach - zasada jest prosta wszystkie pliki ze stosu musza byc widoczne/dostepne, nie wolno ich ukrywac
+- siatka musi byc nizej - nie moze wchodzic pod okno aplikacji
+- kolor linii przerywanej ma byc do zmiany w preferencjach
+- trzeba przerobic wyglada slotu - obok ikony plusa na jego lewej stronie ma byc ikona stosu jesli jest potrzeba - jesli sa dwie ikony to obie sa symetrycznie wobec slotu, jesli tylko plus to plus jest na srodku slotu. na gorze ma byc info o liczbie plikow, nazwa pod ikona nie jest potrzebna, ikona ma byc większa - wg szkicu @Untitled-1.jpg
+- w tej chwiii pliki w slotach nie wysuwaja sie, tylko sa i pojawia sie tlo okna aplikacji - powinna wysuwac sie półka z plikami - animacja to ma byc wysuwanie z gory do dolu, potem wsuwanie do gory!
