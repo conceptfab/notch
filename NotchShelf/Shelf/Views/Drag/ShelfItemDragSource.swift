@@ -4,6 +4,7 @@ import SwiftUI
 struct DraggableClickHandler: NSViewRepresentable {
     let item: ShelfItem
     let viewModel: ShelfItemViewModel
+    let displayName: String
     @Binding var cachedPreviewImage: NSImage?
     let onClick: (NSEvent, NSView) -> Void
     let onRightClick: (NSEvent, NSView) -> Void
@@ -15,6 +16,7 @@ struct DraggableClickHandler: NSViewRepresentable {
         view.dragPreviewImage = cachedPreviewImage ?? viewModel.icon
         view.onClick = onClick
         view.onRightClick = onRightClick
+        view.toolTip = displayName
         return view
     }
 
@@ -24,6 +26,7 @@ struct DraggableClickHandler: NSViewRepresentable {
         if let cached = cachedPreviewImage { nsView.dragPreviewImage = cached }
         nsView.onClick = onClick
         nsView.onRightClick = onRightClick
+        if nsView.toolTip != displayName { nsView.toolTip = displayName }
     }
 
     final class DraggableClickView: NSView, NSDraggingSource {

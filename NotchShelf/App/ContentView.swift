@@ -36,9 +36,11 @@ struct ContentView: View {
         let height = chromeHeight + CGFloat(rows) * rowHeight
 
         let emptyWidth = geometry.notchWidth + ShelfMetrics.sideExpansion * 2
+        let outerHorizontalPadding = (ShelfMetrics.topCornerRadiusExpanded + 12) * 2
         let rowWidth = CGFloat(baseRow) * ShelfMetrics.itemWidth
             + CGFloat(baseRow - 1) * ShelfMetrics.itemSpacing
             + ShelfMetrics.contentPadding * 2
+            + outerHorizontalPadding
         return CGSize(
             width: Swift.min(ShelfMetrics.expandedSize.width, Swift.max(emptyWidth, rowWidth)),
             height: Swift.min(ShelfMetrics.expandedSize.height, height)

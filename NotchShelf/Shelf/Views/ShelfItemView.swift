@@ -60,6 +60,7 @@ struct ShelfItemView: View {
                 DraggableClickHandler(
                     item: item,
                     viewModel: viewModel,
+                    displayName: viewModel.viewData.displayName,
                     cachedPreviewImage: $cachedPreviewImage,
                     onClick: { event, nsView in viewModel.handleClick(event: event, view: nsView) },
                     onRightClick: { event, nsView in viewModel.handleRightClick(event: event, view: nsView) }
