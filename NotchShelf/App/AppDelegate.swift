@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
         windowController = NotchWindowController(windowModel: windowModel)
         setupDragMonitor()
+        ShelfStore.shared.cleanupInvalidItems()
     }
 
     private static var isRunningTests: Bool {

@@ -112,7 +112,6 @@ struct ContentView: View {
                height: ShelfMetrics.windowSize.height,
                alignment: .top)
         .background(Color.clear.allowsHitTesting(false))
-        .onAppear { ShelfStore.shared.cleanupInvalidItems() }
     }
 
     private func handleHover(_ hovering: Bool) {
