@@ -33,24 +33,20 @@ enum ShelfActionService {
 
     private static func handleBookmarkedFile(
         _ bookmarkData: Data,
-        action: @escaping @Sendable (URL) -> Void
+        action: (URL) -> Void
     ) {
-        Task {
-            guard let url = Bookmark(data: bookmarkData).resolveURL() else { return }
-            url.accessSecurityScopedResource { action($0) }
-        }
+        guard let url = Bookmark(data: bookmarkData).resolveURL() else { return }
+        url.accessSecurityScopedResource { action($0) }
     }
 
     private static func handleBookmarkedFiles(
         _ bookmarkData: [Data],
-        action: @escaping @Sendable ([URL]) -> Void
+        action: ([URL]) -> Void
     ) {
-        Task {
-            let urls = bookmarkData.compactMap { Bookmark(data: $0).resolveURL() }
-            guard !urls.isEmpty else { return }
-            let scoped = urls.filter { $0.startAccessingSecurityScopedResource() }
-            defer { scoped.forEach { $0.stopAccessingSecurityScopedResource() } }
-            action(urls)
-        }
+        let urls = bookmarkData.compactMap { Bookmark(data: $0).resolveURL() }
+        guard !urls.isEmpty else { return }
+        let scoped = urls.filter { $0.startAccessingSecurityScopedResource() }
+        defer { scoped.forEach { $0.stopAccessingSecurityScopedResource() } }
+        action(urls)
     }
 }
