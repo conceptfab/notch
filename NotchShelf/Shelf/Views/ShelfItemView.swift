@@ -136,7 +136,6 @@ struct ShelfItemView: View {
                 Spacer(minLength: 0)
                 copyModeButton
             }
-            .padding(.horizontal, 6)
             .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemToggleHeight)
         } else {
             HStack {

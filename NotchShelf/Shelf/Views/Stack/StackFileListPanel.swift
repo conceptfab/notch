@@ -120,24 +120,64 @@ struct StackFileListPanelPresenter: NSViewRepresentable {
 
         func update(item: ShelfItem, anchoredTo anchorView: NSView, isPresented: Bool) {
             guard isPresented else {
-                close()
+                animateClose()
                 return
             }
 
             let panel = panel ?? makePanel()
             self.panel = panel
             panel.contentViewController = makeContentController(for: item)
-            position(panel, anchoredTo: anchorView, itemCount: item.allBookmarkData.count)
+            let targetFrame = computeFrame(anchorView: anchorView, itemCount: item.allBookmarkData.count)
 
             if !panel.isVisible {
+                let collapsedFrame = NSRect(
+                    x: targetFrame.origin.x,
+                    y: targetFrame.maxY,
+                    width: targetFrame.size.width,
+                    height: 0
+                )
+                panel.setFrame(collapsedFrame, display: false)
                 panel.orderFrontRegardless()
+                NSAnimationContext.runAnimationGroup { context in
+                    context.duration = 0.25
+                    context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                    panel.animator().setFrame(targetFrame, display: true)
+                }
                 installOutsideClickMonitor(anchorView: anchorView)
+            } else {
+                panel.setFrame(targetFrame, display: true)
             }
+        }
+
+        func animateClose() {
+            guard let panel, panel.isVisible else {
+                close()
+                return
+            }
+            removeOutsideClickMonitors()
+            let currentFrame = panel.frame
+            let collapsedFrame = NSRect(
+                x: currentFrame.origin.x,
+                y: currentFrame.maxY,
+                width: currentFrame.size.width,
+                height: 0
+            )
+            NSAnimationContext.runAnimationGroup({ context in
+                context.duration = 0.18
+                context.timingFunction = CAMediaTimingFunction(name: .easeIn)
+                panel.animator().setFrame(collapsedFrame, display: true)
+            }, completionHandler: { [weak self] in
+                self?.close()
+            })
         }
 
         func close() {
             panel?.orderOut(nil)
             panel = nil
+            removeOutsideClickMonitors()
+        }
+
+        private func removeOutsideClickMonitors() {
             if let localMonitor {
                 NSEvent.removeMonitor(localMonitor)
                 self.localMonitor = nil
@@ -165,22 +205,9 @@ struct StackFileListPanelPresenter: NSViewRepresentable {
         }
 
         private func makeContentController(for item: ShelfItem) -> NSHostingController<some View> {
-            let count = item.allBookmarkData.count
-            let threshold = UserDefaults.standard.integer(forKey: UserDefaultsKey.stackListGridThreshold)
-            let usesGrid = count > Swift.max(threshold, 3)
-
-            let width: CGFloat = usesGrid ? 280 : 240
-            let height: CGFloat
-            if usesGrid {
-                let columns = 4.0
-                let rows = ceil(Double(count) / columns)
-                height = Swift.min(rows * 74 + 16, 320)
-            } else {
-                height = Swift.min(CGFloat(count) * 34 + 12, 320)
-            }
-
+            let size = Self.targetSize(forItemCount: item.allBookmarkData.count)
             let view = StackFileListView(item: item)
-                .frame(width: width, height: height)
+                .frame(width: size.width, height: size.height)
                 .background(Color.clear)
             let controller = NSHostingController(rootView: view)
             controller.view.wantsLayer = true
@@ -188,11 +215,21 @@ struct StackFileListPanelPresenter: NSViewRepresentable {
             return controller
         }
 
-        private func position(_ panel: NSPanel, anchoredTo anchorView: NSView, itemCount: Int) {
-            guard let window = anchorView.window else { return }
+        private func computeFrame(anchorView: NSView, itemCount: Int) -> NSRect {
+            let size = Self.targetSize(forItemCount: itemCount)
+            guard let window = anchorView.window else {
+                return NSRect(origin: .zero, size: size)
+            }
+            let anchorRect = anchorView.convert(anchorView.bounds, to: nil)
+            let screenRect = window.convertToScreen(anchorRect)
+            let x = screenRect.midX - size.width / 2
+            let y = screenRect.minY - size.height - 4
+            return NSRect(x: x, y: y, width: size.width, height: size.height)
+        }
+
+        private static func targetSize(forItemCount itemCount: Int) -> NSSize {
             let threshold = UserDefaults.standard.integer(forKey: UserDefaultsKey.stackListGridThreshold)
             let usesGrid = itemCount > Swift.max(threshold, 3)
-
             let width: CGFloat = usesGrid ? 280 : 240
             let height: CGFloat
             if usesGrid {
@@ -202,13 +239,7 @@ struct StackFileListPanelPresenter: NSViewRepresentable {
             } else {
                 height = Swift.min(CGFloat(itemCount) * 34 + 12, 320)
             }
-            panel.setContentSize(NSSize(width: width, height: height))
-
-            let anchorRect = anchorView.convert(anchorView.bounds, to: nil)
-            let screenRect = window.convertToScreen(anchorRect)
-            let x = screenRect.midX - width / 2
-            let y = screenRect.minY - height - 4
-            panel.setFrameOrigin(NSPoint(x: x, y: y))
+            return NSSize(width: width, height: height)
         }
 
         private func installOutsideClickMonitor(anchorView: NSView) {
@@ -225,13 +256,13 @@ struct StackFileListPanelPresenter: NSViewRepresentable {
                     if anchorView.bounds.contains(point) { return event }
                 }
                 self.isPresented.wrappedValue = false
-                self.close()
+                self.animateClose()
                 return event
             }
             globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
                 Task { @MainActor in
                     self?.isPresented.wrappedValue = false
-                    self?.close()
+                    self?.animateClose()
                 }
             }
         }
