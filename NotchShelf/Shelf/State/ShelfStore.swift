@@ -3,7 +3,7 @@ import Foundation
 /// The shelf's central state: the ordered list of items, persistence, and bookmark
 /// lifecycle (refreshing stale bookmarks, pruning dead ones).
 @MainActor
-final class ShelfStore: ObservableObject {
+final class ShelfStore: ObservableObject, ShelfStoring {
     static let shared = ShelfStore()
 
     private let persistence: ShelfPersistenceService

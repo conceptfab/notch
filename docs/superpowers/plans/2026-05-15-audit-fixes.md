@@ -1680,7 +1680,7 @@ git commit -m "feat: surface persistence errors via ShelfStore.lastError"
 - Modify: `NotchShelf/Shelf/State/ShelfStore.swift`
 - Modify: `NotchShelf/Shelf/State/ShelfSelection.swift`
 
-- [ ] **Step 1: Create the protocols file**
+- [x] **Step 1: Create the protocols file**
 
 ```bash
 mkdir -p NotchShelf/Shared/Protocols
@@ -1724,7 +1724,7 @@ protocol SelectionStoring: AnyObject {
 }
 ```
 
-- [ ] **Step 2: Conform the singletons**
+- [x] **Step 2: Conform the singletons**
 
 In `NotchShelf/Shared/Preferences.swift`:
 
@@ -1783,7 +1783,7 @@ final class ShelfSelection: ObservableObject, SelectionStoring {
 
 `selectedIDs` is already `@Published private(set)` — read-only access works.
 
-- [ ] **Step 3: Build & test**
+- [x] **Step 3: Build & test**
 
 ```bash
 xcodegen generate
@@ -1791,7 +1791,7 @@ xcodegen generate
 ```
 Expected: all tests pass. If a compiler error appears because a non-main caller touches `Preferences.shared`, that callsite needs to be moved into a `@MainActor` context — those are exactly the call paths the audit flagged.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add NotchShelf NotchShelf.xcodeproj

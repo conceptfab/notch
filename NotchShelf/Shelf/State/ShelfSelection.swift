@@ -2,7 +2,7 @@ import Foundation
 
 /// Multi-selection state for the shelf, with shift-range support and a drag flag.
 @MainActor
-final class ShelfSelection: ObservableObject {
+final class ShelfSelection: ObservableObject, SelectionStoring {
     static let shared = ShelfSelection()
 
     @Published private(set) var selectedIDs: Set<UUID> = []

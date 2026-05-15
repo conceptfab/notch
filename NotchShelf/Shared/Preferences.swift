@@ -1,7 +1,8 @@
 import Foundation
 
 /// App preferences backed by `UserDefaults`. Both keys default to `false`.
-final class Preferences: @unchecked Sendable {
+@MainActor
+final class Preferences: PreferenceProviding {
     static let shared = Preferences()
 
     private let defaults: UserDefaults
