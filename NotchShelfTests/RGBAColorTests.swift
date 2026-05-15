@@ -30,6 +30,11 @@ struct RGBAColorTests {
         #expect(restored == .defaultDropZone)
     }
 
+    @Test func oversizedComponentsFallBackToDefault() {
+        let restored = RGBAColor(components: [0.1, 0.2, 0.3, 0.4, 0.5])
+        #expect(restored == .defaultDropZone)
+    }
+
     @Test func clampsOutOfRangeValues() {
         let color = RGBAColor(red: -0.5, green: 1.7, blue: 0.5, alpha: 2.0)
         #expect(color.red == 0.0)
