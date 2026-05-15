@@ -44,14 +44,11 @@ struct ShelfItemView: View {
     }
 
     private var itemContent: some View {
-        VStack(spacing: 2) {
+        VStack(spacing: 0) {
             ZStack {
-                VStack(alignment: .center, spacing: 2) {
+                VStack(alignment: .center, spacing: ShelfMetrics.slotInnerSpacingTop) {
+                    countLabel
                     iconView
-                    if item.isStack {
-                        Color.clear.frame(width: 14, height: 14)
-                    }
-                    textView
                 }
                 .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemBodyHeight)
                 .background(backgroundView)
@@ -66,16 +63,8 @@ struct ShelfItemView: View {
                     onClick: { event, nsView in viewModel.handleClick(event: event, view: nsView) },
                     onRightClick: { event, nsView in viewModel.handleRightClick(event: event, view: nsView) }
                 )
-
-                if item.isStack {
-                    VStack(spacing: 0) {
-                        Spacer().frame(height: 29)
-                        stackListButton
-                        Spacer(minLength: 0)
-                    }
-                }
             }
-            copyModeButton
+            bottomToggleRow
         }
         .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemHeight)
         .onChange(of: viewModel.isDropTargeted) { _, targeted in
@@ -103,40 +92,74 @@ struct ShelfItemView: View {
         }
     }
 
+    @ViewBuilder
+    private var countLabel: some View {
+        if viewModel.viewData.isStack {
+            Text("(\(viewModel.viewData.stackCount))")
+                .font(.system(size: 10, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.78))
+                .frame(height: ShelfMetrics.slotCountLabelHeight)
+                .accessibilityLabel("\(viewModel.viewData.stackCount) files")
+        } else {
+            Color.clear.frame(height: ShelfMetrics.slotCountLabelHeight)
+        }
+    }
+
     private var iconView: some View {
         ZStack {
             if item.isStack {
-                RoundedRectangle(cornerRadius: 5)
+                RoundedRectangle(cornerRadius: 7)
                     .fill(.white.opacity(0.16))
-                    .frame(width: ShelfMetrics.iconSize, height: ShelfMetrics.iconSize)
-                    .offset(x: 3, y: -3)
-                RoundedRectangle(cornerRadius: 5)
+                    .frame(width: ShelfMetrics.iconSizeLarge, height: ShelfMetrics.iconSizeLarge)
+                    .offset(x: 4, y: -4)
+                RoundedRectangle(cornerRadius: 7)
                     .fill(.white.opacity(0.22))
-                    .frame(width: ShelfMetrics.iconSize, height: ShelfMetrics.iconSize)
-                    .offset(x: 1.5, y: -1.5)
+                    .frame(width: ShelfMetrics.iconSizeLarge, height: ShelfMetrics.iconSizeLarge)
+                    .offset(x: 2, y: -2)
             }
             Image(nsImage: viewModel.thumbnail ?? viewModel.icon)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: ShelfMetrics.iconSize, height: ShelfMetrics.iconSize)
-                .clipShape(RoundedRectangle(cornerRadius: 5))
-                .shadow(color: .black.opacity(0.15), radius: 2, x: 0, y: 1)
+                .frame(width: ShelfMetrics.iconSizeLarge, height: ShelfMetrics.iconSizeLarge)
+                .clipShape(RoundedRectangle(cornerRadius: 7))
+                .shadow(color: .black.opacity(0.18), radius: 2, x: 0, y: 1)
         }
-        .frame(width: ShelfMetrics.iconSize + (item.isStack ? 4 : 0),
-               height: ShelfMetrics.iconSize + (item.isStack ? 4 : 0))
+        .frame(width: ShelfMetrics.iconSizeLarge + (item.isStack ? 6 : 0),
+               height: ShelfMetrics.iconSizeLarge + (item.isStack ? 6 : 0))
+    }
+
+    @ViewBuilder
+    private var bottomToggleRow: some View {
+        if item.isStack {
+            HStack(spacing: 0) {
+                stackListButton
+                Spacer(minLength: 0)
+                copyModeButton
+            }
+            .padding(.horizontal, 6)
+            .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemToggleHeight)
+        } else {
+            HStack {
+                Spacer(minLength: 0)
+                copyModeButton
+                Spacer(minLength: 0)
+            }
+            .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemToggleHeight)
+        }
     }
 
     private var stackListButton: some View {
         Button {
             showingStackList.toggle()
         } label: {
-            Image(systemName: "list.bullet.circle.fill")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.9))
-                .frame(width: 14, height: 14)
+            Image(systemName: "list.bullet.circle")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.78))
+                .frame(width: ShelfMetrics.itemToggleHeight, height: ShelfMetrics.itemToggleHeight)
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
+        .help("Show stack files")
         .accessibilityLabel("Show stack files")
     }
 
@@ -151,16 +174,6 @@ struct ShelfItemView: View {
         .buttonStyle(.plain)
         .help(keepsItemAfterExternalDrop ? "Copy from this slot" : "Move from this slot")
         .accessibilityLabel(keepsItemAfterExternalDrop ? "Copy from this slot" : "Move from this slot")
-    }
-
-    private var textView: some View {
-        Text(viewModel.viewData.displayName)
-            .font(.system(size: viewModel.viewData.isStack ? 10 : 12, weight: .medium))
-            .foregroundStyle(.primary)
-            .lineLimit(viewModel.viewData.isStack ? 1 : 2)
-            .truncationMode(.middle)
-            .multilineTextAlignment(.center)
-            .frame(height: viewModel.viewData.isStack ? 16 : 28, alignment: .top)
     }
 
     private var backgroundView: some View {

@@ -3,6 +3,14 @@ import CoreGraphics
 /// Fixed dimensions for the notch window and the expanded shelf.
 enum ShelfMetrics {
     static let iconSize: CGFloat = 24
+    /// Larger icon size used inside shelf item slots (no name label below).
+    static let iconSizeLarge: CGFloat = 40
+    /// Vertical space between the file count label and the icon.
+    static let slotInnerSpacingTop: CGFloat = 2
+    /// Vertical space between the icon and the bottom toggle row.
+    static let slotInnerSpacingBottom: CGFloat = 4
+    /// Height of the file-count label row at the top of each slot.
+    static let slotCountLabelHeight: CGFloat = 12
     /// Extra width on each side of the physical notch when the empty shelf opens.
     static let sideExpansion: CGFloat = 60
     /// The maximum expanded shelf shape's size.
