@@ -388,7 +388,7 @@ private struct StackFileDragHandler: NSViewRepresentable {
     }
 
     final class StackFileDragView: NSView, NSDraggingSource {
-        var sourceItem: ShelfItem!
+        var sourceItem: ShelfItem?
         var bookmarkData = Data()
         var title = ""
         var previewImage = NSImage()
@@ -465,7 +465,7 @@ private struct StackFileDragHandler: NSViewRepresentable {
 
         func draggingSession(_ session: NSDraggingSession, willBeginAt screenPoint: NSPoint) {
             ShelfSelection.shared.beginDrag()
-            guard !removedFromShelf else { return }
+            guard !removedFromShelf, let sourceItem else { return }
             ShelfStore.shared.remove(bookmarkData: bookmarkData, from: sourceItem)
             ShelfSelection.shared.clear()
             removedFromShelf = true
@@ -513,7 +513,7 @@ private struct DraggableClickHandler: NSViewRepresentable {
     }
 
     final class DraggableClickView: NSView, NSDraggingSource {
-        var item: ShelfItem!
+        var item: ShelfItem?
         weak var viewModel: ShelfItemViewModel?
         var dragPreviewImage: NSImage?
         var onClick: ((NSEvent, NSView) -> Void)?
@@ -551,6 +551,7 @@ private struct DraggableClickHandler: NSViewRepresentable {
         }
 
         private func startDragSession(with event: NSEvent) {
+            guard let item else { return }
             let selected = ShelfSelection.shared.selectedItems(in: ShelfStore.shared.items)
             let itemsToDrag: [ShelfItem] =
                 (selected.count > 1 && selected.contains { $0.id == item.id }) ? selected : [item]
