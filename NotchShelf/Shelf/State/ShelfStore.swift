@@ -22,6 +22,10 @@ final class ShelfStore: ObservableObject, ShelfStoring {
 
     var isEmpty: Bool { items.isEmpty }
 
+    var totalFileCount: Int {
+        items.reduce(0) { $0 + $1.stackCount }
+    }
+
     /// Composite load state derived from `items` and `isLoading`.
     var state: Loadable<[ShelfItem]> {
         if isLoading && items.isEmpty { return .loading }

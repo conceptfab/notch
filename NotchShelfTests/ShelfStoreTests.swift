@@ -86,6 +86,7 @@ private func makeFileItem(named name: String = "f.txt") throws -> ShelfItem {
     #expect(store.items.count == 1)
     #expect(store.items.first?.isStack == true)
     #expect(store.items.first?.stackCount == 2)
+    #expect(store.totalFileCount == 2)
 }
 
 @MainActor @Test func storeRemoveBookmarkFromStackKeepsRemainingFiles() throws {
@@ -108,6 +109,7 @@ private func makeFileItem(named name: String = "f.txt") throws -> ShelfItem {
     #expect(store.items.count == 1)
     #expect(store.items.first?.isStack == false)
     #expect(store.items.first?.allBookmarkData == [secondBookmark])
+    #expect(store.totalFileCount == 1)
 }
 
 @MainActor @Test func storeDebouncesPersistenceWrites() async throws {

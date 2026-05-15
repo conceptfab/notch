@@ -105,6 +105,7 @@ struct ContentView: View {
             .clipped()
             .animation(shelfAnimation, value: windowModel.expansion)
             .animation(shelfAnimation, value: store.items.count)
+            .animation(shelfAnimation, value: store.totalFileCount)
             .onHover(perform: handleHover)
             Spacer(minLength: 0)
         }
@@ -140,7 +141,7 @@ struct ContentView: View {
 
             // Item count badge on the right — outside physical notch
             HStack(spacing: 3) {
-                Text("\(store.items.count)")
+                Text("\(store.totalFileCount)")
                     .font(.system(size: 11, weight: .bold, design: .rounded))
                     .foregroundStyle(.white.opacity(0.85))
                 Image(systemName: "doc.fill")
