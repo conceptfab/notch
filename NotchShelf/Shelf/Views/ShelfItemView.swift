@@ -5,7 +5,6 @@ import SwiftUI
 /// source for dragging the file back out into Finder.
 struct ShelfItemView: View {
     let item: ShelfItem
-    @EnvironmentObject var windowModel: ShelfWindowModel
     @ObservedObject var selection = ShelfSelection.shared
     @StateObject private var viewModel: ShelfItemViewModel
     @State private var cachedPreviewImage: NSImage?
@@ -57,7 +56,6 @@ struct ShelfItemView: View {
             }
         }
         .onChange(of: viewModel.isDropTargeted) { _, targeted in
-            windowModel.dragTargeting = targeted
             dropTargetDebounceTask?.cancel()
             dropTargetDebounceTask = Task { @MainActor in
                 try? await Task.sleep(for: .milliseconds(50))

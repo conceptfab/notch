@@ -23,6 +23,7 @@ final class DragMonitor {
     private var isDragging = false
     private var isFileDrag = false
     private var insideRegion = false
+    private var lastLocation: CGPoint?
 
     init(regionProvider: @escaping () -> CGRect) {
         self.regionProvider = regionProvider
@@ -53,6 +54,8 @@ final class DragMonitor {
             guard self.isFileDrag else { return }
 
             let location = NSEvent.mouseLocation
+            if self.lastLocation == location { return }
+            self.lastLocation = location
             self.onDragMove?(location)
 
             let nowInside = self.regionProvider().contains(location)
@@ -70,6 +73,7 @@ final class DragMonitor {
             self.isDragging = false
             self.isFileDrag = false
             self.insideRegion = false
+            self.lastLocation = nil
             self.pasteboardChangeCount = -1
             self.onDragEnd?()
         }
@@ -85,6 +89,7 @@ final class DragMonitor {
         isDragging = false
         isFileDrag = false
         insideRegion = false
+        lastLocation = nil
     }
 
     deinit {

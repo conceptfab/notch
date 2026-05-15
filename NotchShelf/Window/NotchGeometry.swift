@@ -33,6 +33,21 @@ struct NotchGeometry: Equatable {
     func contains(_ point: CGPoint) -> Bool {
         notchRect.contains(point)
     }
+
+    /// A more forgiving file-drag catch region around the notch. The physical notch
+    /// is too small for reliable drag targeting, so the region expands sideways and
+    /// downward while keeping the top anchored to the screen edge.
+    func dragCatchRegion(
+        horizontalOutset: CGFloat = ShelfMetrics.dragCatchHorizontalOutset,
+        lowerOutset: CGFloat = ShelfMetrics.dragCatchLowerOutset
+    ) -> CGRect {
+        CGRect(
+            x: notchRect.minX - horizontalOutset,
+            y: notchRect.minY - lowerOutset,
+            width: notchRect.width + horizontalOutset * 2,
+            height: notchRect.height + lowerOutset
+        )
+    }
 }
 
 extension NotchGeometry {

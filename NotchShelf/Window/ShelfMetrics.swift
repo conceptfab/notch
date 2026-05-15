@@ -23,4 +23,11 @@ enum ShelfMetrics {
     static let collapsedExtraWidth: CGFloat = 110
     /// Horizontal padding for the collapsed tray-icon and count-badge.
     static let collapsedIndicatorPadding: CGFloat = 6
+    /// Extra horizontal reach that makes file drags near the notch open the shelf.
+    static let dragCatchHorizontalOutset: CGFloat = 160
+    /// Downward reach from the notch, so the shelf opens before the pointer is pixel-perfect.
+    static let dragCatchLowerOutset: CGFloat = 96
+    /// Expanded shelf grace area to avoid flicker when the pointer crosses panel edges.
+    static let dragExitHorizontalOutset: CGFloat = 48
+    static let dragExitVerticalOutset: CGFloat = 40
 }

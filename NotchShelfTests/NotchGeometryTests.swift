@@ -40,3 +40,17 @@ import Testing
     #expect(geometry.contains(CGPoint(x: 10, y: 970)) == false)
     #expect(geometry.contains(CGPoint(x: screen.midX, y: 500)) == false)
 }
+
+@Test func dragCatchRegionExpandsNotchDownwardAndSideways() {
+    let screen = CGRect(x: 0, y: 0, width: 1512, height: 982)
+    let geometry = NotchGeometry(screenFrame: screen, safeAreaTop: 38,
+                                 auxLeftWidth: 620, auxRightWidth: 620)
+
+    let catchRegion = geometry.dragCatchRegion(horizontalOutset: 160, lowerOutset: 96)
+
+    #expect(catchRegion.maxY == geometry.notchRect.maxY)
+    #expect(catchRegion.width == geometry.notchRect.width + 320)
+    #expect(catchRegion.height == geometry.notchRect.height + 96)
+    #expect(catchRegion.contains(CGPoint(x: geometry.notchRect.midX, y: geometry.notchRect.minY - 80)))
+    #expect(catchRegion.contains(CGPoint(x: geometry.notchRect.minX - 120, y: geometry.notchRect.midY)))
+}

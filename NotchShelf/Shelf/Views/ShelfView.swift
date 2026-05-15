@@ -7,11 +7,13 @@ struct ShelfView: View {
     @EnvironmentObject var windowModel: ShelfWindowModel
     @ObservedObject var store = ShelfStore.shared
     @ObservedObject var selection = ShelfSelection.shared
+    @State private var localDropTargeting = false
     private let spacing: CGFloat = ShelfMetrics.itemSpacing
+    private var isVisuallyTargeted: Bool { windowModel.dragTargeting || localDropTargeting }
 
     var body: some View {
         panel
-            .onDrop(of: [.fileURL], isTargeted: $windowModel.dragTargeting) { providers in
+            .onDrop(of: [.fileURL], isTargeted: $localDropTargeting) { providers in
                 handleDrop(providers: providers)
             }
             .focusable()
@@ -32,7 +34,7 @@ struct ShelfView: View {
     private var panel: some View {
         RoundedRectangle(cornerRadius: 16)
             .stroke(
-                windowModel.dragTargeting
+                isVisuallyTargeted
                     ? Color.accentColor.opacity(0.9)
                     : Color.white.opacity(0.12),
                 style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [7])

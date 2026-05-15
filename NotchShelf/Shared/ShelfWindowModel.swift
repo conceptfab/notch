@@ -20,14 +20,21 @@ final class ShelfWindowModel: ObservableObject {
     func expand() {
         collapseTask?.cancel()
         collapseTask = nil
+        guard expansion != .expanded else { return }
         expansion = .expanded
     }
 
     func collapse() {
         collapseTask?.cancel()
         collapseTask = nil
-        dragTargeting = false
+        setDragTargeting(false)
+        guard expansion != .collapsed else { return }
         expansion = .collapsed
+    }
+
+    func setDragTargeting(_ isTargeting: Bool) {
+        guard dragTargeting != isTargeting else { return }
+        dragTargeting = isTargeting
     }
 
     /// Collapses after `seconds` unless cancelled first, for example by `expand()`.

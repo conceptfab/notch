@@ -30,17 +30,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let self else { return .zero }
             switch self.windowModel.expansion {
             case .collapsed:
-                return NotchGeometry.current().notchRect
+                return NotchGeometry.current().dragCatchRegion()
             case .expanded:
-                return self.windowController?.panelFrame ?? NotchGeometry.current().notchRect
+                return (self.windowController?.panelFrame ?? NotchGeometry.current().notchRect)
+                    .insetBy(
+                        dx: -ShelfMetrics.dragExitHorizontalOutset,
+                        dy: -ShelfMetrics.dragExitVerticalOutset
+                    )
             }
         })
         monitor.onEnterRegion = { [weak self] in
             self?.windowModel.expand()
-            self?.windowModel.dragTargeting = true
+            self?.windowModel.setDragTargeting(true)
         }
         monitor.onExitRegion = { [weak self] in
-            self?.windowModel.dragTargeting = false
+            self?.windowModel.setDragTargeting(false)
         }
         monitor.onDragEnd = { [weak self] in
             guard let self else { return }
