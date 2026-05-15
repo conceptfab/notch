@@ -64,13 +64,9 @@ struct ContentView: View {
 
     private var shelfContentTransition: AnyTransition {
         guard !reduceMotion else { return .opacity }
-        return .asymmetric(
-            insertion: .opacity
-                .combined(with: .move(edge: .top))
-                .combined(with: .scale(scale: 0.97, anchor: .top)),
-            removal: .opacity
-                .combined(with: .scale(scale: 0.98, anchor: .top))
-        )
+        let slide = AnyTransition.move(edge: .top)
+            .combined(with: .opacity)
+        return .asymmetric(insertion: slide, removal: slide)
     }
 
     private struct AnimationSignature: Hashable {
@@ -124,7 +120,13 @@ struct ContentView: View {
                 }
             }
             .frame(width: shapeSize.width, height: shapeSize.height)
-            .clipped()
+            .clipShape(
+                NotchShelfShape(
+                    topCornerRadius: currentTopCornerRadius,
+                    bottomCornerRadius: windowModel.expansion == .expanded
+                        ? ShelfMetrics.bottomCornerRadius : 8
+                )
+            )
             .animation(shelfAnimation, value: animationSignature)
             .onHover(perform: handleHover)
             Spacer(minLength: 0)
