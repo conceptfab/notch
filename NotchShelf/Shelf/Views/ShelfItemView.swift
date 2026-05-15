@@ -34,7 +34,7 @@ struct ShelfItemView: View {
 
     @ViewBuilder
     private var contentWithStackPresenter: some View {
-        if item.isStack {
+        if viewModel.viewData.isStack {
             itemContent.background(
                 StackFileListPanelPresenter(item: item, isPresented: $showingStackList)
             )
