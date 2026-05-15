@@ -53,6 +53,7 @@ struct ShelfItemView: View {
                 .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemBodyHeight)
                 .background(backgroundView)
                 .contentShape(Rectangle())
+                .help(viewModel.viewData.displayName)
                 .animation(.easeInOut(duration: 0.1), value: debouncedDropTarget)
                 .animation(.easeInOut(duration: 0.1), value: isSelected)
 
