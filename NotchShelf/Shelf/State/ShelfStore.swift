@@ -134,15 +134,6 @@ final class ShelfStore: ObservableObject {
         return result.url
     }
 
-    /// Resolves an item's URL, refreshing a stale bookmark immediately.
-    func resolveAndUpdateBookmark(for item: ShelfItem) -> URL? {
-        let result = Bookmark(data: item.bookmarkData).resolve()
-        if let refreshed = result.refreshedData, refreshed != item.bookmarkData {
-            updateBookmark(for: item, bookmark: refreshed)
-        }
-        return result.url
-    }
-
     func resolveFileURLs(for item: ShelfItem) -> [URL] {
         item.allBookmarkData.compactMap { Bookmark(data: $0).resolveURL() }
     }
