@@ -9,10 +9,13 @@ final class ShelfStore: ObservableObject {
     private let persistence: ShelfPersistenceService
 
     @Published private(set) var items: [ShelfItem] = [] {
-        didSet { persistence.save(items) }
+        didSet { schedulePersistenceSave() }
     }
 
     @Published var isLoading: Bool = false
+
+    private var saveTask: Task<Void, Never>?
+    private let saveDebounce: Duration = .milliseconds(200)
 
     var isEmpty: Bool { items.isEmpty }
 
@@ -23,9 +26,9 @@ final class ShelfStore: ObservableObject {
 
     init(persistence: ShelfPersistenceService = .shared) {
         self.persistence = persistence
-        // Assign without triggering the didSet save on launch.
         let loaded = persistence.load()
-        self.items = loaded
+        // Assigning to the backing storage bypasses didSet on initial load.
+        _items = Published(initialValue: loaded)
     }
 
     /// Appends new items, skipping any whose `identityKey` already exists.
@@ -136,5 +139,26 @@ final class ShelfStore: ObservableObject {
 
     func resolveFileURLs(for item: ShelfItem) -> [URL] {
         item.allBookmarkData.compactMap { Bookmark(data: $0).resolveURL() }
+    }
+
+    private func schedulePersistenceSave() {
+        saveTask?.cancel()
+        let snapshot = items
+        let persistence = self.persistence
+        let debounce = saveDebounce
+        saveTask = Task { @MainActor in
+            try? await Task.sleep(for: debounce)
+            guard !Task.isCancelled else { return }
+            await Task.detached { persistence.save(snapshot) }.value
+        }
+    }
+
+    /// Flushes any pending debounced save synchronously. Intended for tests and
+    /// `applicationWillTerminate`.
+    func flushPendingSave() async {
+        saveTask?.cancel()
+        saveTask = nil
+        let snapshot = items
+        await Task.detached { [persistence] in persistence.save(snapshot) }.value
     }
 }

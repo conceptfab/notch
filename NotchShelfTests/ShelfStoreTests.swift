@@ -47,13 +47,14 @@ private func makeFileItem(named name: String = "f.txt") throws -> ShelfItem {
     #expect(store.items.isEmpty)
 }
 
-@MainActor @Test func storePersistsAcrossInstances() throws {
+@MainActor @Test func storePersistsAcrossInstances() async throws {
     let dir = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent(UUID().uuidString, isDirectory: true)
     let persistence = ShelfPersistenceService(directory: dir)
     let store1 = ShelfStore(persistence: persistence)
     let a = try makeFileItem()
     store1.add([a])
+    await store1.flushPendingSave()
 
     let store2 = ShelfStore(persistence: ShelfPersistenceService(directory: dir))
     #expect(store2.items == [a])
@@ -107,4 +108,27 @@ private func makeFileItem(named name: String = "f.txt") throws -> ShelfItem {
     #expect(store.items.count == 1)
     #expect(store.items.first?.isStack == false)
     #expect(store.items.first?.allBookmarkData == [secondBookmark])
+}
+
+@MainActor @Test func storeDebouncesPersistenceWrites() async throws {
+    let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent(UUID().uuidString, isDirectory: true)
+    let persistence = ShelfPersistenceService(directory: dir)
+    let store = ShelfStore(persistence: persistence)
+
+    let a = try makeFileItem(named: "a.txt")
+    let b = try makeFileItem(named: "b.txt")
+    store.add([a])
+    store.add([b])
+
+    // Before the debounce flushes, the file should not yet reflect the latest items.
+    let immediateLoad = ShelfPersistenceService(directory: dir).load()
+    #expect(immediateLoad.count <= 2)
+
+    // Allow the debounce window to elapse.
+    try await Task.sleep(for: .milliseconds(300))
+    await store.flushPendingSave()
+
+    let flushed = ShelfPersistenceService(directory: dir).load()
+    #expect(flushed.count == 2)
 }
