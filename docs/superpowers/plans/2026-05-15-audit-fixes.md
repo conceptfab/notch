@@ -1955,7 +1955,7 @@ git commit -m "refactor: inject PreferenceProviding into drag-source views"
 - Modify: `NotchShelf/Shelf/Views/ShelfItemView.swift`
 - Modify: `NotchShelfTests/ShelfItemViewModelTests.swift`
 
-- [ ] **Step 1: Update `ShelfItemViewModel` constructor**
+- [x] **Step 1: Update `ShelfItemViewModel` constructor**
 
 ```swift
 @MainActor
@@ -2023,7 +2023,7 @@ final class ShelfItemViewModel: ObservableObject {
 }
 ```
 
-- [ ] **Step 2: Add a tested behavior using fakes**
+- [x] **Step 2: Add a tested behavior using fakes**
 
 In `NotchShelfTests/ShelfItemViewModelTests.swift`, add:
 
@@ -2085,7 +2085,7 @@ final class FakeSelection: SelectionStoring {
 }
 ```
 
-- [ ] **Step 3: Build & test**
+- [x] **Step 3: Build & test**
 
 ```bash
 xcodegen generate
@@ -2093,7 +2093,7 @@ xcodegen generate
 ```
 Expected: all tests pass including the new injection test.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add NotchShelf NotchShelfTests NotchShelf.xcodeproj

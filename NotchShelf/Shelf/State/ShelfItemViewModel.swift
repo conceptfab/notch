@@ -12,12 +12,19 @@ final class ShelfItemViewModel: ObservableObject {
     @Published var thumbnail: NSImage?
     @Published var isDropTargeted: Bool = false
 
-    private let selection = ShelfSelection.shared
+    private let store: ShelfStoring
+    private let selection: SelectionStoring
     private var thumbnailTask: Task<Void, Never>?
 
-    init(item: ShelfItem) {
+    init(
+        item: ShelfItem,
+        store: ShelfStoring = ShelfStore.shared,
+        selection: SelectionStoring = ShelfSelection.shared
+    ) {
         self.item = item
         self.viewData = ShelfItemViewData.build(from: item)
+        self.store = store
+        self.selection = selection
         loadThumbnail()
     }
 
@@ -63,7 +70,7 @@ final class ShelfItemViewModel: ObservableObject {
     func handleClick(event: NSEvent, view: NSView) {
         let flags = event.modifierFlags
         if flags.contains(.shift) {
-            selection.shiftSelect(to: item, in: ShelfStore.shared.items)
+            selection.shiftSelect(to: item, in: store.items)
         } else if flags.contains(.command) {
             selection.toggle(item)
         } else if flags.contains(.control) {
@@ -76,7 +83,7 @@ final class ShelfItemViewModel: ObservableObject {
     }
 
     func handleDoubleClick() {
-        for selectedItem in selection.selectedItems(in: ShelfStore.shared.items) {
+        for selectedItem in selection.selectedItems(in: store.items) {
             ShelfActionService.open(selectedItem)
         }
     }
@@ -89,7 +96,7 @@ final class ShelfItemViewModel: ObservableObject {
         addItem(to: menu, title: "Copy Path") { ShelfActionService.copyPath(self.item) }
         menu.addItem(.separator())
         addItem(to: menu, title: "Remove from Shelf") {
-            for selectedItem in self.selection.selectedItems(in: ShelfStore.shared.items) {
+            for selectedItem in self.selection.selectedItems(in: self.store.items) {
                 ShelfActionService.remove(selectedItem)
             }
         }
