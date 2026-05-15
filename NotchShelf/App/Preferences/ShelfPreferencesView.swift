@@ -5,6 +5,8 @@ struct ShelfPreferencesView: View {
     @AppStorage(UserDefaultsKey.maxSlotCount) private var maxSlotCount = 15
     @AppStorage(UserDefaultsKey.stackListGridThreshold) private var stackListGridThreshold = 5
 
+    @State private var dropZoneColor: Color = RGBAColor.defaultDropZone.color
+
     var body: some View {
         Form {
             Section("Slots") {
@@ -15,6 +17,13 @@ struct ShelfPreferencesView: View {
                     LabeledContent("Maximum slots", value: "\(maxSlotCount)")
                 }
                 Text("When two or fewer slots remain free, NotchShelf adds another row, up to the maximum.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section("Drop zone") {
+                ColorPicker("Outline color", selection: $dropZoneColor, supportsOpacity: true)
+                Text("The dashed outline that pulses when files hover the shelf.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
@@ -33,5 +42,26 @@ struct ShelfPreferencesView: View {
         .onChange(of: minSlotCount) { _, newValue in
             if maxSlotCount < newValue { maxSlotCount = newValue }
         }
+        .onAppear(perform: loadDropZoneColor)
+        .onChange(of: dropZoneColor) { _, newValue in
+            persist(dropZoneColor: newValue)
+        }
+    }
+
+    private func loadDropZoneColor() {
+        let components = UserDefaults.standard.array(forKey: UserDefaultsKey.dropZoneColor) as? [Double]
+            ?? RGBAColor.defaultDropZone.components
+        dropZoneColor = RGBAColor(components: components).color
+    }
+
+    private func persist(dropZoneColor color: Color) {
+        guard let nsColor = NSColor(color).usingColorSpace(.sRGB) else { return }
+        let rgba = RGBAColor(
+            red: Double(nsColor.redComponent),
+            green: Double(nsColor.greenComponent),
+            blue: Double(nsColor.blueComponent),
+            alpha: Double(nsColor.alphaComponent)
+        )
+        UserDefaults.standard.set(rgba.components, forKey: UserDefaultsKey.dropZoneColor)
     }
 }
