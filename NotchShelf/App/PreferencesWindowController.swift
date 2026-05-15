@@ -13,7 +13,7 @@ final class PreferencesWindowController: NSWindowController {
             backing: .buffered,
             defer: false
         )
-        window.title = "Preferencje"
+        window.title = "Preferences"
         window.contentView = hostingView
         window.isReleasedWhenClosed = false
         window.center()

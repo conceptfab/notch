@@ -32,6 +32,17 @@ import Testing
     #expect(geometry.notchHeight == 32)
 }
 
+@Test func currentReturnsZeroEquivalentGeometryWhenNoScreensAvailable() {
+    let geometry = NotchGeometry(
+        screenFrame: .zero,
+        safeAreaTop: 0,
+        auxLeftWidth: nil,
+        auxRightWidth: nil
+    )
+    #expect(geometry.notchRect == CGRect(x: -92.5, y: -32, width: 185, height: 32))
+    #expect(geometry.hasNotch == false)
+}
+
 @Test func notchGeometryContainsPointInsideAndOutside() {
     let screen = CGRect(x: 0, y: 0, width: 1512, height: 982)
     let geometry = NotchGeometry(screenFrame: screen, safeAreaTop: 38,

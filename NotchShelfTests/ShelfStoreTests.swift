@@ -156,15 +156,54 @@ private func makeFileItem(named name: String = "f.txt") throws -> ShelfItem {
     store.add([b])
 
     // Before the debounce flushes, the file should not yet reflect the latest items.
-    let immediateLoad = ShelfPersistenceService(directory: dir).load()
+    let immediateLoad = ShelfPersistenceService(directory: dir).loadSlots().compactMap(\.item)
     #expect(immediateLoad.count <= 2)
 
     // Allow the debounce window to elapse.
     try await Task.sleep(for: .milliseconds(300))
     await store.flushPendingSave()
 
-    let flushed = ShelfPersistenceService(directory: dir).load()
+    let flushed = ShelfPersistenceService(directory: dir).loadSlots().compactMap(\.item)
     #expect(flushed.count == 2)
+}
+
+@MainActor @Test func debouncedSaveCapturesLatestSnapshotAfterBurst() async throws {
+    let dir = try TempDir.make()
+    defer { try? FileManager.default.removeItem(at: dir.url) }
+    let persistence = ShelfPersistenceService(directory: dir.url)
+    let store = ShelfStore(persistence: persistence)
+
+    let firstURL = try dir.url.appendingPathComponent("a.txt").touch()
+    let secondURL = try dir.url.appendingPathComponent("b.txt").touch()
+    let first = ShelfItem(bookmarkData: try Bookmark(url: firstURL).data)
+    let second = ShelfItem(bookmarkData: try Bookmark(url: secondURL).data)
+
+    store.add([first])
+    store.add([second])
+    await store.flushPendingSave()
+
+    let persisted = persistence.loadSlots().compactMap(\.item)
+    #expect(persisted.count == 2, "Latest snapshot must be persisted, not the stale one captured at schedule time")
+}
+
+@MainActor @Test func flushSyncDoesNotWriteWhenNoWorkIsPending() async throws {
+    let dir = try TempDir.make()
+    defer { try? FileManager.default.removeItem(at: dir.url) }
+    let persistence = ShelfPersistenceService(directory: dir.url)
+    let store = ShelfStore(persistence: persistence)
+
+    let itemURL = try dir.url.appendingPathComponent("x.txt").touch()
+    let item = ShelfItem(bookmarkData: try Bookmark(url: itemURL).data)
+    store.add([item])
+    await store.flushPendingSave()
+
+    let shelfFile = dir.url.appendingPathComponent("shelf.json")
+    let before = try shelfFile.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
+    try await Task.sleep(for: .milliseconds(100))
+    store.flushPendingSaveSync()
+    let after = try shelfFile.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
+
+    #expect(after == before, "flushPendingSaveSync should not touch disk when no save is pending")
 }
 
 @MainActor @Test func storeFlushPendingSaveIsIdempotentUnderRapidMutations() async throws {
@@ -186,7 +225,7 @@ private func makeFileItem(named name: String = "f.txt") throws -> ShelfItem {
     await store.flushPendingSave()
     await store.flushPendingSave()
 
-    let loaded = ShelfPersistenceService(directory: dir).load()
+    let loaded = ShelfPersistenceService(directory: dir).loadSlots().compactMap(\.item)
     #expect(loaded.count == 3)
 }
 
@@ -201,5 +240,5 @@ private func makeFileItem(named name: String = "f.txt") throws -> ShelfItem {
     await store.flushPendingSave()
 
     #expect(store.lastError != nil)
-    #expect(store.state == .failed(store.lastError ?? ""))
+    #expect(store.lastError != nil)
 }

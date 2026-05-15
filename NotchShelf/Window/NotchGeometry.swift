@@ -54,7 +54,14 @@ extension NotchGeometry {
     /// Reads geometry from the built-in notch screen, falling back to the main screen.
     @MainActor
     static func current() -> NotchGeometry {
-        let screen = notchScreen
+        guard let screen = notchScreen else {
+            return NotchGeometry(
+                screenFrame: .zero,
+                safeAreaTop: 0,
+                auxLeftWidth: nil,
+                auxRightWidth: nil
+            )
+        }
         return NotchGeometry(
             screenFrame: screen.frame,
             safeAreaTop: screen.safeAreaInsets.top,
@@ -63,11 +70,12 @@ extension NotchGeometry {
         )
     }
 
-    /// The built-in notch screen, or the main screen as a fallback.
+    /// The built-in notch screen, or the main screen as a fallback. Returns nil
+    /// during transient display reconfiguration states where macOS reports no screens.
     @MainActor
-    static var notchScreen: NSScreen {
+    static var notchScreen: NSScreen? {
         NSScreen.screens.first(where: { $0.safeAreaInsets.top > 0 })
             ?? NSScreen.main
-            ?? NSScreen.screens.first!
+            ?? NSScreen.screens.first
     }
 }

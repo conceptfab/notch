@@ -40,14 +40,12 @@ struct Bookmark: Sendable, Equatable, Codable {
             }
             return (url, nil)
         } catch {
-            NSLog("Bookmark resolve failed: \(error.localizedDescription)")
+            AppLogger.bookmark.error("Bookmark resolve failed: \(error.localizedDescription, privacy: .public)")
             return (nil, nil)
         }
     }
 
     func resolveURL() -> URL? { resolve().url }
-
-    var refreshedData: Data? { resolve().refreshedData }
 
     /// True if the bookmark still points at an existing file.
     func validate() async -> Bool {

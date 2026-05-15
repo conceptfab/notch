@@ -2,17 +2,17 @@ import AppKit
 import SwiftUI
 
 struct PreferencesView: View {
-    @AppStorage("copyOnDrag") private var copyOnDrag = false
+    @AppStorage(UserDefaultsKey.copyOnDrag) private var copyOnDrag = false
 
     var body: some View {
         Form {
-            Toggle("Zawsze kopiuj pliki przy przeciąganiu z półki", isOn: $copyOnDrag)
+            Toggle("Always copy files when dragging off the shelf", isOn: $copyOnDrag)
 
             Divider()
 
             HStack {
                 Spacer()
-                Button("Zamknij aplikację", role: .destructive, action: quitApplication)
+                Button("Quit NotchShelf", role: .destructive, action: quitApplication)
             }
         }
         .formStyle(.grouped)

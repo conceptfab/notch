@@ -1,11 +1,5 @@
 import Foundation
 
-/// Read/write access to a single boolean preference that controls drag semantics.
-@MainActor
-protocol PreferenceProviding: AnyObject {
-    var copyOnDrag: Bool { get set }
-}
-
 /// Read-only view of the shelf's items, plus mutation helpers used by drag handlers
 /// and the action service.
 @MainActor

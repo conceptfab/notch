@@ -14,7 +14,7 @@ extension NSItemProvider {
         await withCheckedContinuation { (cont: CheckedContinuation<URL?, Never>) in
             loadItem(forTypeIdentifier: typeIdentifier, options: nil) { item, error in
                 if let error {
-                    NSLog("Error loading item for \(typeIdentifier): \(error.localizedDescription)")
+                    AppLogger.drag.error("Error loading item for \(typeIdentifier, privacy: .public): \(error.localizedDescription, privacy: .public)")
                     cont.resume(returning: nil)
                     return
                 }

@@ -7,7 +7,6 @@ import UniformTypeIdentifiers
 final class DragMonitor {
     var onEnterRegion: (() -> Void)?
     var onExitRegion: (() -> Void)?
-    var onDragMove: ((CGPoint) -> Void)?
     var onDragEnd: (() -> Void)?
 
     /// Supplies the current hit-region. Re-evaluated on every move so it can grow
@@ -56,7 +55,6 @@ final class DragMonitor {
             let location = NSEvent.mouseLocation
             if self.lastLocation == location { return }
             self.lastLocation = location
-            self.onDragMove?(location)
 
             let nowInside = self.regionProvider().contains(location)
             if nowInside && !self.insideRegion {
@@ -92,9 +90,4 @@ final class DragMonitor {
         lastLocation = nil
     }
 
-    deinit {
-        // Caller must invoke stopMonitoring() before releasing the last reference.
-        // We intentionally do not touch NSEvent monitors here because Swift 6 does
-        // not guarantee deinit runs on the MainActor.
-    }
 }

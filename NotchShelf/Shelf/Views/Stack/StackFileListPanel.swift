@@ -10,18 +10,7 @@ struct StackMenuEntry {
 
 struct StackFileListView: View {
     let item: ShelfItem
-
-    private var entries: [StackMenuEntry] {
-        item.allBookmarkData.enumerated().map { index, data in
-            let url = Bookmark(data: data).resolveURL()
-            return StackMenuEntry(
-                id: index,
-                title: url?.lastPathComponent ?? "Unknown file",
-                bookmarkData: data,
-                fileURL: url
-            )
-        }
-    }
+    @State private var entries: [StackMenuEntry] = []
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
@@ -35,19 +24,27 @@ struct StackFileListView: View {
         .frame(maxHeight: 220)
         .scrollIndicators(.never)
         .background(Color.clear)
+        .onAppear { resolveEntries() }
+        .onChange(of: item) { _, _ in resolveEntries() }
+    }
+
+    private func resolveEntries() {
+        entries = item.allBookmarkData.enumerated().map { index, data in
+            let url = Bookmark(data: data).resolveURL()
+            return StackMenuEntry(
+                id: index,
+                title: url?.lastPathComponent ?? "Unknown file",
+                bookmarkData: data,
+                fileURL: url
+            )
+        }
     }
 }
 
 struct StackFileRowView: View {
     let sourceItem: ShelfItem
     let entry: StackMenuEntry
-
-    private var icon: NSImage {
-        if let url = entry.fileURL {
-            return NSWorkspace.shared.icon(forFile: url.path)
-        }
-        return NSWorkspace.shared.icon(for: .data)
-    }
+    @State private var icon: NSImage = NSWorkspace.shared.icon(for: .data)
 
     var body: some View {
         HStack(spacing: 8) {
@@ -66,6 +63,16 @@ struct StackFileRowView: View {
         .contentShape(Rectangle())
         .overlay {
             StackFileDragHandler(sourceItem: sourceItem, entry: entry, previewImage: icon)
+        }
+        .onAppear { loadIcon() }
+        .onChange(of: entry.id) { _, _ in loadIcon() }
+    }
+
+    private func loadIcon() {
+        if let url = entry.fileURL {
+            icon = NSWorkspace.shared.icon(forFile: url.path)
+        } else {
+            icon = NSWorkspace.shared.icon(for: .data)
         }
     }
 }

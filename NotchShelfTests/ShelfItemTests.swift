@@ -53,7 +53,7 @@ private func makeTempFile(named name: String) throws -> URL {
 
     #expect(item.isStack)
     #expect(item.stackCount == 2)
-    #expect(item.fileURLs.map(\.lastPathComponent).sorted() == ["a.txt", "b.txt"])
+    #expect(item.allBookmarkData.count == 2)
 }
 
 @Test func shelfItemIdentityKeyIsStableAcrossReads() throws {

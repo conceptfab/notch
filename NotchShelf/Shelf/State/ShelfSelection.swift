@@ -15,8 +15,6 @@ final class ShelfSelection: ObservableObject, SelectionStoring {
 
     func isSelected(_ id: UUID) -> Bool { selectedIDs.contains(id) }
 
-    var hasSelection: Bool { !selectedIDs.isEmpty }
-
     func selectedItems(in allItems: [ShelfItem]) -> [ShelfItem] {
         allItems.filter { selectedIDs.contains($0.id) }
     }

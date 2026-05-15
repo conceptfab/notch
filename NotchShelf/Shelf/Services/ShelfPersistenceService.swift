@@ -24,22 +24,22 @@ final class ShelfPersistenceService: @unchecked Sendable {
         }
         try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
         fileURL = dir.appendingPathComponent("shelf.json")
-        encoder.outputFormatting = [.prettyPrinted]
     }
 
-    /// Loads the shelf. Corrupted individual entries are skipped rather than failing the whole load.
-    func load() -> [ShelfItem] {
+    /// Loads the shelf slots. Corrupted individual legacy entries are skipped rather
+    /// than failing the whole load.
+    func loadSlots() -> [ShelfSlot] {
         guard let data = try? Data(contentsOf: fileURL) else { return [] }
 
         if let items = try? decoder.decode([ShelfItem].self, from: data) {
-            return items
+            return items.map { ShelfSlot(item: $0) }
         }
         if let slots = try? decoder.decode([ShelfSlot].self, from: data) {
-            return slots.compactMap(\.item)
+            return slots
         }
 
         guard let jsonArray = (try? JSONSerialization.jsonObject(with: data)) as? [Any] else {
-            NSLog("Shelf persistence file is not a valid JSON array")
+            AppLogger.persistence.error("Shelf persistence file is not a valid JSON array")
             return []
         }
 
@@ -54,30 +54,9 @@ final class ShelfPersistenceService: @unchecked Sendable {
             }
         }
         if failed > 0 {
-            NSLog("Loaded \(valid.count) shelf items, discarded \(failed) corrupted")
+            AppLogger.persistence.info("Loaded \(valid.count) shelf items, discarded \(failed) corrupted")
         }
-        return valid
-    }
-
-    func loadSlots() -> [ShelfSlot] {
-        guard let data = try? Data(contentsOf: fileURL) else { return [] }
-
-        if let slots = try? decoder.decode([ShelfSlot].self, from: data) {
-            return slots
-        }
-        return load().map { ShelfSlot(item: $0) }
-    }
-
-    @discardableResult
-    func save(_ items: [ShelfItem]) -> Result<Void, Error> {
-        do {
-            let data = try encoder.encode(items)
-            try data.write(to: fileURL, options: .atomic)
-            return .success(())
-        } catch {
-            NSLog("Failed to save shelf items: \(error.localizedDescription)")
-            return .failure(error)
-        }
+        return valid.map { ShelfSlot(item: $0) }
     }
 
     @discardableResult
@@ -87,7 +66,7 @@ final class ShelfPersistenceService: @unchecked Sendable {
             try data.write(to: fileURL, options: .atomic)
             return .success(())
         } catch {
-            NSLog("Failed to save shelf slots: \(error.localizedDescription)")
+            AppLogger.persistence.error("Failed to save shelf slots: \(error.localizedDescription, privacy: .public)")
             return .failure(error)
         }
     }

@@ -36,7 +36,7 @@ final class NotchWindowController: NSObject {
     /// Centers the panel horizontally on the notch screen with its top flush to the
     /// screen's top edge.
     func reposition() {
-        let screen = NotchGeometry.notchScreen
+        guard let screen = NotchGeometry.notchScreen else { return }
         let geometry = NotchGeometry.current()
         let frame = screen.frame
         let size = ShelfMetrics.windowSize

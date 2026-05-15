@@ -23,17 +23,8 @@ final class ShelfStore: ObservableObject, ShelfStoring {
 
     var items: [ShelfItem] { slots.compactMap(\.item) }
 
-    var isEmpty: Bool { items.isEmpty }
-
     var totalFileCount: Int {
         items.reduce(0) { $0 + $1.stackCount }
-    }
-
-    /// Composite load state derived from `items` and `isLoading`.
-    var state: Loadable<[ShelfItem]> {
-        if isLoading && items.isEmpty { return .loading }
-        if let lastError { return .failed(lastError) }
-        return .loaded(items)
     }
 
     /// Deferred bookmark refreshes, applied off the current run loop turn so we never
@@ -114,12 +105,6 @@ final class ShelfStore: ObservableObject, ShelfStoring {
         slots = Self.paddedSlots(updated)
     }
 
-    /// Immediately replaces an item's bookmark (used for user-initiated actions).
-    func updateBookmark(for item: ShelfItem, bookmark: Data) {
-        guard let idx = slots.firstIndex(where: { $0.item?.id == item.id }) else { return }
-        slots[idx].item?.bookmarkData = bookmark
-    }
-
     /// Queues a stale-bookmark refresh to be applied after the current update cycle.
     private func scheduleDeferredBookmarkUpdate(for item: ShelfItem, bookmark: Data) {
         pendingBookmarkUpdates[item.id] = bookmark
@@ -178,16 +163,28 @@ final class ShelfStore: ObservableObject, ShelfStoring {
     }
 
     private static func validateInParallel(_ snapshot: [ShelfItem]) async -> Set<ShelfItem.ID> {
-        await withTaskGroup(of: (ShelfItem.ID, Bool).self) { group in
-            for item in snapshot {
+        let maxConcurrency = 8
+        return await withTaskGroup(of: (ShelfItem.ID, Bool).self) { group in
+            var iterator = snapshot.makeIterator()
+            var inFlight = 0
+
+            while inFlight < maxConcurrency, let item = iterator.next() {
                 group.addTask {
                     let isValid = await Bookmark(data: item.bookmarkData).validate()
                     return (item.id, isValid)
                 }
+                inFlight += 1
             }
+
             var validIDs: Set<ShelfItem.ID> = []
-            for await (id, isValid) in group where isValid {
-                validIDs.insert(id)
+            while let (id, isValid) = await group.next() {
+                if isValid { validIDs.insert(id) }
+                if let next = iterator.next() {
+                    group.addTask {
+                        let isValid = await Bookmark(data: next.bookmarkData).validate()
+                        return (next.id, isValid)
+                    }
+                }
             }
             return validIDs
         }
@@ -208,21 +205,21 @@ final class ShelfStore: ObservableObject, ShelfStoring {
 
     private func schedulePersistenceSave() {
         saveTask?.cancel()
-        let snapshot = slots
         let persistence = self.persistence
         let debounce = saveDebounce
         saveTask = Task { @MainActor [weak self] in
             try? await Task.sleep(for: debounce)
-            guard !Task.isCancelled else { return }
-            if let inflightWrite = self?.inflightWrite {
+            guard !Task.isCancelled, let self else { return }
+            if let inflightWrite = self.inflightWrite {
                 _ = await inflightWrite.value
             }
+            let snapshot = self.slots
             let write = Task.detached {
                 persistence.save(snapshot).errorMessage
             }
-            self?.inflightWrite = write
-            self?.lastError = await write.value
-            if self?.inflightWrite == write { self?.inflightWrite = nil }
+            self.inflightWrite = write
+            self.lastError = await write.value
+            if self.inflightWrite == write { self.inflightWrite = nil }
         }
     }
 
@@ -248,20 +245,26 @@ final class ShelfStore: ObservableObject, ShelfStoring {
     /// Must be called from the main actor.
     nonisolated func flushPendingSaveSync() {
         MainActor.assumeIsolated {
+            let hadSaveTask = saveTask != nil
             saveTask?.cancel()
             saveTask = nil
-            // Wait inline for any in-flight detached write to settle so the
-            // synchronous save below is unambiguously the last to land on disk.
+            var shouldWriteSynchronously = hadSaveTask
             if let inflight = inflightWrite {
                 let semaphore = DispatchSemaphore(value: 0)
                 Task.detached {
                     _ = await inflight.value
                     semaphore.signal()
                 }
-                _ = semaphore.wait(timeout: .now() + 2.0)
+                let result = semaphore.wait(timeout: .now() + 0.5)
+                if result == .timedOut {
+                    AppLogger.shelf.error("flushPendingSaveSync: in-flight write did not settle within 500ms; falling through to synchronous save")
+                    shouldWriteSynchronously = true
+                }
                 inflightWrite = nil
             }
-            lastError = persistence.save(slots).errorMessage
+            if shouldWriteSynchronously {
+                lastError = persistence.save(slots).errorMessage
+            }
         }
     }
 

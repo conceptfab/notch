@@ -64,6 +64,20 @@ struct ContentView: View {
         )
     }
 
+    private struct AnimationSignature: Hashable {
+        let expansion: ShelfWindowModel.Expansion
+        let itemCount: Int
+        let totalFileCount: Int
+    }
+
+    private var animationSignature: AnimationSignature {
+        AnimationSignature(
+            expansion: windowModel.expansion,
+            itemCount: store.items.count,
+            totalFileCount: store.totalFileCount
+        )
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             ZStack {
@@ -103,9 +117,7 @@ struct ContentView: View {
             }
             .frame(width: shapeSize.width, height: shapeSize.height)
             .clipped()
-            .animation(shelfAnimation, value: windowModel.expansion)
-            .animation(shelfAnimation, value: store.items.count)
-            .animation(shelfAnimation, value: store.totalFileCount)
+            .animation(shelfAnimation, value: animationSignature)
             .onHover(perform: handleHover)
             Spacer(minLength: 0)
         }
@@ -136,6 +148,8 @@ struct ContentView: View {
                     RoundedRectangle(cornerRadius: 6, style: .continuous)
                         .fill(.white.opacity(0.08))
                 )
+                .accessibilityLabel("NotchShelf")
+                .accessibilityHidden(false)
 
             Spacer(minLength: 0)
 
@@ -154,6 +168,8 @@ struct ContentView: View {
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
                     .fill(.white.opacity(0.08))
             )
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(store.totalFileCount) files on shelf")
         }
         .padding(.horizontal, ShelfMetrics.collapsedIndicatorPadding + ShelfMetrics.topCornerRadius)
     }
@@ -164,14 +180,15 @@ struct ContentView: View {
         VStack {
             HStack {
                 Spacer()
-                Button("Preferencje", systemImage: "gearshape.fill", action: showPreferences)
+                Button("Preferences", systemImage: "gearshape.fill", action: showPreferences)
                     .labelStyle(.iconOnly)
                     .buttonStyle(.plain)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.88))
                     .frame(width: 28, height: 28)
                     .contentShape(Rectangle())
-                    .help("Preferencje")
+                    .help("Preferences")
+                    .accessibilityLabel("Preferences")
             }
             Spacer()
         }

@@ -9,6 +9,7 @@ import SwiftUI
 final class ShelfItemViewModel: ObservableObject {
     @Published private(set) var item: ShelfItem
     @Published private(set) var viewData: ShelfItemViewData
+    @Published private(set) var icon: NSImage = NSWorkspace.shared.icon(for: .data)
     @Published var thumbnail: NSImage?
     @Published var isDropTargeted: Bool = false
 
@@ -23,6 +24,7 @@ final class ShelfItemViewModel: ObservableObject {
     ) {
         self.item = item
         self.viewData = ShelfItemViewData.build(from: item)
+        self.icon = Self.icon(for: item)
         self.store = store
         self.selection = selection
         loadThumbnail()
@@ -32,18 +34,23 @@ final class ShelfItemViewModel: ObservableObject {
         guard self.item != item else { return }
         self.item = item
         self.viewData = ShelfItemViewData.build(from: item)
+        self.icon = Self.icon(for: item)
         thumbnail = nil
         loadThumbnail()
     }
 
     var isSelected: Bool { selection.isSelected(item.id) }
 
-    /// The file's Finder icon, used as a fallback before the thumbnail loads.
-    var icon: NSImage {
+    private static func icon(for item: ShelfItem) -> NSImage {
         if let url = item.fileURL {
             return NSWorkspace.shared.icon(forFile: url.path)
         }
         return NSWorkspace.shared.icon(for: .data)
+    }
+
+    func loadThumbnailIfNeeded() {
+        guard thumbnail == nil, thumbnailTask == nil else { return }
+        loadThumbnail()
     }
 
     func loadThumbnail() {

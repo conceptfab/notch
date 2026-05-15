@@ -18,14 +18,17 @@ private func makeItem() throws -> ShelfItem {
 
 @Test func persistenceLoadReturnsEmptyWhenNoFile() {
     let service = ShelfPersistenceService(directory: tempDir())
-    #expect(service.load().isEmpty)
+    #expect(service.loadSlots().isEmpty)
 }
 
-@Test func persistenceSaveThenLoadRoundTrips() throws {
-    let service = ShelfPersistenceService(directory: tempDir())
+@Test func persistenceLoadsLegacyItemsFormat() throws {
+    let dir = tempDir()
     let items = [try makeItem(), try makeItem()]
-    service.save(items)
-    let loaded = service.load()
+    let data = try JSONEncoder().encode(items)
+    try data.write(to: dir.appendingPathComponent("shelf.json"))
+
+    let legacyService = ShelfPersistenceService(directory: dir)
+    let loaded = legacyService.loadSlots().compactMap(\.item)
     #expect(loaded == items)
 }
 
@@ -41,7 +44,6 @@ private func makeItem() throws -> ShelfItem {
     service.save(slots)
 
     #expect(service.loadSlots() == slots)
-    #expect(service.load() == [item])
 }
 
 @Test func persistenceSkipsCorruptedEntries() throws {
@@ -55,6 +57,6 @@ private func makeItem() throws -> ShelfItem {
     let mixedData = try JSONSerialization.data(withJSONObject: mixed)
     try mixedData.write(to: dir.appendingPathComponent("shelf.json"))
 
-    let loaded = service.load()
+    let loaded = service.loadSlots().compactMap(\.item)
     #expect(loaded == [good])
 }

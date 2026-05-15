@@ -30,10 +30,6 @@ struct ShelfItem: Identifiable, Codable, Equatable, Sendable {
 
     var stackCount: Int { allBookmarkData.count }
 
-    var fileURLs: [URL] {
-        allBookmarkData.compactMap { Bookmark(data: $0).resolveURL() }
-    }
-
     /// Current location of the file, or nil if the bookmark can no longer be resolved.
     var fileURL: URL? {
         Bookmark(data: bookmarkData).resolveURL()

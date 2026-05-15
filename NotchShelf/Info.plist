@@ -18,7 +18,9 @@
     <string>$(MACOSX_DEPLOYMENT_TARGET)</string>
     <key>LSUIElement</key>
     <true/>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.utilities</string>
     <key>NSHumanReadableCopyright</key>
-    <string>NotchShelf</string>
+    <string>Copyright © 2026 Michał Kleniewski. All rights reserved.</string>
 </dict>
 </plist>

@@ -17,3 +17,9 @@ import Testing
     )
     #expect(image != nil)
 }
+
+@Test func thumbnailServiceClearCacheIsCallable() async {
+    let service = ThumbnailService.shared
+    await service.clearCache()
+    await service.clearCache()
+}

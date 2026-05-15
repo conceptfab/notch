@@ -10,6 +10,7 @@ struct ShelfItemView: View {
     @State private var cachedPreviewImage: NSImage?
     @State private var debouncedDropTarget = false
     @State private var dropTargetDebounceTask: Task<Void, Never>?
+    @State private var dragPreviewTask: Task<Void, Never>?
     @State private var showingStackList = false
 
     private var isSelected: Bool { viewModel.isSelected }
@@ -20,6 +21,21 @@ struct ShelfItemView: View {
     }
 
     var body: some View {
+        contentWithStackPresenter
+    }
+
+    @ViewBuilder
+    private var contentWithStackPresenter: some View {
+        if item.isStack {
+            itemContent.background(
+                StackFileListPanelPresenter(item: item, isPresented: $showingStackList)
+            )
+        } else {
+            itemContent
+        }
+    }
+
+    private var itemContent: some View {
         ZStack {
             VStack(alignment: .center, spacing: 2) {
                 iconView
@@ -50,11 +66,6 @@ struct ShelfItemView: View {
                 }
             }
         }
-        .background {
-            if item.isStack {
-                StackFileListPanelPresenter(item: item, isPresented: $showingStackList)
-            }
-        }
         .onChange(of: viewModel.isDropTargeted) { _, targeted in
             dropTargetDebounceTask?.cancel()
             dropTargetDebounceTask = Task { @MainActor in
@@ -64,19 +75,19 @@ struct ShelfItemView: View {
             }
         }
         .onAppear {
-            viewModel.loadThumbnail()
-            Task { @MainActor in
-                if cachedPreviewImage == nil {
-                    cachedPreviewImage = await renderDragPreview()
-                }
-            }
+            viewModel.loadThumbnailIfNeeded()
+            refreshDragPreview()
         }
         .onChange(of: viewModel.thumbnail) { _, _ in
-            Task { cachedPreviewImage = await renderDragPreview() }
+            refreshDragPreview()
         }
         .onChange(of: item) { _, updated in
             viewModel.update(item: updated)
-            Task { cachedPreviewImage = await renderDragPreview() }
+            refreshDragPreview()
+        }
+        .onDisappear {
+            dropTargetDebounceTask?.cancel()
+            dragPreviewTask?.cancel()
         }
     }
 
@@ -114,6 +125,7 @@ struct ShelfItemView: View {
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("Show stack files")
     }
 
     private var textView: some View {
@@ -162,5 +174,14 @@ struct ShelfItemView: View {
         let renderer = ImageRenderer(content: content)
         renderer.scale = NSScreen.main?.backingScaleFactor ?? 2.0
         return renderer.nsImage ?? (viewModel.thumbnail ?? viewModel.icon)
+    }
+
+    private func refreshDragPreview() {
+        dragPreviewTask?.cancel()
+        dragPreviewTask = Task { @MainActor in
+            let rendered = await renderDragPreview()
+            guard !Task.isCancelled else { return }
+            cachedPreviewImage = rendered
+        }
     }
 }

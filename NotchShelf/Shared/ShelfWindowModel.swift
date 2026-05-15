@@ -4,7 +4,7 @@ import SwiftUI
 /// the shared animation curve.
 @MainActor
 final class ShelfWindowModel: ObservableObject {
-    enum Expansion: Equatable {
+    enum Expansion: Hashable {
         case collapsed
         case expanded
     }
