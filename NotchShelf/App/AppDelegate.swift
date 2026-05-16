@@ -120,12 +120,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
         }
+        distributedEventObservers.append(
+            distributedCenter.addObserver(
+                forName: nil,
+                object: nil,
+                queue: .main
+            ) { [weak self] notification in
+                let notificationName = notification.name.rawValue
+                Task { @MainActor [weak self] in
+                    guard let name = notificationName.nonEmpty,
+                          Self.isLikelyNotificationDistributedEvent(name)
+                    else { return }
+                    self?.triggerSystemEventGlowIfEnabled(reason: name)
+                }
+            }
+        )
 
         let monitor = SystemNotificationWindowMonitor { [weak self] in
             self?.triggerSystemEventGlowIfEnabled(reason: "notification-window")
         }
         monitor.start()
         systemNotificationWindowMonitor = monitor
+    }
+
+    static func isLikelyNotificationDistributedEvent(_ name: String) -> Bool {
+        let lowercasedName = name.lowercased()
+        return lowercasedName.contains("notificationcenter")
+            || lowercasedName.contains("usernotification")
+            || lowercasedName.contains("customalerts")
+            || lowercasedName.contains("banner")
     }
 
     private func tearDownSystemEventGlowObservers() {
@@ -165,5 +188,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if storedPref != actual {
             UserDefaults.standard.set(actual, forKey: UserDefaultsKey.launchAtLogin)
         }
+    }
+}
+
+private extension String {
+    var nonEmpty: String? {
+        isEmpty ? nil : self
     }
 }

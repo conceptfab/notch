@@ -34,6 +34,7 @@ struct StackFileDragHandler: NSViewRepresentable {
         private var didStartDrag = false
         private var draggedSourceItem: ShelfItem?
         private var draggedBookmarkData = Data()
+        private var lastDragContext: NSDraggingContext = .withinApplication
 
         override func mouseDown(with event: NSEvent) {
             mouseDownEvent = event
@@ -68,15 +69,11 @@ struct StackFileDragHandler: NSViewRepresentable {
         @discardableResult
         private func startDragSession(with event: NSEvent) -> Bool {
             guard let url = Bookmark(data: bookmarkData).resolveURL() else { return false }
-            let pasteboardItem = NSPasteboardItem()
-            pasteboardItem.setString(url.absoluteString, forType: .fileURL)
-            pasteboardItem.setString(url.path, forType: .string)
-
             if url.startAccessingSecurityScopedResource() {
                 draggedURL = url
             }
 
-            let draggingItem = NSDraggingItem(pasteboardWriter: pasteboardItem)
+            let draggingItem = NSDraggingItem(pasteboardWriter: url as NSURL)
             draggingItem.setDraggingFrame(
                 NSRect(origin: .zero, size: previewImage.size),
                 contents: previewImage
@@ -92,9 +89,14 @@ struct StackFileDragHandler: NSViewRepresentable {
             _ session: NSDraggingSession,
             sourceOperationMaskFor context: NSDraggingContext
         ) -> NSDragOperation {
-            ShelfDragOperationPolicy.sourceOperationMask(
+            lastDragContext = context
+            let keepAfterExternalDrop = sourceItem.map {
+                ShelfStore.shared.keepsItemAfterExternalDrop($0)
+            } ?? false
+            return ShelfDragOperationPolicy.sourceOperationMask(
                 copyOnDrag: UserDefaults.standard.bool(forKey: UserDefaultsKey.copyOnDrag),
-                context: context
+                context: context,
+                keepAfterExternalDrop: keepAfterExternalDrop
             )
         }
 
@@ -107,8 +109,12 @@ struct StackFileDragHandler: NSViewRepresentable {
             endedAt screenPoint: NSPoint,
             operation: NSDragOperation
         ) {
-            if ShelfDragOperationPolicy.shouldRemoveFromShelf(after: operation),
-               let draggedSourceItem {
+            if let draggedSourceItem,
+               ShelfDragOperationPolicy.shouldRemoveFromShelf(
+                   after: operation,
+                   context: lastDragContext,
+                   keepAfterExternalDrop: ShelfStore.shared.keepsItemAfterExternalDrop(draggedSourceItem)
+               ) {
                 ShelfStore.shared.remove(bookmarkData: draggedBookmarkData, from: draggedSourceItem)
                 ShelfSelection.shared.clear()
             }
@@ -118,6 +124,7 @@ struct StackFileDragHandler: NSViewRepresentable {
             draggedSourceItem = nil
             draggedBookmarkData = Data()
             didStartDrag = false
+            lastDragContext = .withinApplication
         }
 
         func ignoreModifierKeys(for session: NSDraggingSession) -> Bool { false }

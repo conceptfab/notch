@@ -112,7 +112,7 @@ struct ContentView: View {
                 )
                     .frame(width: currentShapeSize.width, height: currentShapeSize.height)
                     .transition(.opacity)
-                    .zIndex(0)
+                    .zIndex(20)
             }
 
             VStack(spacing: 0) {

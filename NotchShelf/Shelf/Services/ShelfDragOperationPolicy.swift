@@ -1,12 +1,17 @@
 import AppKit
 
 enum ShelfDragOperationPolicy {
-    /// Outside the app we only ever offer `.copy`. NotchShelf holds bookmarks,
-    /// not files, so Finder must never be invited to relocate the source file.
-    static func sourceOperationMask(copyOnDrag: Bool, context: NSDraggingContext) -> NSDragOperation {
+    /// Finder should be allowed to perform a real file move unless this drag is
+    /// explicitly in copy mode. NotchShelf stores bookmarks, but it vends the
+    /// original file URL back to AppKit for drag-out.
+    static func sourceOperationMask(
+        copyOnDrag: Bool,
+        context: NSDraggingContext,
+        keepAfterExternalDrop: Bool = false
+    ) -> NSDragOperation {
         switch context {
         case .outsideApplication:
-            return [.copy]
+            return keepAfterExternalDrop ? [.copy] : [.copy, .move]
         case .withinApplication:
             return copyOnDrag ? [.copy] : [.copy, .move, .generic]
         @unknown default:
@@ -19,13 +24,11 @@ enum ShelfDragOperationPolicy {
         context: NSDraggingContext,
         keepAfterExternalDrop: Bool = false
     ) -> Bool {
-        if operation.contains(.move) { return true }
-
         switch context {
         case .outsideApplication:
-            return operation.contains(.copy) && !keepAfterExternalDrop
+            return (operation.contains(.copy) || operation.contains(.move)) && !keepAfterExternalDrop
         case .withinApplication:
-            return false
+            return operation.contains(.move)
         @unknown default:
             return false
         }

@@ -8,7 +8,15 @@ final class SystemNotificationWindowMonitor {
     private static let notificationBundleIdentifiers: Set<String> = [
         "com.apple.notificationcenter",
         "com.apple.notificationcenterui",
-        "com.apple.UserNotificationCenter"
+        "com.apple.UserNotificationCenter",
+        "com.apple.usernotifications.usernotificationcenter"
+    ]
+
+    private static let notificationOwnerNames: Set<String> = [
+        "Notification Center",
+        "NotificationCenter",
+        "UserNotificationCenter",
+        "User Notification Center"
     ]
 
     private let interval: TimeInterval
@@ -66,17 +74,19 @@ final class SystemNotificationWindowMonitor {
 
     static func isNotificationWindow(_ windowInfo: [String: Any]) -> Bool {
         guard let pidNumber = windowInfo[kCGWindowOwnerPID as String] as? NSNumber,
-              let app = NSRunningApplication(processIdentifier: pidNumber.int32Value),
-              let bundleIdentifier = app.bundleIdentifier,
               let bounds = windowInfo[kCGWindowBounds as String] as? [String: Any]
         else {
             return false
         }
 
+        let app = NSRunningApplication(processIdentifier: pidNumber.int32Value)
+        let bundleIdentifier = app?.bundleIdentifier
+        let ownerName = windowInfo[kCGWindowOwnerName as String] as? String
         let layer = (windowInfo[kCGWindowLayer as String] as? NSNumber)?.intValue ?? 0
         let alpha = (windowInfo[kCGWindowAlpha as String] as? NSNumber)?.doubleValue ?? 1.0
         return isLikelyNotificationWindow(
             bundleIdentifier: bundleIdentifier,
+            ownerName: ownerName,
             bounds: bounds,
             layer: layer,
             alpha: alpha
@@ -84,20 +94,60 @@ final class SystemNotificationWindowMonitor {
     }
 
     static func isLikelyNotificationWindow(
-        bundleIdentifier: String,
+        bundleIdentifier: String?,
+        ownerName: String? = nil,
         bounds: [String: Any],
         layer: Int,
         alpha: Double
     ) -> Bool {
-        guard notificationBundleIdentifiers.contains(bundleIdentifier),
-              alpha > 0.05,
+        guard alpha > 0.05,
               layer >= 0
         else {
             return false
         }
 
+        if isLikelyTopRightBanner(bounds: bounds, layer: layer) {
+            return true
+        }
+
+        guard isNotificationOwner(bundleIdentifier: bundleIdentifier, ownerName: ownerName) else {
+            return false
+        }
+
         let width = (bounds["Width"] as? NSNumber)?.doubleValue ?? 0
         let height = (bounds["Height"] as? NSNumber)?.doubleValue ?? 0
-        return width >= 180 && height >= 40
+        return (180...620).contains(width) && (40...260).contains(height)
+    }
+
+    static func isLikelyTopRightBanner(bounds: [String: Any], layer: Int) -> Bool {
+        let x = (bounds["X"] as? NSNumber)?.doubleValue ?? -1
+        let y = (bounds["Y"] as? NSNumber)?.doubleValue ?? -1
+        let width = (bounds["Width"] as? NSNumber)?.doubleValue ?? 0
+        let height = (bounds["Height"] as? NSNumber)?.doubleValue ?? 0
+
+        return layer >= 20
+            && x >= 300
+            && (0...220).contains(y)
+            && (180...620).contains(width)
+            && (40...260).contains(height)
+    }
+
+    private static func isNotificationOwner(bundleIdentifier: String?, ownerName: String?) -> Bool {
+        if let bundleIdentifier {
+            let normalizedBundleID = bundleIdentifier.lowercased()
+            if notificationBundleIdentifiers.contains(bundleIdentifier)
+                || normalizedBundleID.contains("notificationcenter")
+                || normalizedBundleID.contains("usernotification") {
+                return true
+            }
+        }
+
+        guard let ownerName else { return false }
+        let normalizedOwnerName = ownerName
+            .replacingOccurrences(of: " ", with: "")
+            .lowercased()
+        return notificationOwnerNames.contains(ownerName)
+            || normalizedOwnerName.contains("notificationcenter")
+            || normalizedOwnerName.contains("usernotification")
     }
 }

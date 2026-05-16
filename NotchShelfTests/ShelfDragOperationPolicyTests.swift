@@ -2,12 +2,12 @@ import AppKit
 import Testing
 @testable import NotchShelf
 
-@Test func shelfDragOperationPolicyUsesCopyOnlyWhenPreferenceIsEnabled() {
+@Test func shelfDragOperationPolicyUsesCopyOnlyWithinAppWhenPreferenceIsEnabled() {
     #expect(
         ShelfDragOperationPolicy.sourceOperationMask(
             copyOnDrag: true,
             context: .outsideApplication
-        ) == [.copy]
+        ) == [.copy, .move]
     )
     #expect(
         ShelfDragOperationPolicy.sourceOperationMask(
@@ -22,7 +22,7 @@ import Testing
         ShelfDragOperationPolicy.sourceOperationMask(
             copyOnDrag: false,
             context: .outsideApplication
-        ) == [.copy]
+        ) == [.copy, .move]
     )
     #expect(
         ShelfDragOperationPolicy.sourceOperationMask(
@@ -66,12 +66,12 @@ import Testing
     )
 }
 
-@Test func outsideApplicationAlwaysReturnsCopyOnly() {
-    let copyOnly = ShelfDragOperationPolicy.sourceOperationMask(
+@Test func outsideApplicationAllowsFinderMoveByDefault() {
+    let moveCapable = ShelfDragOperationPolicy.sourceOperationMask(
         copyOnDrag: false,
         context: .outsideApplication
     )
-    #expect(copyOnly == [.copy])
+    #expect(moveCapable == [.copy, .move])
 }
 
 @Test func outsideApplicationIgnoresCopyOnDragPreference() {
@@ -79,7 +79,35 @@ import Testing
         copyOnDrag: true,
         context: .outsideApplication
     )
-    #expect(copyOn == [.copy])
+    #expect(copyOn == [.copy, .move])
+}
+
+@Test func outsideApplicationCopyModeReturnsCopyOnly() {
+    let copyOnly = ShelfDragOperationPolicy.sourceOperationMask(
+        copyOnDrag: false,
+        context: .outsideApplication,
+        keepAfterExternalDrop: true
+    )
+    #expect(copyOnly == [.copy])
+}
+
+@Test func outsideApplicationMoveRemovesShelfEntryAfterSuccessfulDrop() {
+    #expect(
+        ShelfDragOperationPolicy.shouldRemoveFromShelf(
+            after: .move,
+            context: .outsideApplication
+        )
+    )
+}
+
+@Test func outsideApplicationMoveKeepsShelfEntryWhenSlotCopyModeIsEnabled() {
+    #expect(
+        !ShelfDragOperationPolicy.shouldRemoveFromShelf(
+            after: .move,
+            context: .outsideApplication,
+            keepAfterExternalDrop: true
+        )
+    )
 }
 
 @Test func withinApplicationKeepsMoveByDefault() {

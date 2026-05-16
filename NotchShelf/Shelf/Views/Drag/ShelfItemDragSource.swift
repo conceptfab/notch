@@ -41,6 +41,7 @@ struct DraggableClickHandler: NSViewRepresentable {
         private var draggedURLs: [URL] = []
         private var draggedItems: [ShelfItem] = []
         private var draggedItemIDsToKeepAfterExternalDrop: Set<ShelfItem.ID> = []
+        private var dragSessionShouldCopyOnlyOutsideApp = false
         private var didStartDrag = false
         private var lastDragContext: NSDraggingContext = .withinApplication
 
@@ -90,6 +91,7 @@ struct DraggableClickHandler: NSViewRepresentable {
                     .filter { ShelfStore.shared.keepsItemAfterExternalDrop($0) }
                     .map(\.id)
             )
+            dragSessionShouldCopyOnlyOutsideApp = !draggedItemIDsToKeepAfterExternalDrop.isEmpty
 
             var draggingItems: [NSDraggingItem] = []
             for dragItem in itemsToDrag {
@@ -102,8 +104,8 @@ struct DraggableClickHandler: NSViewRepresentable {
                     continue
                 }
                 for url in urls {
-                    guard let pasteboardItem = pasteboardItem(for: url) else { continue }
-                    draggingItems.append(draggingItem(for: pasteboardItem))
+                    guard let pasteboardWriter = pasteboardWriter(for: url) else { continue }
+                    draggingItems.append(draggingItem(for: pasteboardWriter))
                 }
             }
             guard !draggingItems.isEmpty else { return false }
@@ -111,8 +113,8 @@ struct DraggableClickHandler: NSViewRepresentable {
             return true
         }
 
-        private func draggingItem(for pasteboardItem: NSPasteboardItem) -> NSDraggingItem {
-            let draggingItem = NSDraggingItem(pasteboardWriter: pasteboardItem)
+        private func draggingItem(for pasteboardWriter: NSPasteboardWriting) -> NSDraggingItem {
+            let draggingItem = NSDraggingItem(pasteboardWriter: pasteboardWriter)
             let image = dragPreviewImage ?? viewModel?.icon ?? NSImage()
             draggingItem.setDraggingFrame(
                 NSRect(origin: .zero, size: image.size),
@@ -142,14 +144,11 @@ struct DraggableClickHandler: NSViewRepresentable {
             return pasteboardItem
         }
 
-        private func pasteboardItem(for url: URL) -> NSPasteboardItem? {
-            let pasteboardItem = NSPasteboardItem()
+        private func pasteboardWriter(for url: URL) -> NSPasteboardWriting? {
             if url.startAccessingSecurityScopedResource() {
                 draggedURLs.append(url)
             }
-            pasteboardItem.setString(url.absoluteString, forType: .fileURL)
-            pasteboardItem.setString(url.path, forType: .string)
-            return pasteboardItem
+            return url as NSURL
         }
 
         func draggingSession(
@@ -159,7 +158,8 @@ struct DraggableClickHandler: NSViewRepresentable {
             lastDragContext = context
             return ShelfDragOperationPolicy.sourceOperationMask(
                 copyOnDrag: UserDefaults.standard.bool(forKey: UserDefaultsKey.copyOnDrag),
-                context: context
+                context: context,
+                keepAfterExternalDrop: dragSessionShouldCopyOnlyOutsideApp
             )
         }
 
@@ -173,7 +173,7 @@ struct DraggableClickHandler: NSViewRepresentable {
             operation: NSDragOperation
         ) {
             if operation.contains(.move) {
-                AppLogger.drag.notice("Drag session ended with .move operation (within-app only path)")
+                AppLogger.drag.notice("Drag session ended with .move operation")
             }
             removeDraggedItemsFromShelf(after: operation)
             ShelfSelection.shared.endDrag()
@@ -181,6 +181,7 @@ struct DraggableClickHandler: NSViewRepresentable {
             draggedURLs.removeAll()
             draggedItems.removeAll()
             draggedItemIDsToKeepAfterExternalDrop.removeAll()
+            dragSessionShouldCopyOnlyOutsideApp = false
             didStartDrag = false
             lastDragContext = .withinApplication
         }
