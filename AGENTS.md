@@ -1,13 +1,13 @@
 <claude-mem-context>
 # Memory Context
 
-# [notch] recent context, 2026-05-16 2:25pm GMT+2
+# [notch] recent context, 2026-05-16 2:28pm GMT+2
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (18,893t read) | 390,232t work | 95% savings
+Stats: 50 obs (17,415t read) | 556,430t work | 97% savings
 
 ### May 15, 2026
 S1506 Fix stack file list panel being half-obscured by the notch application window (May 15 at 9:56 PM)
@@ -15,14 +15,6 @@ S1507 Fix stack file list panel positioning — panel top edge was hidden under 
 S1508 Restore blue dashed border frame to ShelfView; investigate sharp corners on frame bottom edge (May 15 at 10:34 PM)
 S1509 Disable default macOS focus ring on ShelfView panel while maintaining keyboard functionality (May 15 at 10:39 PM)
 S1510 Restore status icons (tray icon + file count badge) visible on the collapsed shelf notch (May 15 at 10:41 PM)
-3792 11:20p 🔵 NotchShelf — Additional Code Issues Found During Deep Audit
-3793 11:21p 🔵 Build Environment: Xcode 26.5 / Swift 6.3.2 / macOS 26 Target
-3794 11:22p 🟣 Added Liquid Glass Compatibility Layer and Shelf Button Styles
-3795 " 🔄 Shelf UI Buttons and Drop Zone Modernized with Glass Styles
-3796 " 🔄 ShelfItemView Gains Hover State, Better Button Styles, and Accessibility Hints
-3797 11:23p 🔴 ShelfItemView Button Initializer Cleanup — Remove Empty Trailing Closure
-3798 " 🔄 Stack List Panel, Grid Cells, Placeholder, and Drag Preview Modernized
-3799 " 🔄 ContentView Notch Shape Gets Glass Rim, Bottom Vignette, and Badge Capsule
 3800 11:24p 🔴 ContentView Notch Rim Fixed: strokeBorder → stroke on Custom Shape
 3801 " 🔄 Preferences Window Polished — Material Background, Sizing, and Label Improvements
 3802 " 🔄 PreferencesView Adopts Modern Tab API with macOS 15+ / Legacy Fallback
@@ -71,6 +63,14 @@ S1515 Restore status icons on collapsed shelf notch — active visual debugging,
 3845 " 🟣 SlotCountPolicy: Dynamic Width Scaling with Minimum-4 Semantics
 3855 2:21p 🟣 Slot icons switched from QuickLook thumbnails to NSWorkspace real icons
 3856 " ⚖️ Notch app collapsed UI width formula: notchWidth + 2× notchHeight
+3863 2:27p 🟣 NotchShelf shelf slots refactored to row-based layout model
+3864 " 🔵 NotchShelf startup glow mechanism – reuse potential for system event signaling
+3866 " 🟣 Added "glowOnSystemEvents" preference key and UI toggle
+3867 " 🟣 ShelfWindowModel gains glowPulse counter and requestGlow() for event-driven glow signaling
+3868 2:28p 🔄 ContentView glow logic extracted to reusable playGlow() with task cancellation
+3870 " 🟣 AppDelegate wires system event observers for notch glow on wake/screen change/session activation
+3871 " 🟣 Tests added for glowOnSystemEvents preference key and glowPulse model behavior
+3872 " 🔵 Pre-existing Swift 6 actor isolation warning in StackFileListPanel.swift
 
-Access 390k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 556k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>

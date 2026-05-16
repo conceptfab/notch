@@ -6,6 +6,7 @@ enum UserDefaultsKey {
     static let copyOnDrag = "copyOnDrag"
     static let autoHideDelaySeconds = "autoHideDelaySeconds"
     static let launchAtLogin = "launchAtLogin"
+    static let glowOnSystemEvents = "glowOnSystemEvents"
     static let minSlotCount = "minSlotCount"
     static let maxSlotCount = "maxSlotCount"
     static let stackListGridThreshold = "stackListGridThreshold"
@@ -19,6 +20,7 @@ func registerPreferenceDefaults(in defaults: UserDefaults = .standard) {
         UserDefaultsKey.copyOnDrag: false,
         UserDefaultsKey.autoHideDelaySeconds: 1.5,
         UserDefaultsKey.launchAtLogin: false,
+        UserDefaultsKey.glowOnSystemEvents: false,
         UserDefaultsKey.minSlotCount: ShelfMetrics.defaultSlotCount,
         UserDefaultsKey.maxSlotCount: ShelfMetrics.defaultAdditionalRowCount,
         UserDefaultsKey.stackListGridThreshold: 5,

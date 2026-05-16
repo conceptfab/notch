@@ -12,6 +12,7 @@ struct ContentView: View {
     @AppStorage(UserDefaultsKey.minSlotCount) private var configuredSlotCount = ShelfMetrics.defaultSlotCount
     @State private var isStartupGlowVisible = false
     @State private var didPlayStartupGlow = false
+    @State private var glowTask: Task<Void, Never>?
 
     private var geometry: NotchGeometry { NotchGeometry.current() }
 
@@ -182,6 +183,9 @@ struct ContentView: View {
         .onChange(of: currentShapeSize) { _, newSize in
             windowModel.shapeSize = newSize
         }
+        .onChange(of: windowModel.glowPulse) { _, _ in
+            playGlow()
+        }
     }
 
     private func handleHover(_ hovering: Bool) {
@@ -196,11 +200,17 @@ struct ContentView: View {
     private func playStartupGlow() {
         guard !didPlayStartupGlow else { return }
         didPlayStartupGlow = true
+        playGlow()
+    }
+
+    private func playGlow() {
+        glowTask?.cancel()
 
         if reduceMotion {
             isStartupGlowVisible = true
-            Task { @MainActor in
+            glowTask = Task { @MainActor in
                 try? await Task.sleep(for: .milliseconds(700))
+                guard !Task.isCancelled else { return }
                 isStartupGlowVisible = false
             }
             return
@@ -210,8 +220,9 @@ struct ContentView: View {
             isStartupGlowVisible = true
         }
 
-        Task { @MainActor in
+        glowTask = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(650))
+            guard !Task.isCancelled else { return }
             withAnimation(.easeOut(duration: 0.55)) {
                 isStartupGlowVisible = false
             }

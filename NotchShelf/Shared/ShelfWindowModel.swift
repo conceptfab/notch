@@ -19,6 +19,8 @@ final class ShelfWindowModel: ObservableObject {
     /// `StackFileListPanelPresenter` so the stack drawer can anchor itself just
     /// below the shape, matching its width.
     @Published var shapeSize: CGSize = .zero
+    /// Incremented by app-level event handlers when the notch should emit a brief glow.
+    @Published private(set) var glowPulse: Int = 0
 
     private var collapseTask: Task<Void, Never>?
 
@@ -40,6 +42,10 @@ final class ShelfWindowModel: ObservableObject {
     func setDragTargeting(_ isTargeting: Bool) {
         guard dragTargeting != isTargeting else { return }
         dragTargeting = isTargeting
+    }
+
+    func requestGlow() {
+        glowPulse += 1
     }
 
     /// Collapses after `seconds` unless cancelled first, for example by `expand()`.

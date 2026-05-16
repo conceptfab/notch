@@ -34,3 +34,10 @@ import Testing
     try? await Task.sleep(for: .seconds(0.15))
     #expect(model.expansion == .expanded)
 }
+
+@MainActor @Test func windowModelGlowPulseIncrementsOnRequest() {
+    let model = ShelfWindowModel()
+    #expect(model.glowPulse == 0)
+    model.requestGlow()
+    #expect(model.glowPulse == 1)
+}

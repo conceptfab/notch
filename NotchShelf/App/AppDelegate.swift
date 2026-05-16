@@ -6,6 +6,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let windowModel = ShelfWindowModel()
     private var windowController: NotchWindowController?
     private var dragMonitor: DragMonitor?
+    private var systemEventObservers: [NSObjectProtocol] = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         registerPreferenceDefaults()
@@ -13,11 +14,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
         windowController = NotchWindowController(windowModel: windowModel)
         setupDragMonitor()
+        setupSystemEventGlowObservers()
         ShelfStore.shared.cleanupInvalidItems()
         reconcileLaunchAtLoginPreference()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        tearDownSystemEventGlowObservers()
         dragMonitor?.stopMonitoring()
         dragMonitor = nil
         ShelfStore.shared.flushPendingSaveSync()
@@ -60,6 +63,53 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         monitor.startMonitoring()
         dragMonitor = monitor
+    }
+
+    private func setupSystemEventGlowObservers() {
+        let workspaceCenter = NSWorkspace.shared.notificationCenter
+        systemEventObservers = [
+            workspaceCenter.addObserver(
+                forName: NSWorkspace.didWakeNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.triggerSystemEventGlowIfEnabled()
+                }
+            },
+            workspaceCenter.addObserver(
+                forName: NSWorkspace.sessionDidBecomeActiveNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.triggerSystemEventGlowIfEnabled()
+                }
+            },
+            NotificationCenter.default.addObserver(
+                forName: NSApplication.didChangeScreenParametersNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.triggerSystemEventGlowIfEnabled()
+                }
+            }
+        ]
+    }
+
+    private func tearDownSystemEventGlowObservers() {
+        let workspaceCenter = NSWorkspace.shared.notificationCenter
+        for observer in systemEventObservers {
+            workspaceCenter.removeObserver(observer)
+            NotificationCenter.default.removeObserver(observer)
+        }
+        systemEventObservers.removeAll()
+    }
+
+    private func triggerSystemEventGlowIfEnabled() {
+        guard UserDefaults.standard.bool(forKey: UserDefaultsKey.glowOnSystemEvents) else { return }
+        windowModel.requestGlow()
     }
 
     private func reconcileLaunchAtLoginPreference() {
