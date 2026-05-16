@@ -35,6 +35,23 @@ import Testing
     ))
 }
 
+@MainActor @Test func notificationWindowMonitorAcceptsPolishNotificationCenterOwnerName() {
+    let bounds: [String: Any] = [
+        "X": NSNumber(value: 1100),
+        "Y": NSNumber(value: 36),
+        "Width": NSNumber(value: 408),
+        "Height": NSNumber(value: 112)
+    ]
+
+    #expect(SystemNotificationWindowMonitor.isLikelyNotificationWindow(
+        bundleIdentifier: nil,
+        ownerName: "Centrum powiadomień",
+        bounds: bounds,
+        layer: 0,
+        alpha: 1.0
+    ))
+}
+
 @MainActor @Test func notificationWindowMonitorAcceptsUserNotificationBundleVariants() {
     let bounds: [String: Any] = [
         "X": NSNumber(value: 1100),

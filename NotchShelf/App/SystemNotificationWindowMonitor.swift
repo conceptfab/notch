@@ -16,7 +16,9 @@ final class SystemNotificationWindowMonitor {
         "Notification Center",
         "NotificationCenter",
         "UserNotificationCenter",
-        "User Notification Center"
+        "User Notification Center",
+        "Centrum powiadomien",
+        "Centrum powiadomień"
     ]
 
     private let interval: TimeInterval
@@ -149,5 +151,7 @@ final class SystemNotificationWindowMonitor {
         return notificationOwnerNames.contains(ownerName)
             || normalizedOwnerName.contains("notificationcenter")
             || normalizedOwnerName.contains("usernotification")
+            || normalizedOwnerName.contains("powiadomien")
+            || normalizedOwnerName.contains("powiadomień")
     }
 }

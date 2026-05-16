@@ -11,7 +11,6 @@ struct ShelfSlotPlaceholderView: View {
     private var strokeColor: Color {
         isTargeted ? Color.accentColor.opacity(0.95) : Color.white.opacity(0.28)
     }
-    private var slotSize: CGFloat { ShelfMetrics.iconSizeLarge + 12 }
 
     var body: some View {
         ZStack {
@@ -21,7 +20,8 @@ struct ShelfSlotPlaceholderView: View {
                         strokeColor,
                         style: StrokeStyle(lineWidth: isTargeted ? 2.5 : 1.5, lineCap: .round, dash: [8])
                     )
-                    .frame(width: slotSize, height: slotSize)
+                    .frame(width: ShelfMetrics.slotFrameSize, height: ShelfMetrics.slotFrameSize)
+                    .position(x: ShelfMetrics.itemWidth / 2, y: ShelfMetrics.slotFrameCenterY)
             }
         }
             .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemHeight)

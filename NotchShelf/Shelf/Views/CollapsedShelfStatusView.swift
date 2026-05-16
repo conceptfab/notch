@@ -4,7 +4,7 @@ import SwiftUI
 struct CollapsedShelfStatusView: View {
     let fileCount: Int
     let shelfWidth: CGFloat
-    let notchHeight: CGFloat
+    let shelfHeight: CGFloat
 
     private var edgeInset: CGFloat {
         5
@@ -29,6 +29,6 @@ struct CollapsedShelfStatusView: View {
                 .accessibilityLabel("\(fileCount) files on shelf")
         }
         .padding(.horizontal, edgeInset)
-        .frame(width: shelfWidth, height: notchHeight, alignment: .center)
+        .frame(width: shelfWidth, height: shelfHeight, alignment: .center)
     }
 }

@@ -49,31 +49,26 @@ struct ShelfItemView: View {
     }
 
     private var itemContent: some View {
-        VStack(spacing: ShelfMetrics.slotInnerSpacingBottom) {
-            ZStack {
-                VStack(alignment: .center, spacing: ShelfMetrics.slotInnerSpacingTop) {
-                    countLabel
-                    iconView
-                }
-                .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemBodyHeight)
-                .background(backgroundView)
-                .contentShape(Rectangle())
-                .help(viewModel.viewData.displayName)
-                .animation(.easeInOut(duration: 0.1), value: debouncedDropTarget)
-                .animation(.easeInOut(duration: 0.1), value: isSelected)
+        ZStack(alignment: .bottom) {
+            slotLayer
 
-                DraggableClickHandler(
-                    item: item,
-                    viewModel: viewModel,
-                    displayName: viewModel.viewData.displayName,
-                    cachedPreviewImage: $cachedPreviewImage,
-                    onClick: { event, nsView in viewModel.handleClick(event: event, view: nsView) },
-                    onRightClick: { event, nsView in viewModel.handleRightClick(event: event, view: nsView) }
-                )
-            }
-            bottomToggleRow
+            DraggableClickHandler(
+                item: item,
+                viewModel: viewModel,
+                displayName: viewModel.viewData.displayName,
+                cachedPreviewImage: $cachedPreviewImage,
+                onClick: { event, nsView in viewModel.handleClick(event: event, view: nsView) },
+                onRightClick: { event, nsView in viewModel.handleRightClick(event: event, view: nsView) }
+            )
+
+            slotControlRow
+                .position(x: ShelfMetrics.itemWidth / 2, y: ShelfMetrics.slotControlCenterY)
         }
         .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemHeight)
+        .contentShape(Rectangle())
+        .help(viewModel.viewData.displayName)
+        .animation(.easeInOut(duration: 0.1), value: debouncedDropTarget)
+        .animation(.easeInOut(duration: 0.1), value: isSelected)
         .onChange(of: viewModel.isDropTargeted) { _, targeted in
             dropTargetDebounceTask?.cancel()
             dropTargetDebounceTask = Task { @MainActor in
@@ -95,6 +90,28 @@ struct ShelfItemView: View {
         }
     }
 
+    private var slotLayer: some View {
+        ZStack {
+            slotContent
+                .frame(width: ShelfMetrics.slotFrameSize, height: ShelfMetrics.slotFrameSize)
+                .position(x: ShelfMetrics.itemWidth / 2, y: ShelfMetrics.slotFrameCenterY)
+        }
+        .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemHeight)
+    }
+
+    @ViewBuilder
+    private var slotContent: some View {
+        if viewModel.viewData.isStack {
+            framedIconView
+                .overlay(alignment: .top) {
+                    countLabel
+                        .offset(y: -ShelfMetrics.slotCountLabelHeight - ShelfMetrics.slotInnerSpacingTop)
+                }
+        } else {
+            framedIconView
+        }
+    }
+
     @ViewBuilder
     private var countLabel: some View {
         if viewModel.viewData.isStack {
@@ -103,9 +120,15 @@ struct ShelfItemView: View {
                 .foregroundStyle(.white.opacity(0.78))
                 .frame(height: ShelfMetrics.slotCountLabelHeight)
                 .accessibilityLabel("\(viewModel.viewData.stackCount) files")
-        } else {
-            Color.clear.frame(height: ShelfMetrics.slotCountLabelHeight)
         }
+    }
+
+    private var framedIconView: some View {
+        iconView
+            .offset(y: ShelfMetrics.slotIconVerticalOffset)
+            .frame(width: ShelfMetrics.slotFrameSize,
+                   height: ShelfMetrics.slotFrameSize)
+            .background(backgroundView)
     }
 
     private var iconView: some View {
@@ -132,16 +155,16 @@ struct ShelfItemView: View {
     }
 
     @ViewBuilder
-    private var bottomToggleRow: some View {
+    private var slotControlRow: some View {
         if viewModel.viewData.isStack {
             HStack(spacing: 8) {
                 stackListButton
                 copyModeButton
             }
-            .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemToggleHeight)
+            .frame(width: ShelfMetrics.slotFrameSize, height: ShelfMetrics.itemToggleHeight)
         } else {
             copyModeButton
-                .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemToggleHeight)
+                .frame(width: ShelfMetrics.slotFrameSize, height: ShelfMetrics.itemToggleHeight)
         }
     }
 
@@ -162,9 +185,9 @@ struct ShelfItemView: View {
 
     private var copyModeButton: some View {
         Button(action: onToggleKeepsItemAfterExternalDrop) {
-            Image(systemName: keepsItemAfterExternalDrop ? "plus.circle.fill" : "plus.circle")
+            Image(systemName: "plus.circle.fill")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(keepsItemAfterExternalDrop ? Color.accentColor : .white.opacity(0.72))
+                .foregroundStyle(keepsItemAfterExternalDrop ? Color.accentColor : .black.opacity(0.9))
                 .frame(width: ShelfMetrics.itemToggleHeight, height: ShelfMetrics.itemToggleHeight)
                 .contentShape(Circle())
         }

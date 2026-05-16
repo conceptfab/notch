@@ -1,51 +1,26 @@
 <claude-mem-context>
 # Memory Context
 
-# [notch] recent context, 2026-05-16 7:48pm GMT+2
+# [notch] recent context, 2026-05-16 11:44pm GMT+2
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (17,021t read) | 548,156t work | 97% savings
+Stats: 50 obs (18,344t read) | 559,202t work | 97% savings
 
 ### May 15, 2026
-S1506 Fix stack file list panel being half-obscured by the notch application window (May 15 at 9:56 PM)
 S1507 Fix stack file list panel positioning — panel top edge was hidden under notch chrome (May 15 at 10:13 PM)
 S1508 Restore blue dashed border frame to ShelfView; investigate sharp corners on frame bottom edge (May 15 at 10:34 PM)
 S1509 Disable default macOS focus ring on ShelfView panel while maintaining keyboard functionality (May 15 at 10:39 PM)
 S1510 Restore status icons (tray icon + file count badge) visible on the collapsed shelf notch (May 15 at 10:41 PM)
 ### May 16, 2026
-3803 1:23p 🔴 Status Icons Restored When Shelf Is Closed
-3804 1:24p 🔵 CollapsedIndicators Architecture in ContentView
-3805 " 🔵 ShelfRevealContent Uses Mask+Offset Animation to Stay Always Mounted
-3806 1:25p 🔴 Collapsed Indicators Fixed With Explicit Width Frame
-3807 " ✅ Fix Committed: Collapsed Status Icons Frame Constraint
 S1511 Restore status icons (tray icon + file count badge) visible on collapsed shelf notch — fully fixed and committed (May 16 at 1:25 PM)
-3808 1:28p 🔄 Collapsed Indicators Moved to Shape Overlay for Natural Width Inheritance
-3809 " ✅ Overlay Approach Committed and App Relaunched for Verification
 S1512 Restore status icons (tray icon + file count badge) visible on collapsed shelf notch — completed with 3 iterative commits (May 16 at 1:28 PM)
-3810 1:29p 🔄 Removed Redundant zIndex From Shape With Collapsed Indicators Overlay
 S1513 Restore status icons (tray icon + file count badge) on collapsed shelf notch — 4-commit iterative fix completed (May 16 at 1:29 PM)
-3811 1:31p 🔴 NotchShelfShape Given Explicit Frame to Guarantee Overlay Width Matches Collapsed Size
-3812 " ✅ Explicit Shape Frame Committed as Fourth Fix Iteration
 S1514 Restore status icons on collapsed shelf notch — now in active visual debugging phase with red background overlay (May 16 at 1:32 PM)
-3813 1:33p 🔵 Temporary Debug Overlay Added to Verify Collapsed Indicators Positioning
-3814 1:34p 🔵 Debug: Switched From Conditional Rendering to Always-Mounted With Opacity Toggle
-S1515 Restore status icons on collapsed shelf notch — active visual debugging, root cause still unconfirmed (May 16 at 1:34 PM)
-3815 1:35p 🔵 Confirmed: collapsedIndicators No Longer Gated on hasItems in Current Debug Build
-3816 " 🔴 Debug Changes Reverted — ContentView.swift Reset to Last Committed State
-3817 1:38p 🔵 CollapsedIndicators Layout Architecture in NotchShelf ContentView
-3818 " 🔵 ShelfRevealContent Uses Offset+Mask Animation to Stay Always Mounted
-3819 1:39p 🔵 Root Cause: ShelfRevealContent Wide Frame Drives ZStack Width, Breaking CollapsedIndicators
-3820 " 🔵 NotchShelf Build Infrastructure: xcodegen + xcodebuild, macOS 14+ Target, Swift 6.0
-3821 " 🔵 SF Symbols Confirmed Available: tray.full, tray.full.fill, archivebox.fill
-3822 1:40p 🔴 Collapsed Status Icons Fixed: Extracted to CollapsedShelfStatusView with Explicit Width
-3823 " 🔵 Test Run Fails in Sandbox Due to testmanagerd Restriction, Not Compilation Error
-3824 1:41p 🔴 Fixed collapsed notch shelf status icon layout and width mismatch
-3825 " 🔵 xcodebuild tests fail in Codex sandbox due to testmanagerd connection restriction
-3826 " 🔴 All 87 Tests Pass After CollapsedShelfStatusView Fix
-3827 " 🟣 NotchShelf Deployed with Fixed Collapsed Status Icons
+S1515 Restore status icons on collapsed shelf notch — active visual debugging, root cause still unconfirmed (May 16 at 1:33 PM)
+3827 1:41p 🟣 NotchShelf Deployed with Fixed Collapsed Status Icons
 3828 1:42p 🔴 NotchShelf Running with Collapsed Status Icon Fix Confirmed Live at PID 5690
 3829 1:43p 🔄 CollapsedShelfStatusView Redesigned to Float Over Full Window Width
 3832 1:44p 🔴 Second CollapsedShelfStatusView Iteration Compiles and Links Successfully
@@ -71,6 +46,31 @@ S1515 Restore status icons on collapsed shelf notch — active visual debugging,
 3874 " 🟣 System-event notch glow feature fully implemented and all 89 tests pass
 3875 2:29p 🔵 System-event glow feature staged but not yet committed; slot refactor was already committed
 3876 2:32p 🟣 Flash-on-system-events toggle added to NotchShelf
+4015 10:57p 🔵 NotchShelf System Event Glow Architecture Mapped
+4016 10:58p 🔵 swift -e Cannot Post DistributedNotification Due to Module Cache Permission Error
+4017 " 🔵 swift -e Works With -module-cache-path /tmp Flag to Post DistributedNotifications
+4018 " 🟣 scripts/trigger-system-event.sh Created for Manual Notch Glow Testing
+4019 " 🟣 trigger-system-event.sh Verified Working — Runs in ~0.74s
+S1560 Create a test script that triggers system events that the NotchShelf app reacts to (notch glow) (May 16 at 10:59 PM)
+4020 11:00p 🔵 pgrep Unavailable in Agent Sandbox — sysmond Service Not Found
+4021 11:01p 🟣 trigger-system-event.sh Gains Real Notification Mode via osascript
+4022 " 🔵 defaults write Fails for Sandboxed NotchShelf App Container
+4023 " 🔵 trigger-system-event.sh Works End-to-End With Escalated Permissions
+4024 " 🟣 Added `scripts/trigger-system-event.sh` for NotchShelf system event testing
+4025 " 🔵 NotchShelf sandboxed container blocks `defaults write` from outside the app
+4026 " 🔵 zsh "log" Built-in Shadows /usr/bin/log in Agent Shell
+4027 " 🔵 /usr/bin/log Cannot Run While Sandboxed — No In-Agent Log Verification Possible
+4028 11:02p 🔵 No "System glow requested" Log Entries Found — NotchShelf Not Running During Test
+4029 " 🔵 SystemNotificationWindowMonitor Detects Any Top-Right Banner by Geometry Alone
+4030 11:03p 🔵 NotchShelf Running (PID 8763) and Complete Glow Signal Chain Mapped
+4031 " 🔵 End-to-End Verified: trigger-system-event.sh Triggers NotchShelf Glow
+4032 " 🔵 "notification" Mode Confirmed: SystemNotificationWindowMonitor Detects osascript Banner and Fires Glow
+4033 11:04p 🔵 NSUserNotification Produces No Visible CGWindowList Banner on macOS 14 — and Polish Locale May Break Owner Name Matching
+4034 " 🔵 Glow Animation Timing Fully Mapped: 18ms In, 650ms Hold, 550ms Out
+4035 " 🔴 SystemNotificationWindowMonitor Extended With Polish Locale "Centrum powiadomień" Owner Name
+4036 11:05p 🔴 Fixed Polish-locale notification detection in SystemNotificationWindowMonitor
+4037 " 🔵 CGWindowList probe confirms Polish locale for macOS system processes
+4038 11:06p 🔵 xcodebuild Tests Require Escalated Permissions — Sandbox Blocks testmanagerd Connection
 
-Access 548k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 559k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>

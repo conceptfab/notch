@@ -21,7 +21,7 @@ struct ContentView: View {
     private var shapeSize: CGSize {
         switch windowModel.expansion {
         case .collapsed:
-            return CGSize(width: collapsedShapeWidth, height: geometry.notchHeight)
+            return CGSize(width: collapsedShapeWidth, height: collapsedShapeHeight)
         case .expanded:
             return expandedShapeSize
         }
@@ -29,6 +29,10 @@ struct ContentView: View {
 
     private var collapsedShapeWidth: CGFloat {
         geometry.notchWidth + geometry.notchHeight * 2
+    }
+
+    private var collapsedShapeHeight: CGFloat {
+        geometry.notchHeight + ShelfMetrics.collapsedHeightExtension
     }
 
     private var expandedShapeSize: CGSize {
@@ -165,7 +169,7 @@ struct ContentView: View {
                 CollapsedShelfStatusView(
                     fileCount: store.totalFileCount,
                     shelfWidth: collapsedShapeWidth,
-                    notchHeight: geometry.notchHeight
+                    shelfHeight: collapsedShapeHeight
                 )
                 .transition(.opacity)
                 .zIndex(10)

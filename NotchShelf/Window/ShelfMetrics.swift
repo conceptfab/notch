@@ -10,6 +10,10 @@ enum ShelfMetrics {
     static let defaultAdditionalRowCount = 2
     /// Larger icon size used inside shelf item slots (no name label below).
     static let iconSizeLarge: CGFloat = 40
+    /// Square visual frame used for occupied and empty shelf slots.
+    static let slotFrameSize: CGFloat = iconSizeLarge + 12
+    /// File icon stays centered inside the slot frame.
+    static let slotIconVerticalOffset: CGFloat = 0
     /// Vertical space between the file count label and the icon.
     static let slotInnerSpacingTop: CGFloat = 2
     /// Vertical space between the icon and the bottom toggle row.
@@ -23,13 +27,23 @@ enum ShelfMetrics {
     /// The panel stays fixed at this size and remains transparent outside the shape.
     static let windowSize = CGSize(width: 1160, height: 440)
     static let itemWidth: CGFloat = 56
-    static let itemHeight: CGFloat = 80
+    /// Extra breathing room inside the dashed shelf outline around the fixed grid.
+    static let gridHorizontalInset: CGFloat = 2
     static let itemToggleHeight: CGFloat = 16
+    /// Gap from the item edge to the visual slot frame, matching the horizontal inset.
+    static let slotFrameInset: CGFloat = gridHorizontalInset + (itemWidth - slotFrameSize) / 2
+    static let itemHeight: CGFloat = slotFrameSize + slotFrameInset * 2
+    /// Shared vertical center for every slot frame inside an item cell.
+    /// Mirrors the horizontal slot inset so the blue shelf outline has even spacing.
+    static let slotFrameCenterY: CGFloat = slotFrameInset + slotFrameSize / 2
+    /// Copy/list controls sit inside the slot on its bottom edge.
+    static let slotControlCenterY: CGFloat = slotFrameCenterY
+        + slotFrameSize / 2
+        - itemToggleHeight / 2
+        - 1
     static let itemBodyHeight: CGFloat = itemHeight - itemToggleHeight - 2
     static let itemSpacing: CGFloat = 6
     static let contentPadding: CGFloat = 10
-    /// Extra breathing room inside the dashed shelf outline around the fixed grid.
-    static let gridHorizontalInset: CGFloat = 2
     /// Horizontal margin between the dashed shelf outline and the black shelf shape.
     static let shelfOuterHorizontalPadding: CGFloat = topCornerRadiusExpanded + 12
     static let shelfPanelBottomPadding: CGFloat = 13
@@ -41,6 +55,8 @@ enum ShelfMetrics {
     /// Larger top corners when expanded, for more pronounced "ears".
     static let topCornerRadiusExpanded: CGFloat = 10
     static let bottomCornerRadius: CGFloat = 28
+    /// Extra collapsed notch height below the physical notch.
+    static let collapsedHeightExtension: CGFloat = 5
     /// Fixed width used by the collapsed shelf status icon.
     static let collapsedStatusIconWidth: CGFloat = 26
     /// Extra horizontal reach that makes file drags near the notch open the shelf.
