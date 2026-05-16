@@ -1,3 +1,1 @@
-- brak ikon przy zwinietym UI informujacyh ze polka ma zawartosc i  ile ma plików
-- rozwinieta aplikacja jest za wysokie o wysokosc notcha!
-- globalna geometria aplikacji musi sie dopasowywac do rozdzielscoci i aktualnego notcha!
+nie dziala przenoszenie plików!!!!!!!

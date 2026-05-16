@@ -1,13 +1,13 @@
 <claude-mem-context>
 # Memory Context
 
-# [notch] recent context, 2026-05-16 2:28pm GMT+2
+# [notch] recent context, 2026-05-16 2:31pm GMT+2
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (17,415t read) | 556,430t work | 97% savings
+Stats: 50 obs (17,042t read) | 554,851t work | 97% savings
 
 ### May 15, 2026
 S1506 Fix stack file list panel being half-obscured by the notch application window (May 15 at 9:56 PM)
@@ -15,9 +15,7 @@ S1507 Fix stack file list panel positioning — panel top edge was hidden under 
 S1508 Restore blue dashed border frame to ShelfView; investigate sharp corners on frame bottom edge (May 15 at 10:34 PM)
 S1509 Disable default macOS focus ring on ShelfView panel while maintaining keyboard functionality (May 15 at 10:39 PM)
 S1510 Restore status icons (tray icon + file count badge) visible on the collapsed shelf notch (May 15 at 10:41 PM)
-3800 11:24p 🔴 ContentView Notch Rim Fixed: strokeBorder → stroke on Custom Shape
-3801 " 🔄 Preferences Window Polished — Material Background, Sizing, and Label Improvements
-3802 " 🔄 PreferencesView Adopts Modern Tab API with macOS 15+ / Legacy Fallback
+3802 11:24p 🔄 PreferencesView Adopts Modern Tab API with macOS 15+ / Legacy Fallback
 ### May 16, 2026
 3803 1:23p 🔴 Status Icons Restored When Shelf Is Closed
 3804 1:24p 🔵 CollapsedIndicators Architecture in ContentView
@@ -71,6 +69,8 @@ S1515 Restore status icons on collapsed shelf notch — active visual debugging,
 3870 " 🟣 AppDelegate wires system event observers for notch glow on wake/screen change/session activation
 3871 " 🟣 Tests added for glowOnSystemEvents preference key and glowPulse model behavior
 3872 " 🔵 Pre-existing Swift 6 actor isolation warning in StackFileListPanel.swift
+3874 " 🟣 System-event notch glow feature fully implemented and all 89 tests pass
+3875 2:29p 🔵 System-event glow feature staged but not yet committed; slot refactor was already committed
 
-Access 556k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 555k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>
