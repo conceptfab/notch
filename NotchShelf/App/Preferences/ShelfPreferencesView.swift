@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct ShelfPreferencesView: View {
-    @AppStorage(UserDefaultsKey.maxSlotCount) private var maxSlotCount = ShelfMetrics.defaultMaximumSlotCount
+    @AppStorage(UserDefaultsKey.minSlotCount) private var slotCount = ShelfMetrics.defaultSlotCount
+    @AppStorage(UserDefaultsKey.maxSlotCount) private var additionalRowCount = ShelfMetrics.defaultAdditionalRowCount
     @AppStorage(UserDefaultsKey.stackListGridThreshold) private var stackListGridThreshold = 5
 
     @State private var dropZoneColor: Color = RGBAColor.defaultDropZone.color
@@ -9,11 +10,13 @@ struct ShelfPreferencesView: View {
     var body: some View {
         Form {
             Section("Slots") {
-                LabeledContent("Minimum visible slots", value: "\(ShelfMetrics.minimumSlotCount)")
-                Stepper(value: $maxSlotCount, in: ShelfMetrics.minimumSlotCount...32) {
-                    LabeledContent("Maximum slots", value: "\(maxSlotCount)")
+                Stepper(value: $slotCount, in: ShelfMetrics.minimumSlotCount...ShelfMetrics.maximumSlotCount) {
+                    LabeledContent("Slots", value: "\(slotCount)")
                 }
-                Text("NotchShelf keeps two empty slots available, up to the maximum.")
+                Stepper(value: $additionalRowCount, in: 0...ShelfMetrics.maximumAdditionalRowCount) {
+                    LabeledContent("Additional rows", value: "\(additionalRowCount)")
+                }
+                Text("Additional rows appear only when the existing rows are occupied.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
@@ -36,9 +39,33 @@ struct ShelfPreferencesView: View {
         }
         .formStyle(.grouped)
         .padding(20)
-        .onAppear(perform: loadDropZoneColor)
+        .onAppear {
+            normalizeSlotPreferences()
+            loadDropZoneColor()
+        }
+        .onChange(of: slotCount) { _, _ in
+            normalizeSlotPreferences()
+        }
+        .onChange(of: additionalRowCount) { _, _ in
+            normalizeSlotPreferences()
+        }
         .onChange(of: dropZoneColor) { _, newValue in
             persist(dropZoneColor: newValue)
+        }
+    }
+
+    private func normalizeSlotPreferences() {
+        let normalizedSlotCount = ShelfMetrics.normalizedSlotCount(slotCount)
+        if slotCount != normalizedSlotCount {
+            slotCount = normalizedSlotCount
+        }
+
+        let normalizedAdditionalRowCount = ShelfMetrics.normalizedAdditionalRowCount(
+            additionalRowCount,
+            baseSlotCount: normalizedSlotCount
+        )
+        if additionalRowCount != normalizedAdditionalRowCount {
+            additionalRowCount = normalizedAdditionalRowCount
         }
     }
 

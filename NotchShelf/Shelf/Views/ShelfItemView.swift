@@ -83,10 +83,6 @@ struct ShelfItemView: View {
             }
         }
         .onAppear {
-            viewModel.loadThumbnailIfNeeded()
-            refreshDragPreview()
-        }
-        .onChange(of: viewModel.thumbnail) { _, _ in
             refreshDragPreview()
         }
         .onChange(of: item) { _, updated in
@@ -124,7 +120,7 @@ struct ShelfItemView: View {
                     .frame(width: ShelfMetrics.iconSizeLarge, height: ShelfMetrics.iconSizeLarge)
                     .offset(x: 2, y: -2)
             }
-            Image(nsImage: viewModel.thumbnail ?? viewModel.icon)
+            Image(nsImage: viewModel.icon)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: ShelfMetrics.iconSizeLarge, height: ShelfMetrics.iconSizeLarge)
@@ -207,12 +203,12 @@ struct ShelfItemView: View {
     @MainActor
     private func renderDragPreview() async -> NSImage {
         let content = DragPreviewView(
-            thumbnail: viewModel.thumbnail ?? viewModel.icon,
+            thumbnail: viewModel.icon,
             displayName: viewModel.viewData.displayName
         )
         let renderer = ImageRenderer(content: content)
         renderer.scale = NSScreen.main?.backingScaleFactor ?? 2.0
-        return renderer.nsImage ?? (viewModel.thumbnail ?? viewModel.icon)
+        return renderer.nsImage ?? viewModel.icon
     }
 
     private func refreshDragPreview() {

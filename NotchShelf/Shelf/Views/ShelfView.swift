@@ -7,6 +7,7 @@ struct ShelfView: View {
     @EnvironmentObject var windowModel: ShelfWindowModel
     @ObservedObject var store = ShelfStore.shared
     @ObservedObject var selection = ShelfSelection.shared
+    @AppStorage(UserDefaultsKey.minSlotCount) private var configuredSlotCount = ShelfMetrics.defaultSlotCount
     @State private var localDropTargeting = false
     @State private var dropZoneRGBA: RGBAColor = ShelfView.loadDropZoneColor()
     private let spacing: CGFloat = ShelfMetrics.itemSpacing
@@ -17,7 +18,7 @@ struct ShelfView: View {
     }
 
     private var rowCapacity: Int {
-        Swift.max(store.visibleSlots.count, ShelfMetrics.minimumSlotCount)
+        ShelfMetrics.normalizedSlotCount(configuredSlotCount)
     }
 
     private var gridColumns: [GridItem] {

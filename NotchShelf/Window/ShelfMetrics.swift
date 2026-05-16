@@ -2,9 +2,12 @@ import CoreGraphics
 
 /// Fixed dimensions for the notch window and the expanded shelf.
 enum ShelfMetrics {
-    /// Minimum number of visible shelf slots. This is intentionally not user-configurable.
+    /// Minimum number of shelf slots in the base row.
     static let minimumSlotCount = 5
-    static let defaultMaximumSlotCount = 16
+    static let maximumSlotCount = 10
+    static let defaultSlotCount = minimumSlotCount
+    static let maximumAdditionalRowCount = 3
+    static let defaultAdditionalRowCount = 2
     /// Larger icon size used inside shelf item slots (no name label below).
     static let iconSizeLarge: CGFloat = 40
     /// Vertical space between the file count label and the icon.
@@ -16,9 +19,9 @@ enum ShelfMetrics {
     /// Extra width on each side of the physical notch when the empty shelf opens.
     static let sideExpansion: CGFloat = 60
     /// The maximum expanded shelf shape's size.
-    static let expandedSize = CGSize(width: 1120, height: 220)
+    static let expandedSize = CGSize(width: 1120, height: 420)
     /// The panel stays fixed at this size and remains transparent outside the shape.
-    static let windowSize = CGSize(width: 1160, height: 250)
+    static let windowSize = CGSize(width: 1160, height: 440)
     static let itemWidth: CGFloat = 56
     static let itemHeight: CGFloat = 80
     static let itemToggleHeight: CGFloat = 16
@@ -47,4 +50,27 @@ enum ShelfMetrics {
     /// Expanded shelf grace area to avoid flicker when the pointer crosses panel edges.
     static let dragExitHorizontalOutset: CGFloat = 48
     static let dragExitVerticalOutset: CGFloat = 40
+
+    static func normalizedSlotCount(_ value: Int) -> Int {
+        guard value > 0 else { return defaultSlotCount }
+        return Swift.min(Swift.max(value, minimumSlotCount), maximumSlotCount)
+    }
+
+    static func normalizedAdditionalRowCount(_ value: Int, baseSlotCount: Int) -> Int {
+        guard value > maximumAdditionalRowCount else {
+            return Swift.min(Swift.max(value, 0), maximumAdditionalRowCount)
+        }
+
+        // Older builds stored an absolute maximum slot count in this preference.
+        // Convert that value to extra rows so existing installs land on the same capacity.
+        let base = Swift.max(baseSlotCount, 1)
+        let extraSlots = Swift.max(value - base, 0)
+        let migratedRows = Int(ceil(Double(extraSlots) / Double(base)))
+        return Swift.min(Swift.max(migratedRows, 0), maximumAdditionalRowCount)
+    }
+
+    static func maximumVisibleSlotCount(baseSlotCount: Int, additionalRows: Int) -> Int {
+        normalizedSlotCount(baseSlotCount)
+            * (1 + normalizedAdditionalRowCount(additionalRows, baseSlotCount: baseSlotCount))
+    }
 }

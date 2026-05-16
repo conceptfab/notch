@@ -13,7 +13,7 @@ struct ShelfStoreClearAllTests {
         let persistence = ShelfPersistenceService(directory: tempDir.url)
         let store = ShelfStore(persistence: persistence, defaults: makeTestUserDefaults())
         let baselineSlotCount = store.slots.count
-        let itemsToTriggerGrowth = Swift.max(baselineSlotCount - 1, 1)
+        let itemsToTriggerGrowth = baselineSlotCount + 1
         let items = try (0..<itemsToTriggerGrowth).map { index in
             let url = try tempDir.url.appendingPathComponent("clear-target-\(index).txt").touch()
             return ShelfItem(bookmarkData: try Bookmark(url: url).data)

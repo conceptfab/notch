@@ -6,36 +6,71 @@ import Testing
 struct SlotCountPolicyTests {
     @Test
     func returnsMinimumWhenNoItems() {
-        #expect(SlotCountPolicy.visibleSlotCount(filledItems: 0, currentVisible: 5, min: 5, max: 15) == 5)
+        #expect(SlotCountPolicy.visibleSlotCount(
+            filledItems: 0,
+            currentVisible: 5,
+            baseSlotCount: 5,
+            maxAdditionalRows: 2
+        ) == 5)
     }
 
     @Test
-    func growsByRowWhenFreeSlotsHitTwo() {
-        #expect(SlotCountPolicy.visibleSlotCount(filledItems: 4, currentVisible: 5, min: 4, max: 16) == 6)
+    func keepsBaseRowUntilCapacityIsExceeded() {
+        #expect(SlotCountPolicy.visibleSlotCount(
+            filledItems: 5,
+            currentVisible: 5,
+            baseSlotCount: 5,
+            maxAdditionalRows: 2
+        ) == 5)
     }
 
     @Test
-    func doesNotGrowWhileMoreThanTwoFreeRemain() {
-        #expect(SlotCountPolicy.visibleSlotCount(filledItems: 1, currentVisible: 4, min: 4, max: 16) == 4)
+    func growsByFullAdditionalRows() {
+        #expect(SlotCountPolicy.visibleSlotCount(
+            filledItems: 6,
+            currentVisible: 5,
+            baseSlotCount: 5,
+            maxAdditionalRows: 2
+        ) == 10)
     }
 
     @Test
-    func cappedAtMaximum() {
-        #expect(SlotCountPolicy.visibleSlotCount(filledItems: 15, currentVisible: 16, min: 4, max: 16) == 16)
+    func cappedAtMaximumAdditionalRows() {
+        #expect(SlotCountPolicy.visibleSlotCount(
+            filledItems: 20,
+            currentVisible: 15,
+            baseSlotCount: 5,
+            maxAdditionalRows: 2
+        ) == 15)
     }
 
     @Test
-    func shrinksWhenAtLeastOneFullRowIsFreeBeyondMinimum() {
-        #expect(SlotCountPolicy.visibleSlotCount(filledItems: 3, currentVisible: 10, min: 4, max: 16) == 5)
+    func additionalRowsCanBeDisabled() {
+        #expect(SlotCountPolicy.visibleSlotCount(
+            filledItems: 6,
+            currentVisible: 5,
+            baseSlotCount: 5,
+            maxAdditionalRows: 0
+        ) == 5)
     }
 
     @Test
-    func normalizesUnalignedVisibleSlotsBeforeShrinking() {
-        #expect(SlotCountPolicy.visibleSlotCount(filledItems: 0, currentVisible: 5, min: 4, max: 15) == 4)
+    func shrinksBackToBaseRowWhenItemsAreRemoved() {
+        #expect(SlotCountPolicy.visibleSlotCount(
+            filledItems: 3,
+            currentVisible: 10,
+            baseSlotCount: 5,
+            maxAdditionalRows: 2
+        ) == 5)
     }
 
     @Test
-    func neverShrinksBelowMinimum() {
-        #expect(SlotCountPolicy.visibleSlotCount(filledItems: 0, currentVisible: 5, min: 5, max: 15) == 5)
+    func respectsLargerBaseRow() {
+        #expect(SlotCountPolicy.visibleSlotCount(
+            filledItems: 11,
+            currentVisible: 10,
+            baseSlotCount: 10,
+            maxAdditionalRows: 3
+        ) == 20)
     }
 }

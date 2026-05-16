@@ -1,13 +1,13 @@
 <claude-mem-context>
 # Memory Context
 
-# [notch] recent context, 2026-05-16 2:14pm GMT+2
+# [notch] recent context, 2026-05-16 2:25pm GMT+2
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (19,698t read) | 436,813t work | 95% savings
+Stats: 50 obs (18,893t read) | 390,232t work | 95% savings
 
 ### May 15, 2026
 S1506 Fix stack file list panel being half-obscured by the notch application window (May 15 at 9:56 PM)
@@ -15,9 +15,7 @@ S1507 Fix stack file list panel positioning — panel top edge was hidden under 
 S1508 Restore blue dashed border frame to ShelfView; investigate sharp corners on frame bottom edge (May 15 at 10:34 PM)
 S1509 Disable default macOS focus ring on ShelfView panel while maintaining keyboard functionality (May 15 at 10:39 PM)
 S1510 Restore status icons (tray icon + file count badge) visible on the collapsed shelf notch (May 15 at 10:41 PM)
-3790 11:19p ⚖️ macOS "notch" App UI Modernization — Skill Selection
-3791 11:20p 🔵 NotchShelf App — Full Architecture and UI Audit Findings
-3792 " 🔵 NotchShelf — Additional Code Issues Found During Deep Audit
+3792 11:20p 🔵 NotchShelf — Additional Code Issues Found During Deep Audit
 3793 11:21p 🔵 Build Environment: Xcode 26.5 / Swift 6.3.2 / macOS 26 Target
 3794 11:22p 🟣 Added Liquid Glass Compatibility Layer and Shelf Button Styles
 3795 " 🔄 Shelf UI Buttons and Drop Zone Modernized with Glass Styles
@@ -71,6 +69,8 @@ S1515 Restore status icons on collapsed shelf notch — active visual debugging,
 3837 " ⚖️ Legacy minSlotCount UserDefaults key preserved for disk-stability
 3844 2:07p 🟣 NotchShelf Full Test Suite Passes — 88 Tests Green
 3845 " 🟣 SlotCountPolicy: Dynamic Width Scaling with Minimum-4 Semantics
+3855 2:21p 🟣 Slot icons switched from QuickLook thumbnails to NSWorkspace real icons
+3856 " ⚖️ Notch app collapsed UI width formula: notchWidth + 2× notchHeight
 
-Access 437k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 390k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>

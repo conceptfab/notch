@@ -9,6 +9,7 @@ struct ContentView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.openSettings) private var openSettings
     @ObservedObject private var store = ShelfStore.shared
+    @AppStorage(UserDefaultsKey.minSlotCount) private var configuredSlotCount = ShelfMetrics.defaultSlotCount
     @State private var isStartupGlowVisible = false
     @State private var didPlayStartupGlow = false
 
@@ -30,13 +31,15 @@ struct ContentView: View {
     }
 
     private var expandedShapeSize: CGSize {
-        let slotCount = renderedSlotCount
-        let rowHeight = ShelfMetrics.itemHeight + ShelfMetrics.itemSpacing
+        let rowCapacity = renderedRowCapacity
+        let rowCount = renderedRowCount
+        let rowHeight = CGFloat(rowCount) * ShelfMetrics.itemHeight
+            + CGFloat(Swift.max(rowCount - 1, 0)) * ShelfMetrics.itemSpacing
         let chromeHeight = ShelfMetrics.shelfTopChromeHeight
             + ShelfMetrics.shelfPanelBottomPadding
         let height = chromeHeight + rowHeight
 
-        let rowWidth = shelfPanelWidth(for: slotCount)
+        let rowWidth = shelfPanelWidth(for: rowCapacity)
             + ShelfMetrics.shelfOuterHorizontalPadding * 2
         return CGSize(
             width: Swift.min(ShelfMetrics.expandedSize.width, Swift.max(geometry.notchWidth, rowWidth)),
@@ -45,11 +48,20 @@ struct ContentView: View {
     }
 
     private var renderedSlotCount: Int {
-        Swift.max(store.visibleSlots.count, ShelfMetrics.minimumSlotCount)
+        Swift.max(store.visibleSlots.count, renderedRowCapacity)
+    }
+
+    private var renderedRowCapacity: Int {
+        ShelfMetrics.normalizedSlotCount(configuredSlotCount)
+    }
+
+    private var renderedRowCount: Int {
+        let rows = Int(ceil(Double(renderedSlotCount) / Double(renderedRowCapacity)))
+        return Swift.max(rows, 1)
     }
 
     private func shelfPanelWidth(for slotCount: Int) -> CGFloat {
-        let columns = Swift.max(slotCount, ShelfMetrics.minimumSlotCount)
+        let columns = ShelfMetrics.normalizedSlotCount(slotCount)
         return CGFloat(columns) * ShelfMetrics.itemWidth
             + CGFloat(Swift.max(columns - 1, 0)) * ShelfMetrics.itemSpacing
             + ShelfMetrics.contentPadding * 2
@@ -122,7 +134,7 @@ struct ContentView: View {
                         preferencesButtonTopPadding: preferencesButtonTopPadding,
                         hiddenOffset: ShelfMetrics.shelfTopChromeHeight,
                         contentHeight: expandedContentSize.height,
-                        panelWidth: shelfPanelWidth(for: renderedSlotCount),
+                        panelWidth: shelfPanelWidth(for: renderedRowCapacity),
                         reduceMotion: reduceMotion,
                         clearShelf: clearShelf,
                         showPreferences: showPreferences

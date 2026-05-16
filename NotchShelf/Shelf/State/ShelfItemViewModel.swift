@@ -27,7 +27,6 @@ final class ShelfItemViewModel: ObservableObject {
         self.icon = Self.icon(for: item)
         self.store = store
         self.selection = selection
-        loadThumbnail()
     }
 
     func update(item: ShelfItem) {
@@ -36,14 +35,15 @@ final class ShelfItemViewModel: ObservableObject {
         self.viewData = ShelfItemViewData.build(from: item)
         self.icon = Self.icon(for: item)
         thumbnail = nil
-        loadThumbnail()
     }
 
     var isSelected: Bool { selection.isSelected(item.id) }
 
     private static func icon(for item: ShelfItem) -> NSImage {
         if let url = item.fileURL {
-            return NSWorkspace.shared.icon(forFile: url.path)
+            return url.accessSecurityScopedResource {
+                NSWorkspace.shared.icon(forFile: $0.path)
+            }
         }
         return NSWorkspace.shared.icon(for: .data)
     }

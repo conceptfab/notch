@@ -15,8 +15,8 @@ struct PreferencesKeysTests {
         #expect(suite.bool(forKey: UserDefaultsKey.copyOnDrag) == false)
         #expect(suite.double(forKey: UserDefaultsKey.autoHideDelaySeconds) == 1.5)
         #expect(suite.bool(forKey: UserDefaultsKey.launchAtLogin) == false)
-        #expect(suite.integer(forKey: UserDefaultsKey.minSlotCount) == ShelfMetrics.minimumSlotCount)
-        #expect(suite.integer(forKey: UserDefaultsKey.maxSlotCount) == ShelfMetrics.defaultMaximumSlotCount)
+        #expect(suite.integer(forKey: UserDefaultsKey.minSlotCount) == ShelfMetrics.defaultSlotCount)
+        #expect(suite.integer(forKey: UserDefaultsKey.maxSlotCount) == ShelfMetrics.defaultAdditionalRowCount)
         #expect(suite.integer(forKey: UserDefaultsKey.stackListGridThreshold) == 5)
         let storedColor = suite.array(forKey: UserDefaultsKey.dropZoneColor) as? [Double]
         #expect(storedColor == [0.0, 0.88, 0.84, 1.0])

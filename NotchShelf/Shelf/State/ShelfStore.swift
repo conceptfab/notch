@@ -5,13 +5,19 @@ import Foundation
 enum SlotCountPolicy {
     /// `filledItems`: how many slots currently hold a `ShelfItem`.
     /// `currentVisible`: how many slots are presently rendered.
-    /// `min` / `max`: user-configured bounds.
-    static func visibleSlotCount(filledItems: Int, currentVisible: Int, min: Int, max: Int) -> Int {
-        let lowerBound = Swift.max(min, 1)
-        let upperBound = Swift.max(max, lowerBound)
-        let preferredFreeSlots = 2
-        let target = Swift.max(lowerBound, filledItems + preferredFreeSlots)
-        return Swift.max(Swift.min(target, upperBound), lowerBound)
+    /// `baseSlotCount`: user-configured slots in the first row.
+    /// `maxAdditionalRows`: user-configured extra full rows that may appear.
+    static func visibleSlotCount(
+        filledItems: Int,
+        currentVisible: Int,
+        baseSlotCount: Int,
+        maxAdditionalRows: Int
+    ) -> Int {
+        let rowCapacity = Swift.max(baseSlotCount, 1)
+        let maximumRows = 1 + Swift.max(maxAdditionalRows, 0)
+        let filledRows = Int(ceil(Double(Swift.max(filledItems, 0)) / Double(rowCapacity)))
+        let targetRows = Swift.min(Swift.max(filledRows, 1), maximumRows)
+        return targetRows * rowCapacity
     }
 }
 
@@ -20,7 +26,7 @@ enum SlotCountPolicy {
 @MainActor
 final class ShelfStore: ObservableObject, ShelfStoring {
     static let shared = ShelfStore()
-    static let defaultSlotCount = ShelfMetrics.minimumSlotCount
+    static let defaultSlotCount = ShelfMetrics.defaultSlotCount
 
     private let persistence: ShelfPersistenceService
     private let defaults: UserDefaults
@@ -43,13 +49,15 @@ final class ShelfStore: ObservableObject, ShelfStoring {
         items.reduce(0) { $0 + $1.stackCount }
     }
 
-    private var defaultsMin: Int {
-        Self.defaultSlotCount
+    private var baseSlotCount: Int {
+        ShelfMetrics.normalizedSlotCount(defaults.integer(forKey: UserDefaultsKey.minSlotCount))
     }
 
-    private var defaultsMax: Int {
-        let value = defaults.integer(forKey: UserDefaultsKey.maxSlotCount)
-        return value >= defaultsMin ? value : ShelfMetrics.defaultMaximumSlotCount
+    private var maximumAdditionalRows: Int {
+        ShelfMetrics.normalizedAdditionalRowCount(
+            defaults.integer(forKey: UserDefaultsKey.maxSlotCount),
+            baseSlotCount: baseSlotCount
+        )
     }
 
     /// The number of slots the UI should render right now.
@@ -70,12 +78,16 @@ final class ShelfStore: ObservableObject, ShelfStoring {
         self.persistence = persistence
         self.defaults = defaults
         let raw = persistence.loadSlots()
-        let max = defaults.integer(forKey: UserDefaultsKey.maxSlotCount)
+        let baseSlotCount = ShelfMetrics.normalizedSlotCount(defaults.integer(forKey: UserDefaultsKey.minSlotCount))
+        let maxAdditionalRows = ShelfMetrics.normalizedAdditionalRowCount(
+            defaults.integer(forKey: UserDefaultsKey.maxSlotCount),
+            baseSlotCount: baseSlotCount
+        )
         let target = SlotCountPolicy.visibleSlotCount(
             filledItems: raw.compactMap(\.item).count,
             currentVisible: raw.count,
-            min: Self.defaultSlotCount,
-            max: max >= Self.defaultSlotCount ? max : ShelfMetrics.defaultMaximumSlotCount
+            baseSlotCount: baseSlotCount,
+            maxAdditionalRows: maxAdditionalRows
         )
         let loaded = Self.paddedSlots(raw, target: target)
         // Assigning to the backing storage bypasses didSet on initial load.
@@ -357,8 +369,8 @@ final class ShelfStore: ObservableObject, ShelfStoring {
         SlotCountPolicy.visibleSlotCount(
             filledItems: filled,
             currentVisible: currentVisible,
-            min: defaultsMin,
-            max: defaultsMax
+            baseSlotCount: baseSlotCount,
+            maxAdditionalRows: maximumAdditionalRows
         )
     }
 
