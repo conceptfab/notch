@@ -1,4 +1,5 @@
 import Foundation
+@testable import NotchShelf
 
 struct TempDir {
     let url: URL
@@ -17,4 +18,12 @@ extension URL {
         try Data().write(to: self)
         return self
     }
+}
+
+func makeTestUserDefaults() -> UserDefaults {
+    let suiteName = "NotchShelfTests-\(UUID().uuidString)"
+    let defaults = UserDefaults(suiteName: suiteName)!
+    defaults.removePersistentDomain(forName: suiteName)
+    registerPreferenceDefaults(in: defaults)
+    return defaults
 }

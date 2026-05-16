@@ -1,8 +1,7 @@
 import SwiftUI
 
 struct ShelfPreferencesView: View {
-    @AppStorage(UserDefaultsKey.minSlotCount) private var minSlotCount = 5
-    @AppStorage(UserDefaultsKey.maxSlotCount) private var maxSlotCount = 15
+    @AppStorage(UserDefaultsKey.maxSlotCount) private var maxSlotCount = ShelfMetrics.defaultMaximumSlotCount
     @AppStorage(UserDefaultsKey.stackListGridThreshold) private var stackListGridThreshold = 5
 
     @State private var dropZoneColor: Color = RGBAColor.defaultDropZone.color
@@ -10,13 +9,11 @@ struct ShelfPreferencesView: View {
     var body: some View {
         Form {
             Section("Slots") {
-                Stepper(value: $minSlotCount, in: 3...10) {
-                    LabeledContent("Minimum visible slots", value: "\(minSlotCount)")
-                }
-                Stepper(value: $maxSlotCount, in: minSlotCount...30) {
+                LabeledContent("Minimum visible slots", value: "\(ShelfMetrics.minimumSlotCount)")
+                Stepper(value: $maxSlotCount, in: ShelfMetrics.minimumSlotCount...32) {
                     LabeledContent("Maximum slots", value: "\(maxSlotCount)")
                 }
-                Text("When two or fewer slots remain free, NotchShelf adds another row, up to the maximum.")
+                Text("NotchShelf keeps two empty slots available, up to the maximum.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
@@ -39,9 +36,6 @@ struct ShelfPreferencesView: View {
         }
         .formStyle(.grouped)
         .padding(20)
-        .onChange(of: minSlotCount) { _, newValue in
-            if maxSlotCount < newValue { maxSlotCount = newValue }
-        }
         .onAppear(perform: loadDropZoneColor)
         .onChange(of: dropZoneColor) { _, newValue in
             persist(dropZoneColor: newValue)

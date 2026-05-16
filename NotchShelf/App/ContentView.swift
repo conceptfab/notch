@@ -19,34 +19,41 @@ struct ContentView: View {
     private var shapeSize: CGSize {
         switch windowModel.expansion {
         case .collapsed:
-            let baseWidth = geometry.notchWidth
-            let width = hasItems ? baseWidth + ShelfMetrics.collapsedExtraWidth : baseWidth
-            return CGSize(width: width, height: geometry.notchHeight)
+            return CGSize(width: collapsedShapeWidth, height: geometry.notchHeight)
         case .expanded:
             return expandedShapeSize
         }
     }
 
-    private var expandedShapeSize: CGSize {
-        let baseRow = Swift.max(UserDefaults.standard.integer(forKey: UserDefaultsKey.minSlotCount), 3)
-        let slotCount = store.visibleSlotCount
-        let rows = Swift.max(Int((Double(slotCount) / Double(baseRow)).rounded(.up)), 1)
-        let rowHeight = ShelfMetrics.itemHeight + ShelfMetrics.itemSpacing
-        let chromeHeight = geometry.notchHeight
-            + ShelfMetrics.shelfTopChromeHeight
-            + ShelfMetrics.shelfPanelBottomPadding
-        let height = chromeHeight + CGFloat(rows) * rowHeight
+    private var collapsedShapeWidth: CGFloat {
+        geometry.notchWidth + geometry.notchHeight * 2
+    }
 
-        let emptyWidth = geometry.notchWidth + ShelfMetrics.sideExpansion * 2
-        let outerHorizontalPadding = (ShelfMetrics.topCornerRadiusExpanded + 12) * 2
-        let rowWidth = CGFloat(baseRow) * ShelfMetrics.itemWidth
-            + CGFloat(baseRow - 1) * ShelfMetrics.itemSpacing
-            + ShelfMetrics.contentPadding * 2
-            + outerHorizontalPadding
+    private var expandedShapeSize: CGSize {
+        let slotCount = renderedSlotCount
+        let rowHeight = ShelfMetrics.itemHeight + ShelfMetrics.itemSpacing
+        let chromeHeight = ShelfMetrics.shelfTopChromeHeight
+            + ShelfMetrics.shelfPanelBottomPadding
+        let height = chromeHeight + rowHeight
+
+        let rowWidth = shelfPanelWidth(for: slotCount)
+            + ShelfMetrics.shelfOuterHorizontalPadding * 2
         return CGSize(
-            width: Swift.min(ShelfMetrics.expandedSize.width, Swift.max(emptyWidth, rowWidth)),
+            width: Swift.min(ShelfMetrics.expandedSize.width, Swift.max(geometry.notchWidth, rowWidth)),
             height: Swift.min(ShelfMetrics.expandedSize.height, height)
         )
+    }
+
+    private var renderedSlotCount: Int {
+        Swift.max(store.visibleSlots.count, ShelfMetrics.minimumSlotCount)
+    }
+
+    private func shelfPanelWidth(for slotCount: Int) -> CGFloat {
+        let columns = Swift.max(slotCount, ShelfMetrics.minimumSlotCount)
+        return CGFloat(columns) * ShelfMetrics.itemWidth
+            + CGFloat(Swift.max(columns - 1, 0)) * ShelfMetrics.itemSpacing
+            + ShelfMetrics.contentPadding * 2
+            + ShelfMetrics.gridHorizontalInset * 2
     }
 
     private var currentTopCornerRadius: CGFloat {
@@ -112,11 +119,10 @@ struct ContentView: View {
                     }
 
                     ShelfRevealContent(
-                        topCornerRadius: currentTopCornerRadius,
-                        notchHeight: geometry.notchHeight,
                         preferencesButtonTopPadding: preferencesButtonTopPadding,
-                        hiddenOffset: geometry.notchHeight + ShelfMetrics.shelfTopChromeHeight,
+                        hiddenOffset: ShelfMetrics.shelfTopChromeHeight,
                         contentHeight: expandedContentSize.height,
+                        panelWidth: shelfPanelWidth(for: renderedSlotCount),
                         reduceMotion: reduceMotion,
                         clearShelf: clearShelf,
                         showPreferences: showPreferences
@@ -127,11 +133,6 @@ struct ContentView: View {
                            alignment: .top)
                     .zIndex(1)
 
-                    if windowModel.expansion == .collapsed && hasItems {
-                        collapsedIndicators
-                            .transition(.opacity)
-                            .zIndex(2)
-                    }
                 }
                 .frame(width: currentShapeSize.width, height: currentShapeSize.height)
                 .clipShape(
@@ -145,6 +146,17 @@ struct ContentView: View {
                 .onHover(perform: handleHover)
                 .zIndex(1)
                 Spacer(minLength: 0)
+            }
+
+            if windowModel.expansion == .collapsed && hasItems {
+                CollapsedShelfStatusView(
+                    fileCount: store.totalFileCount,
+                    shelfWidth: collapsedShapeWidth,
+                    notchHeight: geometry.notchHeight
+                )
+                .transition(.opacity)
+                .zIndex(10)
+                .allowsHitTesting(false)
             }
         }
         .frame(width: ShelfMetrics.windowSize.width,
@@ -192,38 +204,6 @@ struct ContentView: View {
                 isStartupGlowVisible = false
             }
         }
-    }
-
-    // MARK: - Collapsed Indicators
-
-    private var collapsedIndicators: some View {
-        HStack(spacing: 0) {
-            // Tray icon on the left — outside physical notch
-            Image(systemName: "tray.fill")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.85))
-                .frame(width: 26, height: 22)
-                .accessibilityLabel("NotchShelf")
-                .accessibilityHidden(false)
-
-            Spacer(minLength: 0)
-
-            // Item count badge on the right — outside physical notch
-            HStack(spacing: 3) {
-                Text("\(store.totalFileCount)")
-                    .font(.system(size: 11, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.85))
-                Image(systemName: "doc.fill")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.85))
-            }
-            .padding(.horizontal, 6)
-            .padding(.vertical, 3)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(store.totalFileCount) files on shelf")
-        }
-        .padding(.horizontal, ShelfMetrics.collapsedIndicatorPadding + ShelfMetrics.topCornerRadius)
-        .frame(height: geometry.notchHeight, alignment: .center)
     }
 
     private func clearShelf() {

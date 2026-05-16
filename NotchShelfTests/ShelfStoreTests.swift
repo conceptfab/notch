@@ -6,7 +6,7 @@ import Foundation
 private func storeWithTempPersistence() -> ShelfStore {
     let dir = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent(UUID().uuidString, isDirectory: true)
-    return ShelfStore(persistence: ShelfPersistenceService(directory: dir))
+    return ShelfStore(persistence: ShelfPersistenceService(directory: dir), defaults: makeTestUserDefaults())
 }
 
 private func makeFileItem(named name: String = "f.txt") throws -> ShelfItem {
@@ -35,10 +35,10 @@ private func makeFileItem(named name: String = "f.txt") throws -> ShelfItem {
     let store = storeWithTempPersistence()
     let a = try makeFileItem(named: "a.txt")
 
-    store.add([a], atSlot: 4)
+    store.add([a], atSlot: ShelfMetrics.minimumSlotCount - 1)
 
     #expect(store.items == [a])
-    #expect(store.slots[4].item == a)
+    #expect(store.slots[ShelfMetrics.minimumSlotCount - 1].item == a)
     #expect(store.slots[0].item == nil)
 }
 
@@ -92,12 +92,13 @@ private func makeFileItem(named name: String = "f.txt") throws -> ShelfItem {
     let dir = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent(UUID().uuidString, isDirectory: true)
     let persistence = ShelfPersistenceService(directory: dir)
-    let store1 = ShelfStore(persistence: persistence)
+    let defaults = makeTestUserDefaults()
+    let store1 = ShelfStore(persistence: persistence, defaults: defaults)
     let a = try makeFileItem()
     store1.add([a])
     await store1.flushPendingSave()
 
-    let store2 = ShelfStore(persistence: ShelfPersistenceService(directory: dir))
+    let store2 = ShelfStore(persistence: ShelfPersistenceService(directory: dir), defaults: defaults)
     #expect(store2.items == [a])
 }
 
@@ -105,12 +106,13 @@ private func makeFileItem(named name: String = "f.txt") throws -> ShelfItem {
     let dir = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent(UUID().uuidString, isDirectory: true)
     let persistence = ShelfPersistenceService(directory: dir)
-    let store1 = ShelfStore(persistence: persistence)
+    let defaults = makeTestUserDefaults()
+    let store1 = ShelfStore(persistence: persistence, defaults: defaults)
     let a = try makeFileItem(named: "a.txt")
     store1.add([a], atSlot: 3)
     await store1.flushPendingSave()
 
-    let store2 = ShelfStore(persistence: ShelfPersistenceService(directory: dir))
+    let store2 = ShelfStore(persistence: ShelfPersistenceService(directory: dir), defaults: defaults)
     #expect(store2.items == [a])
     #expect(store2.slots[3].item == a)
     #expect(store2.slots[0].item == nil)
@@ -172,7 +174,7 @@ private func makeFileItem(named name: String = "f.txt") throws -> ShelfItem {
     let dir = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent(UUID().uuidString, isDirectory: true)
     let persistence = ShelfPersistenceService(directory: dir)
-    let store = ShelfStore(persistence: persistence)
+    let store = ShelfStore(persistence: persistence, defaults: makeTestUserDefaults())
 
     let a = try makeFileItem(named: "a.txt")
     let b = try makeFileItem(named: "b.txt")
@@ -195,7 +197,7 @@ private func makeFileItem(named name: String = "f.txt") throws -> ShelfItem {
     let dir = try TempDir.make()
     defer { try? FileManager.default.removeItem(at: dir.url) }
     let persistence = ShelfPersistenceService(directory: dir.url)
-    let store = ShelfStore(persistence: persistence)
+    let store = ShelfStore(persistence: persistence, defaults: makeTestUserDefaults())
 
     let firstURL = try dir.url.appendingPathComponent("a.txt").touch()
     let secondURL = try dir.url.appendingPathComponent("b.txt").touch()
@@ -214,7 +216,7 @@ private func makeFileItem(named name: String = "f.txt") throws -> ShelfItem {
     let dir = try TempDir.make()
     defer { try? FileManager.default.removeItem(at: dir.url) }
     let persistence = ShelfPersistenceService(directory: dir.url)
-    let store = ShelfStore(persistence: persistence)
+    let store = ShelfStore(persistence: persistence, defaults: makeTestUserDefaults())
 
     let itemURL = try dir.url.appendingPathComponent("x.txt").touch()
     let item = ShelfItem(bookmarkData: try Bookmark(url: itemURL).data)
@@ -234,7 +236,7 @@ private func makeFileItem(named name: String = "f.txt") throws -> ShelfItem {
     let dir = URL(fileURLWithPath: NSTemporaryDirectory())
         .appendingPathComponent(UUID().uuidString, isDirectory: true)
     let persistence = ShelfPersistenceService(directory: dir)
-    let store = ShelfStore(persistence: persistence)
+    let store = ShelfStore(persistence: persistence, defaults: makeTestUserDefaults())
 
     let a = try makeFileItem(named: "a.txt")
     let b = try makeFileItem(named: "b.txt")
@@ -257,7 +259,7 @@ private func makeFileItem(named name: String = "f.txt") throws -> ShelfItem {
     // Use a path that points to a non-existent parent so the write fails.
     let bogusDir = URL(fileURLWithPath: "/dev/null/cannot-create")
     let persistence = ShelfPersistenceService(directory: bogusDir)
-    let store = ShelfStore(persistence: persistence)
+    let store = ShelfStore(persistence: persistence, defaults: makeTestUserDefaults())
 
     let item = try makeFileItem(named: "a.txt")
     store.add([item])

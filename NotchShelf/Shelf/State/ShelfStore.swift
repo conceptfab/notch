@@ -9,19 +9,8 @@ enum SlotCountPolicy {
     static func visibleSlotCount(filledItems: Int, currentVisible: Int, min: Int, max: Int) -> Int {
         let lowerBound = Swift.max(min, 1)
         let upperBound = Swift.max(max, lowerBound)
-        let rowSize = lowerBound
-
-        var target = Swift.max(currentVisible, lowerBound)
-        let free = target - filledItems
-
-        if free <= 2 {
-            target = Swift.min(target + rowSize, upperBound)
-        } else {
-            while target - rowSize >= lowerBound,
-                  filledItems <= (target - rowSize) - 2 {
-                target -= rowSize
-            }
-        }
+        let preferredFreeSlots = 2
+        let target = Swift.max(lowerBound, filledItems + preferredFreeSlots)
         return Swift.max(Swift.min(target, upperBound), lowerBound)
     }
 }
@@ -31,9 +20,10 @@ enum SlotCountPolicy {
 @MainActor
 final class ShelfStore: ObservableObject, ShelfStoring {
     static let shared = ShelfStore()
-    static let defaultSlotCount = 5
+    static let defaultSlotCount = ShelfMetrics.minimumSlotCount
 
     private let persistence: ShelfPersistenceService
+    private let defaults: UserDefaults
 
     @Published private(set) var slots: [ShelfSlot] = [] {
         didSet { schedulePersistenceSave() }
@@ -54,13 +44,12 @@ final class ShelfStore: ObservableObject, ShelfStoring {
     }
 
     private var defaultsMin: Int {
-        let value = UserDefaults.standard.integer(forKey: UserDefaultsKey.minSlotCount)
-        return value >= 3 ? value : Self.defaultSlotCount
+        Self.defaultSlotCount
     }
 
     private var defaultsMax: Int {
-        let value = UserDefaults.standard.integer(forKey: UserDefaultsKey.maxSlotCount)
-        return value >= defaultsMin ? value : 15
+        let value = defaults.integer(forKey: UserDefaultsKey.maxSlotCount)
+        return value >= defaultsMin ? value : ShelfMetrics.defaultMaximumSlotCount
     }
 
     /// The number of slots the UI should render right now.
@@ -77,16 +66,16 @@ final class ShelfStore: ObservableObject, ShelfStoring {
     private var pendingBookmarkUpdates: [ShelfItem.ID: Data] = [:]
     private var updateTask: Task<Void, Never>?
 
-    init(persistence: ShelfPersistenceService = .shared) {
+    init(persistence: ShelfPersistenceService = .shared, defaults: UserDefaults = .standard) {
         self.persistence = persistence
+        self.defaults = defaults
         let raw = persistence.loadSlots()
-        let min = UserDefaults.standard.integer(forKey: UserDefaultsKey.minSlotCount)
-        let max = UserDefaults.standard.integer(forKey: UserDefaultsKey.maxSlotCount)
+        let max = defaults.integer(forKey: UserDefaultsKey.maxSlotCount)
         let target = SlotCountPolicy.visibleSlotCount(
             filledItems: raw.compactMap(\.item).count,
             currentVisible: raw.count,
-            min: min >= 3 ? min : Self.defaultSlotCount,
-            max: max >= 3 ? max : 15
+            min: Self.defaultSlotCount,
+            max: max >= Self.defaultSlotCount ? max : ShelfMetrics.defaultMaximumSlotCount
         )
         let loaded = Self.paddedSlots(raw, target: target)
         // Assigning to the backing storage bypasses didSet on initial load.

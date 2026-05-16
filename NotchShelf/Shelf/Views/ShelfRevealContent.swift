@@ -5,11 +5,10 @@ import SwiftUI
 struct ShelfRevealContent: View {
     @EnvironmentObject private var windowModel: ShelfWindowModel
 
-    let topCornerRadius: CGFloat
-    let notchHeight: CGFloat
     let preferencesButtonTopPadding: CGFloat
     let hiddenOffset: CGFloat
     let contentHeight: CGFloat
+    let panelWidth: CGFloat
     let reduceMotion: Bool
     let clearShelf: () -> Void
     let showPreferences: () -> Void
@@ -36,8 +35,8 @@ struct ShelfRevealContent: View {
         ZStack(alignment: .top) {
             ShelfView()
                 .environmentObject(windowModel)
-                .padding(.horizontal, topCornerRadius + 12)
-                .padding(.top, notchHeight + ShelfMetrics.shelfTopChromeHeight)
+                .frame(width: panelWidth)
+                .padding(.top, ShelfMetrics.shelfTopChromeHeight)
                 .padding(.bottom, ShelfMetrics.shelfPanelBottomPadding)
                 .zIndex(1)
 
@@ -62,7 +61,6 @@ struct ShelfRevealContent: View {
         VStack {
             HStack {
                 ShelfClearButton(action: clearShelf)
-                    .padding(.leading, topCornerRadius + 8)
                 Spacer()
                 Button("Preferences", systemImage: "gearshape.fill", action: showPreferences)
                     .labelStyle(.iconOnly)
@@ -73,8 +71,8 @@ struct ShelfRevealContent: View {
                     .contentShape(Rectangle())
                     .help("Preferences")
                     .accessibilityLabel("Preferences")
-                    .padding(.trailing, topCornerRadius + 8)
             }
+            .frame(width: panelWidth)
             Spacer()
         }
     }

@@ -17,7 +17,7 @@ struct ShelfView: View {
     }
 
     private var rowCapacity: Int {
-        Swift.max(UserDefaults.standard.integer(forKey: UserDefaultsKey.minSlotCount), 3)
+        Swift.max(store.visibleSlots.count, ShelfMetrics.minimumSlotCount)
     }
 
     private var gridColumns: [GridItem] {
@@ -89,6 +89,6 @@ struct ShelfView: View {
                 }
             }
         }
-        .padding(.horizontal, 2)
+        .padding(.horizontal, ShelfMetrics.gridHorizontalInset)
     }
 }
