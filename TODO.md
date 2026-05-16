@@ -1,1 +1,1 @@
-nie dziala przenoszenie plików!!!!!!!
+nie dziala przenoszenie plików!
