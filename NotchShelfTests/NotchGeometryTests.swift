@@ -57,11 +57,13 @@ import Testing
     let geometry = NotchGeometry(screenFrame: screen, safeAreaTop: 38,
                                  auxLeftWidth: 620, auxRightWidth: 620)
 
-    let catchRegion = geometry.dragCatchRegion(horizontalOutset: 160, lowerOutset: 96)
+    let catchRegion = geometry.dragCatchRegion()
 
     #expect(catchRegion.maxY == geometry.notchRect.maxY)
-    #expect(catchRegion.width == geometry.notchRect.width + 320)
-    #expect(catchRegion.height == geometry.notchRect.height + 96)
-    #expect(catchRegion.contains(CGPoint(x: geometry.notchRect.midX, y: geometry.notchRect.minY - 80)))
-    #expect(catchRegion.contains(CGPoint(x: geometry.notchRect.minX - 120, y: geometry.notchRect.midY)))
+    #expect(catchRegion.width == geometry.notchRect.width + 160)
+    #expect(catchRegion.height == geometry.notchRect.height + 48)
+    #expect(catchRegion.contains(CGPoint(x: geometry.notchRect.midX, y: geometry.notchRect.minY - 40)))
+    #expect(catchRegion.contains(CGPoint(x: geometry.notchRect.minX - 60, y: geometry.notchRect.midY)))
+    #expect(catchRegion.contains(CGPoint(x: geometry.notchRect.minX - 100, y: geometry.notchRect.midY)) == false)
+    #expect(catchRegion.contains(CGPoint(x: geometry.notchRect.midX, y: geometry.notchRect.minY - 64)) == false)
 }

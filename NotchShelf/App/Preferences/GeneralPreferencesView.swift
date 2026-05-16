@@ -5,7 +5,7 @@ struct GeneralPreferencesView: View {
     @AppStorage(UserDefaultsKey.autoHideDelaySeconds) private var autoHideDelaySeconds = 1.5
     @AppStorage(UserDefaultsKey.copyOnDrag) private var copyOnDrag = false
     @AppStorage(UserDefaultsKey.launchAtLogin) private var launchAtLogin = false
-    @AppStorage(UserDefaultsKey.glowOnSystemEvents) private var glowOnSystemEvents = false
+    @AppStorage(UserDefaultsKey.glowOnSystemEvents) private var glowOnSystemEvents = true
 
     var body: some View {
         Form {
@@ -25,7 +25,7 @@ struct GeneralPreferencesView: View {
                     .onChange(of: launchAtLogin) { _, enabled in
                         LaunchAtLoginService.shared.setEnabled(enabled)
                     }
-                Toggle("Flash notch glow on system events", isOn: $glowOnSystemEvents)
+                Toggle("Flash notch glow on system notifications and events", isOn: $glowOnSystemEvents)
             }
 
             Section {

@@ -6,7 +6,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let windowModel = ShelfWindowModel()
     private var windowController: NotchWindowController?
     private var dragMonitor: DragMonitor?
-    private var systemEventObservers: [NSObjectProtocol] = []
+    private var workspaceEventObservers: [NSObjectProtocol] = []
+    private var appEventObservers: [NSObjectProtocol] = []
+    private var distributedEventObservers: [NSObjectProtocol] = []
+    private var systemNotificationWindowMonitor: SystemNotificationWindowMonitor?
+    private var lastSystemGlowDate = Date.distantPast
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         registerPreferenceDefaults()
@@ -67,14 +71,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupSystemEventGlowObservers() {
         let workspaceCenter = NSWorkspace.shared.notificationCenter
-        systemEventObservers = [
+        workspaceEventObservers = [
             workspaceCenter.addObserver(
                 forName: NSWorkspace.didWakeNotification,
                 object: nil,
                 queue: .main
             ) { [weak self] _ in
                 Task { @MainActor [weak self] in
-                    self?.triggerSystemEventGlowIfEnabled()
+                    self?.triggerSystemEventGlowIfEnabled(reason: "wake")
                 }
             },
             workspaceCenter.addObserver(
@@ -83,32 +87,75 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 queue: .main
             ) { [weak self] _ in
                 Task { @MainActor [weak self] in
-                    self?.triggerSystemEventGlowIfEnabled()
+                    self?.triggerSystemEventGlowIfEnabled(reason: "session-active")
                 }
-            },
+            }
+        ]
+
+        appEventObservers = [
             NotificationCenter.default.addObserver(
                 forName: NSApplication.didChangeScreenParametersNotification,
                 object: nil,
                 queue: .main
             ) { [weak self] _ in
                 Task { @MainActor [weak self] in
-                    self?.triggerSystemEventGlowIfEnabled()
+                    self?.triggerSystemEventGlowIfEnabled(reason: "screen-parameters")
                 }
             }
         ]
+
+        let distributedCenter = DistributedNotificationCenter.default()
+        distributedEventObservers = [
+            "com.apple.notificationcenterui.banner",
+            "com.apple.notificationcenterui.customalerts",
+            "com.apple.notificationcenterui.customalerts-alive"
+        ].map { name in
+            distributedCenter.addObserver(
+                forName: Notification.Name(name),
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.triggerSystemEventGlowIfEnabled(reason: name)
+                }
+            }
+        }
+
+        let monitor = SystemNotificationWindowMonitor { [weak self] in
+            self?.triggerSystemEventGlowIfEnabled(reason: "notification-window")
+        }
+        monitor.start()
+        systemNotificationWindowMonitor = monitor
     }
 
     private func tearDownSystemEventGlowObservers() {
         let workspaceCenter = NSWorkspace.shared.notificationCenter
-        for observer in systemEventObservers {
+        for observer in workspaceEventObservers {
             workspaceCenter.removeObserver(observer)
+        }
+        workspaceEventObservers.removeAll()
+
+        for observer in appEventObservers {
             NotificationCenter.default.removeObserver(observer)
         }
-        systemEventObservers.removeAll()
+        appEventObservers.removeAll()
+
+        let distributedCenter = DistributedNotificationCenter.default()
+        for observer in distributedEventObservers {
+            distributedCenter.removeObserver(observer)
+        }
+        distributedEventObservers.removeAll()
+
+        systemNotificationWindowMonitor?.stop()
+        systemNotificationWindowMonitor = nil
     }
 
-    private func triggerSystemEventGlowIfEnabled() {
+    private func triggerSystemEventGlowIfEnabled(reason: String) {
         guard UserDefaults.standard.bool(forKey: UserDefaultsKey.glowOnSystemEvents) else { return }
+        let now = Date()
+        guard now.timeIntervalSince(lastSystemGlowDate) >= 0.8 else { return }
+        lastSystemGlowDate = now
+        AppLogger.systemEvents.notice("System glow requested: \(reason, privacy: .public)")
         windowModel.requestGlow()
     }
 

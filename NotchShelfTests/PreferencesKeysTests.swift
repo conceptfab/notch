@@ -15,7 +15,7 @@ struct PreferencesKeysTests {
         #expect(suite.bool(forKey: UserDefaultsKey.copyOnDrag) == false)
         #expect(suite.double(forKey: UserDefaultsKey.autoHideDelaySeconds) == 1.5)
         #expect(suite.bool(forKey: UserDefaultsKey.launchAtLogin) == false)
-        #expect(suite.bool(forKey: UserDefaultsKey.glowOnSystemEvents) == false)
+        #expect(suite.bool(forKey: UserDefaultsKey.glowOnSystemEvents) == true)
         #expect(suite.integer(forKey: UserDefaultsKey.minSlotCount) == ShelfMetrics.defaultSlotCount)
         #expect(suite.integer(forKey: UserDefaultsKey.maxSlotCount) == ShelfMetrics.defaultAdditionalRowCount)
         #expect(suite.integer(forKey: UserDefaultsKey.stackListGridThreshold) == 5)

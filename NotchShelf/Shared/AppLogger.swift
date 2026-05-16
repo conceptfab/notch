@@ -9,4 +9,5 @@ enum AppLogger {
     static let thumbnail = Logger(subsystem: subsystem, category: "thumbnail")
     static let drag = Logger(subsystem: subsystem, category: "drag")
     static let shelf = Logger(subsystem: subsystem, category: "shelf")
+    static let systemEvents = Logger(subsystem: subsystem, category: "system-events")
 }

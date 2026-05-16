@@ -20,7 +20,7 @@ func registerPreferenceDefaults(in defaults: UserDefaults = .standard) {
         UserDefaultsKey.copyOnDrag: false,
         UserDefaultsKey.autoHideDelaySeconds: 1.5,
         UserDefaultsKey.launchAtLogin: false,
-        UserDefaultsKey.glowOnSystemEvents: false,
+        UserDefaultsKey.glowOnSystemEvents: true,
         UserDefaultsKey.minSlotCount: ShelfMetrics.defaultSlotCount,
         UserDefaultsKey.maxSlotCount: ShelfMetrics.defaultAdditionalRowCount,
         UserDefaultsKey.stackListGridThreshold: 5,
