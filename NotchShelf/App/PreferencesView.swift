@@ -12,6 +12,6 @@ struct PreferencesRootView: View {
             AboutPreferencesView()
                 .tabItem { Label("About", systemImage: "info.circle") }
         }
-        .frame(width: 460, height: 320)
+        .frame(width: 460, height: 430)
     }
 }

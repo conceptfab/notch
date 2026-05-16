@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct ShelfPreferencesView: View {
@@ -8,37 +9,47 @@ struct ShelfPreferencesView: View {
     @State private var dropZoneColor: Color = RGBAColor.defaultDropZone.color
 
     var body: some View {
-        Form {
-            Section("Slots") {
-                Stepper(value: $slotCount, in: ShelfMetrics.minimumSlotCount...ShelfMetrics.maximumSlotCount) {
-                    LabeledContent("Slots", value: "\(slotCount)")
-                }
-                Stepper(value: $additionalRowCount, in: 0...ShelfMetrics.maximumAdditionalRowCount) {
-                    LabeledContent("Additional rows", value: "\(additionalRowCount)")
-                }
-                Text("Additional rows appear only when the existing rows are occupied.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+        PreferencesPage(
+            showsIndicators: true
+        ) {
+            PreferencesSection("Slots") {
+                PreferenceStepperRow(
+                    "Slots",
+                    value: $slotCount,
+                    in: ShelfMetrics.minimumSlotCount...ShelfMetrics.maximumSlotCount
+                )
+
+                PreferenceDivider()
+                PreferenceStepperRow(
+                    "Additional rows",
+                    value: $additionalRowCount,
+                    in: 0...ShelfMetrics.maximumAdditionalRowCount
+                )
+
+                PreferenceFootnote("Additional rows appear only when the existing rows are occupied.")
             }
 
-            Section("Drop zone") {
-                ColorPicker("Outline color", selection: $dropZoneColor, supportsOpacity: true)
-                Text("The dashed outline that pulses when files hover the shelf.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+            PreferencesSection("Drop zone") {
+                PreferenceRow("Outline color") {
+                    ColorPicker("Outline color", selection: $dropZoneColor, supportsOpacity: true)
+                        .labelsHidden()
+                        .frame(width: 54)
+                }
+
+                PreferenceFootnote("The dashed outline that pulses when files hover the shelf.")
             }
 
-            Section("Stack list") {
-                Stepper(value: $stackListGridThreshold, in: 3...20) {
-                    LabeledContent("Switch to grid above", value: "\(stackListGridThreshold) files")
-                }
-                Text("All files in a stack are always reachable; the grid keeps them visible without scrolling.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+            PreferencesSection("Stack list") {
+                PreferenceStepperRow(
+                    "Switch to grid above",
+                    value: $stackListGridThreshold,
+                    in: 3...20,
+                    valueText: { "\($0) files" }
+                )
+
+                PreferenceFootnote("All files in a stack are always reachable; the grid keeps them visible without scrolling.")
             }
         }
-        .formStyle(.grouped)
-        .padding(20)
         .onAppear {
             normalizeSlotPreferences()
             loadDropZoneColor()

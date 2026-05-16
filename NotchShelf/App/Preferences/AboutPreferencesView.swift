@@ -30,44 +30,62 @@ struct AboutPreferencesView: View {
     }
 
     var body: some View {
-        VStack(spacing: 14) {
-            Image(nsImage: appIcon)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 96, height: 96)
-                .accessibilityHidden(true)
+        PreferencesPage {
+            VStack(spacing: 16) {
+                VStack(spacing: 12) {
+                    Image(nsImage: appIcon)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 96, height: 96)
+                        .accessibilityHidden(true)
 
-            Text("NotchShelf")
-                .font(.title2.weight(.semibold))
-            Text("Version \(version) (\(build))")
-                .font(.callout)
-                .foregroundStyle(.secondary)
+                    VStack(spacing: 6) {
+                        Text("NotchShelf")
+                            .font(.title2.bold())
 
-            Divider().padding(.vertical, 4)
-
-            VStack(spacing: 4) {
-                Text("Made by Michal Kleniewski")
-                    .font(.callout)
-                Text(copyright)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            HStack(spacing: 16) {
-                Button("View License") {
-                    if let url = URL(string: "https://opensource.org/license/mit") {
-                        NSWorkspace.shared.open(url)
+                        Text("Version \(version) (\(build))")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
                     }
                 }
-                Button("Acknowledgements") {
-                    let alert = NSAlert()
-                    alert.messageText = "Acknowledgements"
-                    alert.informativeText = "NotchShelf is built on Apple platform frameworks only. Thanks to the boring.notch project for the notch geometry research."
-                    alert.runModal()
+
+                Divider()
+
+                VStack(spacing: 6) {
+                    Text("Made by Michal Kleniewski")
+                        .font(.body)
+
+                    Text(copyright)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
                 }
+
+                HStack(spacing: 12) {
+                    Button {
+                        if let url = URL(string: "https://opensource.org/license/mit") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    } label: {
+                        Text("View License")
+                    }
+
+                    Button {
+                        showAcknowledgements()
+                    } label: {
+                        Text("Acknowledgements")
+                    }
+                }
+                .buttonStyle(.bordered)
             }
+            .frame(maxWidth: .infinity)
+            .padding(.top, 10)
         }
-        .padding(24)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func showAcknowledgements() {
+        let alert = NSAlert()
+        alert.messageText = "Acknowledgements"
+        alert.informativeText = "NotchShelf is built on Apple platform frameworks only. Thanks to the boring.notch project for the notch geometry research."
+        alert.runModal()
     }
 }

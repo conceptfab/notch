@@ -8,36 +8,67 @@ struct GeneralPreferencesView: View {
     @AppStorage(UserDefaultsKey.glowOnSystemEvents) private var glowOnSystemEvents = true
 
     var body: some View {
-        Form {
-            Section("Behaviour") {
-                LabeledContent("Auto-hide delay") {
-                    HStack(spacing: 8) {
-                        Slider(value: $autoHideDelaySeconds, in: 0.5...5.0, step: 0.25)
-                            .frame(maxWidth: 200)
+        PreferencesPage {
+            PreferencesSection("Behaviour") {
+                PreferenceRow("Auto-hide delay") {
+                    HStack(spacing: 12) {
+                        Slider(value: $autoHideDelaySeconds, in: 0.5...5.0, step: 0.25) {
+                            Text("Auto-hide delay")
+                        }
+                        .labelsHidden()
+                        .controlSize(.mini)
+                        .frame(width: 132)
+                        .accessibilityValue(Text(delayText))
+
                         Text(String(format: "%.2fs", autoHideDelaySeconds))
-                            .font(.system(.body, design: .monospaced))
-                            .frame(width: 64, alignment: .trailing)
+                            .font(.system(.caption, design: .monospaced))
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                            .frame(width: 50, alignment: .trailing)
                     }
                 }
 
-                Toggle("Always copy files when dragging within the app", isOn: $copyOnDrag)
-                Toggle("Launch NotchShelf at login", isOn: $launchAtLogin)
+                PreferenceDivider()
+                PreferenceToggleRow(
+                    "Always copy files when dragging within the app",
+                    isOn: $copyOnDrag
+                )
+
+                PreferenceDivider()
+                PreferenceToggleRow("Launch NotchShelf at login", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, enabled in
                         LaunchAtLoginService.shared.setEnabled(enabled)
                     }
-                Toggle("Flash notch glow on system notifications and events", isOn: $glowOnSystemEvents)
+
+                PreferenceDivider()
+                PreferenceToggleRow(
+                    "Flash notch glow on system notifications and events",
+                    isOn: $glowOnSystemEvents
+                )
             }
 
-            Section {
+            PreferencesSection {
                 HStack {
                     Spacer()
-                    Button("Quit NotchShelf", role: .destructive) {
+
+                    Button {
                         NSApp.terminate(nil)
+                    } label: {
+                        Label("Quit NotchShelf", systemImage: "power")
                     }
+                    .buttonStyle(.bordered)
+                    .controlSize(.mini)
+                    .tint(.red)
+
+                    Spacer()
                 }
+                .padding(.horizontal, PreferencesPanelMetrics.rowHorizontalPadding)
+                .frame(minHeight: PreferencesPanelMetrics.rowMinHeight)
             }
         }
-        .formStyle(.grouped)
-        .padding(20)
+    }
+
+    private var delayText: String {
+        String(format: "%.2f seconds", autoHideDelaySeconds)
     }
 }

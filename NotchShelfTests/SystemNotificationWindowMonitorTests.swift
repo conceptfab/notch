@@ -68,6 +68,23 @@ import Testing
     ))
 }
 
+@MainActor @Test func notificationWindowMonitorAcceptsTahoeNotificationCenterCompositorWindow() {
+    let bounds: [String: Any] = [
+        "X": NSNumber(value: 0),
+        "Y": NSNumber(value: 0),
+        "Width": NSNumber(value: 2048),
+        "Height": NSNumber(value: 1330)
+    ]
+
+    #expect(SystemNotificationWindowMonitor.isLikelyNotificationWindow(
+        bundleIdentifier: "com.apple.notificationcenterui",
+        ownerName: "Centrum powiadomień",
+        bounds: bounds,
+        layer: 21,
+        alpha: 1.0
+    ))
+}
+
 @MainActor @Test func notificationWindowMonitorRejectsTinyNotificationCenterWindows() {
     let bounds: [String: Any] = [
         "X": NSNumber(value: 1100),
@@ -80,6 +97,23 @@ import Testing
         bundleIdentifier: "com.apple.notificationcenterui",
         bounds: bounds,
         layer: 25,
+        alpha: 1.0
+    ) == false)
+}
+
+@MainActor @Test func notificationWindowMonitorRejectsFullScreenCompositorFromOtherApps() {
+    let bounds: [String: Any] = [
+        "X": NSNumber(value: 0),
+        "Y": NSNumber(value: 0),
+        "Width": NSNumber(value: 2048),
+        "Height": NSNumber(value: 1330)
+    ]
+
+    #expect(SystemNotificationWindowMonitor.isLikelyNotificationWindow(
+        bundleIdentifier: "com.example.SomeApp",
+        ownerName: "SomeApp",
+        bounds: bounds,
+        layer: 21,
         alpha: 1.0
     ) == false)
 }

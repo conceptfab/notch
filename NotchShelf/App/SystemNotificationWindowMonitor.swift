@@ -116,6 +116,10 @@ final class SystemNotificationWindowMonitor {
             return false
         }
 
+        if isLikelyNotificationCompositorWindow(bounds: bounds, layer: layer) {
+            return true
+        }
+
         let width = (bounds["Width"] as? NSNumber)?.doubleValue ?? 0
         let height = (bounds["Height"] as? NSNumber)?.doubleValue ?? 0
         return (180...620).contains(width) && (40...260).contains(height)
@@ -132,6 +136,19 @@ final class SystemNotificationWindowMonitor {
             && (0...220).contains(y)
             && (180...620).contains(width)
             && (40...260).contains(height)
+    }
+
+    static func isLikelyNotificationCompositorWindow(bounds: [String: Any], layer: Int) -> Bool {
+        let x = (bounds["X"] as? NSNumber)?.doubleValue ?? -1
+        let y = (bounds["Y"] as? NSNumber)?.doubleValue ?? -1
+        let width = (bounds["Width"] as? NSNumber)?.doubleValue ?? 0
+        let height = (bounds["Height"] as? NSNumber)?.doubleValue ?? 0
+
+        return layer >= 20
+            && (0...40).contains(x)
+            && (0...60).contains(y)
+            && width >= 900
+            && height >= 500
     }
 
     private static func isNotificationOwner(bundleIdentifier: String?, ownerName: String?) -> Bool {
