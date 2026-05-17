@@ -88,7 +88,7 @@ struct ShelfView: View {
                 .allowsHitTesting(false)
         }
         .contentShape(Rectangle())
-        .animation(.easeInOut(duration: 0.12), value: isVisuallyTargeted)
+        .animation(ShelfAnimations.outlineHover, value: isVisuallyTargeted)
         .onTapGesture { selection.clear() }
     }
 

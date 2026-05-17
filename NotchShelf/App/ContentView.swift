@@ -112,9 +112,9 @@ struct ContentView: View {
 
     private var shelfAnimation: Animation {
         if reduceMotion {
-            return .easeInOut(duration: 0.14)
+            return ShelfAnimations.shelfReduced
         }
-        return .spring(response: 0.32, dampingFraction: 0.86)
+        return ShelfAnimations.shelf
     }
 
     var body: some View {
@@ -250,7 +250,7 @@ struct ContentView: View {
         if reduceMotion {
             isStartupGlowVisible = true
             glowTask = Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(700))
+                try? await Task.sleep(for: .milliseconds(ShelfAnimations.Glow.reducedMotionHoldMillis))
                 guard !Task.isCancelled else { return }
                 isStartupGlowVisible = false
             }
@@ -266,14 +266,14 @@ struct ContentView: View {
             isStartupGlowVisible = false
         }
 
-        withAnimation(.easeOut(duration: 0.18)) {
+        withAnimation(.easeOut(duration: ShelfAnimations.Glow.inDuration)) {
             isStartupGlowVisible = true
         }
 
         glowTask = Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(650))
+            try? await Task.sleep(for: .milliseconds(ShelfAnimations.Glow.holdMillis))
             guard !Task.isCancelled else { return }
-            withAnimation(.easeOut(duration: 0.55)) {
+            withAnimation(.easeOut(duration: ShelfAnimations.Glow.outDuration)) {
                 isStartupGlowVisible = false
             }
         }

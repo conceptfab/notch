@@ -68,8 +68,8 @@ struct ShelfItemView: View {
         .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemHeight)
         .contentShape(Rectangle())
         .help(viewModel.viewData.displayName)
-        .animation(.easeInOut(duration: 0.1), value: debouncedDropTarget)
-        .animation(.easeInOut(duration: 0.1), value: isSelected)
+        .animation(ShelfAnimations.itemHover, value: debouncedDropTarget)
+        .animation(ShelfAnimations.itemHover, value: isSelected)
         .onChange(of: viewModel.isDropTargeted) { _, targeted in
             dropTargetDebounceTask?.cancel()
             dropTargetDebounceTask = Task { @MainActor in
