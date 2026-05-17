@@ -10,23 +10,13 @@ struct GeneralPreferencesView: View {
     var body: some View {
         PreferencesPage {
             PreferencesSection("Behaviour") {
-                PreferenceRow("Auto-hide delay") {
-                    HStack(spacing: 12) {
-                        Slider(value: $autoHideDelaySeconds, in: 0.5...5.0, step: 0.25) {
-                            Text("Auto-hide delay")
-                        }
-                        .labelsHidden()
-                        .controlSize(.small)
-                        .frame(width: PreferencesPanelMetrics.autoHideSliderWidth)
-                        .accessibilityValue(Text(delayText))
-
-                        Text(String(format: "%.2fs", autoHideDelaySeconds))
-                            .font(.system(.callout, design: .monospaced).weight(.medium))
-                            .monospacedDigit()
-                            .foregroundStyle(.primary)
-                            .frame(width: PreferencesPanelMetrics.autoHideValueWidth, alignment: .trailing)
-                    }
-                }
+                PreferenceDoubleSliderRow(
+                    "Auto-hide delay",
+                    value: $autoHideDelaySeconds,
+                    in: 0.5...5.0,
+                    step: 0.25,
+                    valueText: { String(format: "%.2fs", $0) }
+                )
 
                 PreferenceDivider()
                 PreferenceToggleRow(
@@ -68,7 +58,4 @@ struct GeneralPreferencesView: View {
         }
     }
 
-    private var delayText: String {
-        String(format: "%.2f seconds", autoHideDelaySeconds)
-    }
 }
