@@ -2,10 +2,10 @@ import AppKit
 import SwiftUI
 
 struct PreferencesSection<Content: View>: View {
-    private let title: String?
+    private let title: LocalizedStringKey?
     private let content: Content
 
-    init(_ title: String? = nil, @ViewBuilder content: () -> Content) {
+    init(_ title: LocalizedStringKey? = nil, @ViewBuilder content: () -> Content) {
         self.title = title
         self.content = content()
     }

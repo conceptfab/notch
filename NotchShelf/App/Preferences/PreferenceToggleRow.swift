@@ -1,10 +1,10 @@
 import SwiftUI
 
 struct PreferenceToggleRow: View {
-    let title: String
+    let title: LocalizedStringKey
     @Binding var isOn: Bool
 
-    init(_ title: String, isOn: Binding<Bool>) {
+    init(_ title: LocalizedStringKey, isOn: Binding<Bool>) {
         self.title = title
         _isOn = isOn
     }

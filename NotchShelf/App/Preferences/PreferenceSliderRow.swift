@@ -1,14 +1,14 @@
 import SwiftUI
 
 struct PreferenceSliderRow: View {
-    let title: String
+    let title: LocalizedStringKey
     @Binding var value: Int
     let range: ClosedRange<Int>
     let valueText: (Int) -> String
     @State private var doubleValue: Double
 
     init(
-        _ title: String,
+        _ title: LocalizedStringKey,
         value: Binding<Int>,
         in range: ClosedRange<Int>,
         valueText: @escaping (Int) -> String = { "\($0)" }

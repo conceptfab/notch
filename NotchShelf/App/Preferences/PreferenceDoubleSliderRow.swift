@@ -1,14 +1,14 @@
 import SwiftUI
 
 struct PreferenceDoubleSliderRow: View {
-    let title: String
+    let title: LocalizedStringKey
     @Binding var value: Double
     let range: ClosedRange<Double>
     let step: Double
     let valueText: (Double) -> String
 
     init(
-        _ title: String,
+        _ title: LocalizedStringKey,
         value: Binding<Double>,
         in range: ClosedRange<Double>,
         step: Double,

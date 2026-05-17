@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct PreferenceSwitchToggleStyle: ToggleStyle {
-    let accessibilityLabel: String
+    let accessibilityLabel: LocalizedStringKey
 
     func makeBody(configuration: Configuration) -> some View {
         SwitchBody(configuration: configuration, accessibilityLabel: accessibilityLabel)
@@ -9,7 +9,7 @@ struct PreferenceSwitchToggleStyle: ToggleStyle {
 
     private struct SwitchBody: View {
         let configuration: Configuration
-        let accessibilityLabel: String
+        let accessibilityLabel: LocalizedStringKey
         @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
         var body: some View {

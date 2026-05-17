@@ -1,11 +1,11 @@
 import SwiftUI
 
 struct PreferenceRow<Trailing: View>: View {
-    private let title: String
+    private let title: LocalizedStringKey
     private let titleLineLimit: Int
     private let trailing: Trailing
 
-    init(_ title: String, titleLineLimit: Int = 2, @ViewBuilder trailing: () -> Trailing) {
+    init(_ title: LocalizedStringKey, titleLineLimit: Int = 2, @ViewBuilder trailing: () -> Trailing) {
         self.title = title
         self.titleLineLimit = titleLineLimit
         self.trailing = trailing()
