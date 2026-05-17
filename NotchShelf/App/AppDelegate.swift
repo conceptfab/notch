@@ -6,11 +6,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let windowModel = ShelfWindowModel()
     private var windowController: NotchWindowController?
     private var dragMonitor: DragMonitor?
-    private var workspaceEventObservers: [NSObjectProtocol] = []
-    private var appEventObservers: [NSObjectProtocol] = []
-    private var distributedEventObservers: [NSObjectProtocol] = []
-    private var systemNotificationWindowMonitor: SystemNotificationWindowMonitor?
-    private var lastSystemGlowDate = Date.distantPast
+    private var glowCoordinator: SystemEventGlowCoordinator?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         registerPreferenceDefaults()
@@ -18,13 +14,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
         windowController = NotchWindowController(windowModel: windowModel)
         setupDragMonitor()
-        setupSystemEventGlowObservers()
+        setupGlowCoordinator()
         ShelfStore.shared.cleanupInvalidItems()
         reconcileLaunchAtLoginPreference()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        tearDownSystemEventGlowObservers()
+        glowCoordinator?.stop()
+        glowCoordinator = nil
         dragMonitor?.stopMonitoring()
         dragMonitor = nil
         ShelfStore.shared.flushPendingSaveSync()
@@ -68,117 +65,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         dragMonitor = monitor
     }
 
-    private func setupSystemEventGlowObservers() {
-        let workspaceCenter = NSWorkspace.shared.notificationCenter
-        workspaceEventObservers = [
-            workspaceCenter.addObserver(
-                forName: NSWorkspace.didWakeNotification,
-                object: nil,
-                queue: .main
-            ) { [weak self] _ in
-                Task { @MainActor [weak self] in
-                    self?.triggerSystemEventGlowIfEnabled(reason: "wake")
-                }
-            },
-            workspaceCenter.addObserver(
-                forName: NSWorkspace.sessionDidBecomeActiveNotification,
-                object: nil,
-                queue: .main
-            ) { [weak self] _ in
-                Task { @MainActor [weak self] in
-                    self?.triggerSystemEventGlowIfEnabled(reason: "session-active")
-                }
-            }
-        ]
-
-        appEventObservers = [
-            NotificationCenter.default.addObserver(
-                forName: NSApplication.didChangeScreenParametersNotification,
-                object: nil,
-                queue: .main
-            ) { [weak self] _ in
-                Task { @MainActor [weak self] in
-                    self?.triggerSystemEventGlowIfEnabled(reason: "screen-parameters")
-                }
-            }
-        ]
-
-        let distributedCenter = DistributedNotificationCenter.default()
-        distributedEventObservers = [
-            "com.apple.notificationcenterui.banner",
-            "com.apple.notificationcenterui.customalerts",
-            "com.apple.notificationcenterui.customalerts-alive"
-        ].map { name in
-            distributedCenter.addObserver(
-                forName: Notification.Name(name),
-                object: nil,
-                queue: .main
-            ) { [weak self] _ in
-                Task { @MainActor [weak self] in
-                    self?.triggerSystemEventGlowIfEnabled(reason: name)
-                }
-            }
+    private func setupGlowCoordinator() {
+        let coordinator = SystemEventGlowCoordinator { [weak self] _ in
+            self?.windowModel.requestGlow()
         }
-        distributedEventObservers.append(
-            distributedCenter.addObserver(
-                forName: nil,
-                object: nil,
-                queue: .main
-            ) { [weak self] notification in
-                let notificationName = notification.name.rawValue
-                Task { @MainActor [weak self] in
-                    guard let name = notificationName.nonEmpty,
-                          Self.isLikelyNotificationDistributedEvent(name)
-                    else { return }
-                    self?.triggerSystemEventGlowIfEnabled(reason: name)
-                }
-            }
-        )
-
-        let monitor = SystemNotificationWindowMonitor { [weak self] in
-            self?.triggerSystemEventGlowIfEnabled(reason: "notification-window")
-        }
-        monitor.start()
-        systemNotificationWindowMonitor = monitor
-    }
-
-    static func isLikelyNotificationDistributedEvent(_ name: String) -> Bool {
-        let lowercasedName = name.lowercased()
-        return lowercasedName.contains("notificationcenter")
-            || lowercasedName.contains("usernotification")
-            || lowercasedName.contains("customalerts")
-            || lowercasedName.contains("banner")
-    }
-
-    private func tearDownSystemEventGlowObservers() {
-        let workspaceCenter = NSWorkspace.shared.notificationCenter
-        for observer in workspaceEventObservers {
-            workspaceCenter.removeObserver(observer)
-        }
-        workspaceEventObservers.removeAll()
-
-        for observer in appEventObservers {
-            NotificationCenter.default.removeObserver(observer)
-        }
-        appEventObservers.removeAll()
-
-        let distributedCenter = DistributedNotificationCenter.default()
-        for observer in distributedEventObservers {
-            distributedCenter.removeObserver(observer)
-        }
-        distributedEventObservers.removeAll()
-
-        systemNotificationWindowMonitor?.stop()
-        systemNotificationWindowMonitor = nil
-    }
-
-    private func triggerSystemEventGlowIfEnabled(reason: String) {
-        guard UserDefaults.standard.bool(forKey: UserDefaultsKey.glowOnSystemEvents) else { return }
-        let now = Date()
-        guard now.timeIntervalSince(lastSystemGlowDate) >= 0.8 else { return }
-        lastSystemGlowDate = now
-        AppLogger.systemEvents.notice("System glow requested: \(reason, privacy: .public)")
-        windowModel.requestGlow()
+        coordinator.start()
+        glowCoordinator = coordinator
     }
 
     private func reconcileLaunchAtLoginPreference() {
@@ -187,11 +79,5 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if storedPref != actual {
             UserDefaults.standard.set(actual, forKey: UserDefaultsKey.launchAtLogin)
         }
-    }
-}
-
-private extension String {
-    var nonEmpty: String? {
-        isEmpty ? nil : self
     }
 }

@@ -169,10 +169,10 @@ import Testing
 }
 
 @MainActor @Test func distributedNotificationFallbackAcceptsNotificationCenterNames() {
-    #expect(AppDelegate.isLikelyNotificationDistributedEvent("com.apple.notificationcenterui.banner"))
-    #expect(AppDelegate.isLikelyNotificationDistributedEvent("com.apple.UserNotificationCenter.delivered"))
+    #expect(SystemEventGlowCoordinator.isLikelyNotificationDistributedEvent("com.apple.notificationcenterui.banner"))
+    #expect(SystemEventGlowCoordinator.isLikelyNotificationDistributedEvent("com.apple.UserNotificationCenter.delivered"))
 }
 
 @MainActor @Test func distributedNotificationFallbackRejectsUnrelatedNames() {
-    #expect(AppDelegate.isLikelyNotificationDistributedEvent("com.apple.HIToolbox.beginMenuTracking") == false)
+    #expect(SystemEventGlowCoordinator.isLikelyNotificationDistributedEvent("com.apple.HIToolbox.beginMenuTracking") == false)
 }
