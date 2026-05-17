@@ -9,7 +9,7 @@ struct StackFileListView: View {
     private var useGrid: Bool { entries.count > gridThreshold }
 
     var body: some View {
-        ScrollView(.vertical, showsIndicators: false) {
+        ScrollView(.vertical) {
             if useGrid {
                 StackFileGridView(item: item, entries: entries, viewModel: viewModel)
             } else {

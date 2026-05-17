@@ -13,7 +13,7 @@ struct PreferencesPage<Content: View>: View {
     }
 
     var body: some View {
-        ScrollView(.vertical, showsIndicators: showsIndicators) {
+        ScrollView(.vertical) {
             VStack(alignment: .leading, spacing: 18) {
                 content
             }
@@ -23,5 +23,6 @@ struct PreferencesPage<Content: View>: View {
             .padding(.bottom, 16)
             .frame(maxWidth: .infinity)
         }
+        .scrollIndicators(showsIndicators ? .visible : .hidden)
     }
 }
