@@ -135,16 +135,15 @@ struct ContentView: View {
         let currentContentSize = contentSize
         let revealContentSize = expandedContentSize
         ZStack(alignment: .top) {
-            if isStartupGlowVisible {
-                StartupGlowView(
-                    topCornerRadius: currentTopCornerRadius,
-                    bottomCornerRadius: windowModel.expansion == .expanded
-                        ? ShelfMetrics.bottomCornerRadius : 8
-                )
-                    .frame(width: currentShapeSize.width, height: currentShapeSize.height)
-                    .transition(.opacity)
-                    .zIndex(20)
-            }
+            StartupGlowView(
+                topCornerRadius: currentTopCornerRadius,
+                bottomCornerRadius: windowModel.expansion == .expanded
+                    ? ShelfMetrics.bottomCornerRadius : 8
+            )
+                .frame(width: currentShapeSize.width, height: currentShapeSize.height)
+                .opacity(isStartupGlowVisible ? 1 : 0)
+                .allowsHitTesting(false)
+                .zIndex(20)
 
             VStack(spacing: 0) {
                 ZStack(alignment: .top) {
@@ -263,6 +262,15 @@ struct ContentView: View {
                 isStartupGlowVisible = false
             }
             return
+        }
+
+        // Snap any in-flight fade-out to zero before starting a new pulse so
+        // overlapping animation transactions cannot leave opacity stuck at an
+        // intermediate value.
+        var snapTransaction = Transaction(animation: nil)
+        snapTransaction.disablesAnimations = true
+        withTransaction(snapTransaction) {
+            isStartupGlowVisible = false
         }
 
         withAnimation(.easeOut(duration: 0.18)) {
