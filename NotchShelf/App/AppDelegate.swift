@@ -61,8 +61,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if self.windowModel.dropEvent {
                 self.windowModel.dropEvent = false
             } else if !self.windowModel.dragTargeting {
-                let delay = UserDefaults.standard.double(forKey: UserDefaultsKey.autoHideDelaySeconds)
-                self.windowModel.scheduleCollapse(after: delay > 0 ? delay : 1.5)
+                self.windowModel.scheduleCollapse(after: AutoHidePolicy.collapseDelay())
             }
         }
         monitor.startMonitoring()

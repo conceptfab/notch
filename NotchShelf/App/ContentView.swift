@@ -223,8 +223,7 @@ struct ContentView: View {
             windowModel.expand()
         case .ended:
             guard windowModel.expansion == .expanded else { return }
-            let delay = UserDefaults.standard.double(forKey: UserDefaultsKey.autoHideDelaySeconds)
-            windowModel.scheduleCollapse(after: delay > 0 ? delay : 1.5)
+            windowModel.scheduleCollapse(after: AutoHidePolicy.collapseDelay())
         }
     }
 
