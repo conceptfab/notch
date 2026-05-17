@@ -8,6 +8,7 @@ protocol ShelfStoring: AnyObject {
     func add(_ items: [ShelfItem])
     func remove(_ item: ShelfItem)
     func remove(bookmarkData: Data, from item: ShelfItem)
+    func keepsItemAfterExternalDrop(_ item: ShelfItem) -> Bool
     func resolveFileURLs(for item: ShelfItem) -> [URL]
 }
 

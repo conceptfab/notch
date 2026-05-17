@@ -39,6 +39,7 @@ struct ShelfItemView: View {
             itemContent.background(
                 StackFileListPanelPresenter(
                     item: item,
+                    viewModel: viewModel,
                     isPresented: $showingStackList,
                     windowModel: windowModel
                 )

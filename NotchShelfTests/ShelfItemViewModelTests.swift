@@ -37,18 +37,31 @@ private func fileItem(named name: String = "vm.txt") throws -> ShelfItem {
 @MainActor
 private final class FakeShelfStore: ShelfStoring {
     var items: [ShelfItem] = []
+    var keepAfterExternalDropIDs: Set<UUID> = []
+    var resolvedURLsByItemID: [UUID: [URL]] = [:]
+    var removedItemIDs: [UUID] = []
+    var removedBookmarkData: [(Data, UUID)] = []
 
     func add(_ items: [ShelfItem]) {
         self.items.append(contentsOf: items)
     }
 
     func remove(_ item: ShelfItem) {
+        removedItemIDs.append(item.id)
         items.removeAll { $0.id == item.id }
     }
 
-    func remove(bookmarkData: Data, from item: ShelfItem) {}
+    func remove(bookmarkData: Data, from item: ShelfItem) {
+        removedBookmarkData.append((bookmarkData, item.id))
+    }
 
-    func resolveFileURLs(for item: ShelfItem) -> [URL] { [] }
+    func keepsItemAfterExternalDrop(_ item: ShelfItem) -> Bool {
+        keepAfterExternalDropIDs.contains(item.id)
+    }
+
+    func resolveFileURLs(for item: ShelfItem) -> [URL] {
+        resolvedURLsByItemID[item.id] ?? []
+    }
 }
 
 @MainActor
@@ -103,4 +116,75 @@ private final class FakeSelection: SelectionStoring {
     #expect(viewModel.isSelected == false)
     selection.selectSingle(item)
     #expect(viewModel.isSelected == true)
+}
+
+@MainActor @Test func dragItemsUsesSelectedGroupWhenDraggedItemIsSelected() throws {
+    let itemA = try fileItem(named: "a.txt")
+    let itemB = try fileItem(named: "b.txt")
+    let store = FakeShelfStore()
+    store.items = [itemA, itemB]
+    let selection = FakeSelection()
+    selection.selectedIDs = [itemA.id, itemB.id]
+
+    let viewModel = ShelfItemViewModel(item: itemA, store: store, selection: selection)
+
+    #expect(viewModel.dragItems(containing: itemA).map(\.id) == [itemA.id, itemB.id])
+}
+
+@MainActor @Test func dragItemsFallsBackToSingleItemWhenDraggedItemIsNotInSelection() throws {
+    let itemA = try fileItem(named: "a.txt")
+    let itemB = try fileItem(named: "b.txt")
+    let store = FakeShelfStore()
+    store.items = [itemA, itemB]
+    let selection = FakeSelection()
+    selection.selectedIDs = [itemB.id]
+
+    let viewModel = ShelfItemViewModel(item: itemA, store: store, selection: selection)
+
+    #expect(viewModel.dragItems(containing: itemA).map(\.id) == [itemA.id])
+}
+
+@MainActor @Test func dragHelpersDelegateToInjectedDependencies() throws {
+    let item = try fileItem(named: "delegate.txt")
+    let tempDir = try TempDir.make()
+    defer { try? FileManager.default.removeItem(at: tempDir.url) }
+    let url = try tempDir.url.appendingPathComponent("resolved.txt").touch()
+    let store = FakeShelfStore()
+    store.items = [item]
+    store.keepAfterExternalDropIDs = [item.id]
+    store.resolvedURLsByItemID[item.id] = [url]
+    let selection = FakeSelection()
+    let suiteName = "ShelfItemViewModelTests.\(UUID().uuidString)"
+    let defaults = UserDefaults(suiteName: suiteName)!
+    defaults.set(true, forKey: UserDefaultsKey.copyOnDrag)
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+
+    let viewModel = ShelfItemViewModel(
+        item: item,
+        store: store,
+        selection: selection,
+        defaults: defaults
+    )
+
+    #expect(viewModel.keepsItemAfterExternalDrop(item) == true)
+    #expect(viewModel.resolveFileURLs(for: item) == [url])
+    #expect(viewModel.copyOnDragPreferenceEnabled == true)
+
+    viewModel.beginExternalDrag()
+    #expect(selection.isDragging == true)
+    viewModel.endExternalDrag()
+    #expect(selection.isDragging == false)
+
+    viewModel.removeFromShelf(item)
+    #expect(store.removedItemIDs == [item.id])
+
+    let data = Data([1, 2, 3])
+    viewModel.removeFromStack(bookmarkData: data, from: item)
+    #expect(store.removedBookmarkData.count == 1)
+    #expect(store.removedBookmarkData.first?.0 == data)
+    #expect(store.removedBookmarkData.first?.1 == item.id)
+
+    selection.selectedIDs = [item.id]
+    viewModel.clearSelection()
+    #expect(selection.selectedIDs.isEmpty)
 }

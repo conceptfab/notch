@@ -10,6 +10,7 @@ struct StackMenuEntry {
 
 struct StackFileListView: View {
     let item: ShelfItem
+    let viewModel: ShelfItemViewModel
     @AppStorage(UserDefaultsKey.stackListGridThreshold) private var gridThreshold = 5
     @State private var entries: [StackMenuEntry] = []
 
@@ -18,11 +19,11 @@ struct StackFileListView: View {
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
             if useGrid {
-                StackFileGridView(item: item, entries: entries)
+                StackFileGridView(item: item, entries: entries, viewModel: viewModel)
             } else {
                 VStack(spacing: 2) {
                     ForEach(entries, id: \.id) { entry in
-                        StackFileRowView(sourceItem: item, entry: entry)
+                        StackFileRowView(sourceItem: item, entry: entry, viewModel: viewModel)
                     }
                 }
                 .padding(6)
@@ -51,6 +52,7 @@ struct StackFileListView: View {
 struct StackFileRowView: View {
     let sourceItem: ShelfItem
     let entry: StackMenuEntry
+    let viewModel: ShelfItemViewModel
     @State private var icon: NSImage = NSWorkspace.shared.icon(for: .data)
 
     var body: some View {
@@ -69,7 +71,7 @@ struct StackFileRowView: View {
         .frame(height: 32)
         .contentShape(Rectangle())
         .overlay {
-            StackFileDragHandler(sourceItem: sourceItem, entry: entry, previewImage: icon)
+            StackFileDragHandler(sourceItem: sourceItem, entry: entry, previewImage: icon, viewModel: viewModel)
         }
         .onAppear { loadIcon() }
         .onChange(of: entry.id) { _, _ in loadIcon() }
@@ -86,11 +88,12 @@ struct StackFileRowView: View {
 
 struct StackFileListPanelPresenter: NSViewRepresentable {
     let item: ShelfItem
+    let viewModel: ShelfItemViewModel
     @Binding var isPresented: Bool
     let windowModel: ShelfWindowModel
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(isPresented: $isPresented, windowModel: windowModel)
+        Coordinator(viewModel: viewModel, isPresented: $isPresented, windowModel: windowModel)
     }
 
     func makeNSView(context: Context) -> NSView {
@@ -111,12 +114,14 @@ struct StackFileListPanelPresenter: NSViewRepresentable {
     @MainActor
     final class Coordinator {
         private let isPresented: Binding<Bool>
+        private let viewModel: ShelfItemViewModel
         private let windowModel: ShelfWindowModel
         private var panel: NSPanel?
         private var localMonitor: Any?
         private var globalMonitor: Any?
 
-        init(isPresented: Binding<Bool>, windowModel: ShelfWindowModel) {
+        init(viewModel: ShelfItemViewModel, isPresented: Binding<Bool>, windowModel: ShelfWindowModel) {
+            self.viewModel = viewModel
             self.isPresented = isPresented
             self.windowModel = windowModel
         }
@@ -170,7 +175,9 @@ struct StackFileListPanelPresenter: NSViewRepresentable {
                 context.timingFunction = CAMediaTimingFunction(name: .easeIn)
                 panel.animator().setFrame(collapsedFrame, display: true)
             }, completionHandler: { [weak self] in
-                self?.close()
+                Task { @MainActor in
+                    self?.close()
+                }
             })
         }
 
@@ -212,7 +219,7 @@ struct StackFileListPanelPresenter: NSViewRepresentable {
 
         private func makeContentController(for item: ShelfItem) -> NSHostingController<some View> {
             let size = Self.targetSize(forItemCount: item.allBookmarkData.count)
-            let view = StackFileListView(item: item)
+            let view = StackFileListView(item: item, viewModel: viewModel)
                 .frame(width: size.width, height: size.height)
                 .background(Color.clear)
             let controller = NSHostingController(rootView: view)

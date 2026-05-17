@@ -81,21 +81,19 @@ struct DraggableClickHandler: NSViewRepresentable {
 
         @discardableResult
         private func startDragSession(with event: NSEvent) -> Bool {
-            guard let item else { return false }
-            let selected = ShelfSelection.shared.selectedItems(in: ShelfStore.shared.items)
-            let itemsToDrag: [ShelfItem] =
-                (selected.count > 1 && selected.contains { $0.id == item.id }) ? selected : [item]
+            guard let item, let viewModel else { return false }
+            let itemsToDrag = viewModel.dragItems(containing: item)
             draggedItems = itemsToDrag
             draggedItemIDsToKeepAfterExternalDrop = Set(
                 itemsToDrag
-                    .filter { ShelfStore.shared.keepsItemAfterExternalDrop($0) }
+                    .filter { viewModel.keepsItemAfterExternalDrop($0) }
                     .map(\.id)
             )
             dragSessionShouldCopyOnlyOutsideApp = !draggedItemIDsToKeepAfterExternalDrop.isEmpty
 
             var draggingItems: [NSDraggingItem] = []
             for dragItem in itemsToDrag {
-                let urls = ShelfStore.shared.resolveFileURLs(for: dragItem)
+                let urls = viewModel.resolveFileURLs(for: dragItem)
                 if urls.isEmpty {
                     let viewData = ShelfItemViewData.build(from: dragItem)
                     if let pasteboardItem = pasteboardItem(displayName: viewData.displayName) {
@@ -133,9 +131,9 @@ struct DraggableClickHandler: NSViewRepresentable {
                 ) else {
                     continue
                 }
-                ShelfStore.shared.remove(item)
+                viewModel?.removeFromShelf(item)
             }
-            ShelfSelection.shared.clear()
+            viewModel?.clearSelection()
         }
 
         private func pasteboardItem(displayName: String) -> NSPasteboardItem? {
@@ -157,14 +155,14 @@ struct DraggableClickHandler: NSViewRepresentable {
         ) -> NSDragOperation {
             lastDragContext = context
             return ShelfDragOperationPolicy.sourceOperationMask(
-                copyOnDrag: UserDefaults.standard.bool(forKey: UserDefaultsKey.copyOnDrag),
+                copyOnDrag: viewModel?.copyOnDragPreferenceEnabled ?? false,
                 context: context,
                 keepAfterExternalDrop: dragSessionShouldCopyOnlyOutsideApp
             )
         }
 
         func draggingSession(_ session: NSDraggingSession, willBeginAt screenPoint: NSPoint) {
-            ShelfSelection.shared.beginDrag()
+            viewModel?.beginExternalDrag()
         }
 
         func draggingSession(
@@ -176,7 +174,7 @@ struct DraggableClickHandler: NSViewRepresentable {
                 AppLogger.drag.notice("Drag session ended with .move operation")
             }
             removeDraggedItemsFromShelf(after: operation)
-            ShelfSelection.shared.endDrag()
+            viewModel?.endExternalDrag()
             for url in draggedURLs { url.stopAccessingSecurityScopedResource() }
             draggedURLs.removeAll()
             draggedItems.removeAll()

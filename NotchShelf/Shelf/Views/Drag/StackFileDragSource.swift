@@ -5,6 +5,7 @@ struct StackFileDragHandler: NSViewRepresentable {
     let sourceItem: ShelfItem
     let entry: StackMenuEntry
     let previewImage: NSImage
+    let viewModel: ShelfItemViewModel
 
     func makeNSView(context: Context) -> StackFileDragView {
         let view = StackFileDragView()
@@ -12,6 +13,7 @@ struct StackFileDragHandler: NSViewRepresentable {
         view.bookmarkData = entry.bookmarkData
         view.title = entry.title
         view.previewImage = previewImage
+        view.viewModel = viewModel
         return view
     }
 
@@ -20,6 +22,7 @@ struct StackFileDragHandler: NSViewRepresentable {
         nsView.bookmarkData = entry.bookmarkData
         nsView.title = entry.title
         nsView.previewImage = previewImage
+        nsView.viewModel = viewModel
     }
 
     final class StackFileDragView: NSView, NSDraggingSource {
@@ -27,6 +30,7 @@ struct StackFileDragHandler: NSViewRepresentable {
         var bookmarkData = Data()
         var title = ""
         var previewImage = NSImage()
+        weak var viewModel: ShelfItemViewModel?
 
         private var mouseDownEvent: NSEvent?
         private let dragThreshold: CGFloat = 3.0
@@ -91,17 +95,17 @@ struct StackFileDragHandler: NSViewRepresentable {
         ) -> NSDragOperation {
             lastDragContext = context
             let keepAfterExternalDrop = sourceItem.map {
-                ShelfStore.shared.keepsItemAfterExternalDrop($0)
+                viewModel?.keepsItemAfterExternalDrop($0) ?? false
             } ?? false
             return ShelfDragOperationPolicy.sourceOperationMask(
-                copyOnDrag: UserDefaults.standard.bool(forKey: UserDefaultsKey.copyOnDrag),
+                copyOnDrag: viewModel?.copyOnDragPreferenceEnabled ?? false,
                 context: context,
                 keepAfterExternalDrop: keepAfterExternalDrop
             )
         }
 
         func draggingSession(_ session: NSDraggingSession, willBeginAt screenPoint: NSPoint) {
-            ShelfSelection.shared.beginDrag()
+            viewModel?.beginExternalDrag()
         }
 
         func draggingSession(
@@ -113,12 +117,12 @@ struct StackFileDragHandler: NSViewRepresentable {
                ShelfDragOperationPolicy.shouldRemoveFromShelf(
                    after: operation,
                    context: lastDragContext,
-                   keepAfterExternalDrop: ShelfStore.shared.keepsItemAfterExternalDrop(draggedSourceItem)
+                   keepAfterExternalDrop: viewModel?.keepsItemAfterExternalDrop(draggedSourceItem) ?? false
                ) {
-                ShelfStore.shared.remove(bookmarkData: draggedBookmarkData, from: draggedSourceItem)
-                ShelfSelection.shared.clear()
+                viewModel?.removeFromStack(bookmarkData: draggedBookmarkData, from: draggedSourceItem)
+                viewModel?.clearSelection()
             }
-            ShelfSelection.shared.endDrag()
+            viewModel?.endExternalDrag()
             draggedURL?.stopAccessingSecurityScopedResource()
             draggedURL = nil
             draggedSourceItem = nil

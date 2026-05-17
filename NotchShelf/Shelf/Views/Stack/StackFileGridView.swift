@@ -6,6 +6,7 @@ import SwiftUI
 struct StackFileGridView: View {
     let item: ShelfItem
     let entries: [StackMenuEntry]
+    let viewModel: ShelfItemViewModel
 
     private let columns = [
         GridItem(.fixed(64), spacing: 6),
@@ -17,7 +18,7 @@ struct StackFileGridView: View {
     var body: some View {
         LazyVGrid(columns: columns, alignment: .center, spacing: 8) {
             ForEach(entries, id: \.id) { entry in
-                StackFileGridCellView(sourceItem: item, entry: entry)
+                StackFileGridCellView(sourceItem: item, entry: entry, viewModel: viewModel)
             }
         }
         .padding(8)
@@ -27,6 +28,7 @@ struct StackFileGridView: View {
 private struct StackFileGridCellView: View {
     let sourceItem: ShelfItem
     let entry: StackMenuEntry
+    let viewModel: ShelfItemViewModel
     @State private var icon: NSImage = NSWorkspace.shared.icon(for: .data)
 
     var body: some View {
@@ -45,7 +47,7 @@ private struct StackFileGridCellView: View {
         .frame(width: 60, height: 66)
         .contentShape(Rectangle())
         .overlay {
-            StackFileDragHandler(sourceItem: sourceItem, entry: entry, previewImage: icon)
+            StackFileDragHandler(sourceItem: sourceItem, entry: entry, previewImage: icon, viewModel: viewModel)
         }
         .onAppear { loadIcon() }
         .onChange(of: entry.id) { _, _ in loadIcon() }

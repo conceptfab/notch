@@ -15,18 +15,21 @@ final class ShelfItemViewModel: ObservableObject {
 
     private let store: ShelfStoring
     private let selection: SelectionStoring
+    private let defaults: UserDefaults
     private var thumbnailTask: Task<Void, Never>?
 
     init(
         item: ShelfItem,
         store: ShelfStoring = ShelfStore.shared,
-        selection: SelectionStoring = ShelfSelection.shared
+        selection: SelectionStoring = ShelfSelection.shared,
+        defaults: UserDefaults = .standard
     ) {
         self.item = item
         self.viewData = ShelfItemViewData.build(from: item)
         self.icon = Self.icon(for: item)
         self.store = store
         self.selection = selection
+        self.defaults = defaults
     }
 
     func update(item: ShelfItem) {
@@ -108,6 +111,43 @@ final class ShelfItemViewModel: ObservableObject {
             }
         }
         menu.popUp(positioning: nil, at: event.locationInWindow, in: view)
+    }
+
+    func dragItems(containing item: ShelfItem) -> [ShelfItem] {
+        let selected = selection.selectedItems(in: store.items)
+        return (selected.count > 1 && selected.contains { $0.id == item.id }) ? selected : [item]
+    }
+
+    func keepsItemAfterExternalDrop(_ item: ShelfItem) -> Bool {
+        store.keepsItemAfterExternalDrop(item)
+    }
+
+    func resolveFileURLs(for item: ShelfItem) -> [URL] {
+        store.resolveFileURLs(for: item)
+    }
+
+    func removeFromShelf(_ item: ShelfItem) {
+        store.remove(item)
+    }
+
+    func removeFromStack(bookmarkData: Data, from item: ShelfItem) {
+        store.remove(bookmarkData: bookmarkData, from: item)
+    }
+
+    func clearSelection() {
+        selection.clear()
+    }
+
+    func beginExternalDrag() {
+        selection.beginDrag()
+    }
+
+    func endExternalDrag() {
+        selection.endDrag()
+    }
+
+    var copyOnDragPreferenceEnabled: Bool {
+        defaults.bool(forKey: UserDefaultsKey.copyOnDrag)
     }
 
     private func addItem(to menu: NSMenu, title: String, action: @escaping () -> Void) {
