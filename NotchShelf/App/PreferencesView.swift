@@ -3,14 +3,15 @@ import SwiftUI
 struct PreferencesRootView: View {
     var body: some View {
         TabView {
-            GeneralPreferencesView()
-                .tabItem { Label("General", systemImage: "gearshape") }
-
-            ShelfPreferencesView()
-                .tabItem { Label("Shelf", systemImage: "tray.full") }
-
-            AboutPreferencesView()
-                .tabItem { Label("About", systemImage: "info.circle") }
+            Tab("General", systemImage: "gearshape") {
+                GeneralPreferencesView()
+            }
+            Tab("Shelf", systemImage: "tray.full") {
+                ShelfPreferencesView()
+            }
+            Tab("About", systemImage: "info.circle") {
+                AboutPreferencesView()
+            }
         }
         .frame(width: 500, height: 410)
     }
