@@ -114,14 +114,16 @@ final class ShelfItemViewModel: ObservableObject {
         let target = MenuActionTarget(action: action)
         let menuItem = NSMenuItem(title: title, action: #selector(MenuActionTarget.fire), keyEquivalent: "")
         menuItem.target = target
-        objc_setAssociatedObject(menuItem, &MenuActionTarget.key, target, .OBJC_ASSOCIATION_RETAIN)
+        withUnsafePointer(to: MenuActionTarget.key) { key in
+            objc_setAssociatedObject(menuItem, key, target, .OBJC_ASSOCIATION_RETAIN)
+        }
         menu.addItem(menuItem)
     }
 }
 
 /// Bridges a closure to an `@objc` selector for `NSMenuItem`.
 private final class MenuActionTarget: NSObject {
-    nonisolated(unsafe) static var key: UInt8 = 0
+    static let key: UInt8 = 0
 
     private let action: () -> Void
 
