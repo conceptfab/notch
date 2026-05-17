@@ -85,9 +85,12 @@ enum ShelfMetrics {
     /// Fixed width used by the collapsed shelf status icon.
     static let collapsedStatusIconWidth: CGFloat = 26
     /// Extra horizontal reach that makes file drags near the notch open the shelf.
-    static let dragCatchHorizontalOutset: CGFloat = 64
+    static let dragCatchHorizontalOutset: CGFloat = 16
     /// Downward reach from the notch, so the shelf opens before the pointer is pixel-perfect.
-    static let dragCatchLowerOutset: CGFloat = 28
+    static let dragCatchLowerOutset: CGFloat = 8
+    /// Tight hover activation area used while the shelf is collapsed.
+    static let collapsedHoverHorizontalOutset: CGFloat = 8
+    static let collapsedHoverLowerOutset: CGFloat = 4
     /// Expanded shelf grace area to avoid flicker when the pointer crosses panel edges.
     static let dragExitHorizontalOutset: CGFloat = 48
     static let dragExitVerticalOutset: CGFloat = 40

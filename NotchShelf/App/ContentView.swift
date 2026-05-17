@@ -181,7 +181,9 @@ struct ContentView: View {
                 }
                 .frame(width: currentShapeSize.width, height: currentContentSize.height, alignment: .top)
                 .animation(shelfAnimation, value: animationSignature)
-                .onHover(perform: handleHover)
+                .onContinuousHover(coordinateSpace: .local) { phase in
+                    handleHover(phase, surfaceSize: currentShapeSize)
+                }
                 .zIndex(1)
                 Spacer(minLength: 0)
             }
@@ -213,13 +215,35 @@ struct ContentView: View {
         }
     }
 
-    private func handleHover(_ hovering: Bool) {
-        if hovering {
+    private func handleHover(_ phase: HoverPhase, surfaceSize: CGSize) {
+        switch phase {
+        case .active(let location):
+            guard windowModel.expansion == .expanded || collapsedHoverRect(in: surfaceSize).contains(location) else {
+                return
+            }
             windowModel.expand()
-        } else if windowModel.expansion == .expanded {
+        case .ended:
+            guard windowModel.expansion == .expanded else { return }
             let delay = UserDefaults.standard.double(forKey: UserDefaultsKey.autoHideDelaySeconds)
             windowModel.scheduleCollapse(after: delay > 0 ? delay : 1.5)
         }
+    }
+
+    private func collapsedHoverRect(in surfaceSize: CGSize) -> CGRect {
+        let width = Swift.min(
+            surfaceSize.width,
+            geometry.notchWidth + ShelfMetrics.collapsedHoverHorizontalOutset * 2
+        )
+        let height = Swift.min(
+            surfaceSize.height,
+            geometry.notchHeight + ShelfMetrics.collapsedHoverLowerOutset
+        )
+        return CGRect(
+            x: (surfaceSize.width - width) / 2,
+            y: 0,
+            width: width,
+            height: height
+        )
     }
 
     private func playStartupGlow() {

@@ -1,16 +1,15 @@
 <claude-mem-context>
 # Memory Context
 
-# [notch] recent context, 2026-05-17 1:51pm GMT+2
+# [notch] recent context, 2026-05-17 7:29pm GMT+2
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (18,294t read) | 539,273t work | 97% savings
+Stats: 50 obs (17,923t read) | 545,064t work | 97% savings
 
 ### May 15, 2026
-S1507 Fix stack file list panel positioning — panel top edge was hidden under notch chrome (May 15 at 10:13 PM)
 S1508 Restore blue dashed border frame to ShelfView; investigate sharp corners on frame bottom edge (May 15 at 10:34 PM)
 S1509 Disable default macOS focus ring on ShelfView panel while maintaining keyboard functionality (May 15 at 10:39 PM)
 S1510 Restore status icons (tray icon + file count badge) visible on the collapsed shelf notch (May 15 at 10:41 PM)
@@ -20,16 +19,8 @@ S1512 Restore status icons (tray icon + file count badge) visible on collapsed s
 S1513 Restore status icons (tray icon + file count badge) on collapsed shelf notch — 4-commit iterative fix completed (May 16 at 1:29 PM)
 S1514 Restore status icons on collapsed shelf notch — now in active visual debugging phase with red background overlay (May 16 at 1:32 PM)
 S1515 Restore status icons on collapsed shelf notch — active visual debugging, root cause still unconfirmed (May 16 at 1:33 PM)
-S1560 Create a test script that triggers system events that the NotchShelf app reacts to (notch glow) (May 16 at 10:59 PM)
+S1560 Create a test script that triggers system events that the NotchShelf app reacts to (notch glow) (May 16 at 1:34 PM)
 ### May 17, 2026
-4184 12:55p 🟣 Two new ShelfMetrics geometry tests enforce outline and black shape boundaries
-4185 " ✅ Full changeset summary: controls-outside-outline layout refactor across 6 source files
-4186 " ✅ Final test run passes 107 tests after full layout refactor
-4187 " 🔴 NotchShelf "+" controls now render outside black shelf shape
-4188 " 🔄 ShelfMetrics slot outline geometry extracted into reusable functions
-4196 1:02p 🔵 NotchShelf ContentView Layout Architecture
-4197 " 🔵 ShelfMetrics Geometric Alignment System
-4198 " 🔴 Drop Zone Outline Switched from `.stroke` to `.strokeBorder`
 4199 1:03p 🟣 Shelf Outline Vertical Alignment Tests Added
 4200 " 🔴 Drop Zone Outline Fixed from `.stroke` to `.strokeBorder`
 4201 " 🟣 Geometry Precision Tests Added for Slot Grid Outline Alignment
@@ -72,6 +63,15 @@ S1560 Create a test script that triggers system events that the NotchShelf app r
 4254 1:43p 🔵 xcodebuild Test Runner Blocked by Sandbox in Codex Environment
 4255 1:44p 🔵 All 108 NotchShelf Unit Tests Pass After Preferences UI Redesign
 4257 " 🟣 PreferenceSwitchToggleStyle Gains Accessibility Label
+4272 1:54p 🟣 NotchShelf full test suite passes — 108/108 green after shelf slider additions
+4275 1:57p 🟣 UI: Stack and Plus Icons Repositioned Outside Main Window Boundary
+S1582 Move stack and plus icons outside the main application window boundary (NotchShelf macOS app) (May 17 at 1:57 PM)
+4276 2:06p 🔴 NotchShelf Layout Fix — All 108 Tests Passing
+4334 7:27p 🔵 NotchShelf cursor detection zone architecture mapped
+4335 7:28p 🔴 Reduced NotchShelf cursor detection zone for drag and hover
+4336 " 🔵 NotchShelf test run blocked by macOS sandbox restriction on testmanagerd
+4337 " 🔴 All 59 NotchShelf tests pass after cursor zone reduction
+4338 7:29p ✅ Cursor zone reduction committed to git on main branch
 
-Access 539k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 545k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>
