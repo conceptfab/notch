@@ -12,6 +12,7 @@ struct ContentView: View {
     @AppStorage(UserDefaultsKey.minSlotCount) private var configuredSlotCount = ShelfMetrics.defaultSlotCount
     @State private var isStartupGlowVisible = false
     @State private var didPlayStartupGlow = false
+    @State private var startupGlowFinishedAt: Date?
     @State private var glowTask: Task<Void, Never>?
 
     private var geometry: NotchGeometry { NotchGeometry.current() }
@@ -210,6 +211,10 @@ struct ContentView: View {
             windowModel.shapeSize = newSize
         }
         .onChange(of: windowModel.glowPulse) { _, _ in
+            // Suppress system-event glow while the startup glow is still mid-cycle.
+            if let finish = startupGlowFinishedAt, Date() < finish {
+                return
+            }
             playGlow()
         }
     }
@@ -247,6 +252,9 @@ struct ContentView: View {
     private func playStartupGlow() {
         guard !didPlayStartupGlow else { return }
         didPlayStartupGlow = true
+        // Lock out system-event pulses until the startup glow's full envelope ends.
+        let envelopeMillis: Double = reduceMotion ? 700 : 1_200
+        startupGlowFinishedAt = Date().addingTimeInterval(envelopeMillis / 1_000)
         playGlow()
     }
 
