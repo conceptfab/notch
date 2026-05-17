@@ -33,6 +33,11 @@ struct ShelfItemView: View {
         contentWithStackPresenter
     }
 
+    private struct ItemAnimationKey: Hashable {
+        let dropTarget: Bool
+        let isSelected: Bool
+    }
+
     @ViewBuilder
     private var contentWithStackPresenter: some View {
         if viewModel.viewData.isStack {
@@ -68,8 +73,10 @@ struct ShelfItemView: View {
         .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemHeight)
         .contentShape(Rectangle())
         .help(viewModel.viewData.displayName)
-        .animation(ShelfAnimations.itemHover, value: debouncedDropTarget)
-        .animation(ShelfAnimations.itemHover, value: isSelected)
+        .animation(
+            ShelfAnimations.itemHover,
+            value: ItemAnimationKey(dropTarget: debouncedDropTarget, isSelected: isSelected)
+        )
         .onChange(of: viewModel.isDropTargeted) { _, targeted in
             dropTargetDebounceTask?.cancel()
             dropTargetDebounceTask = Task { @MainActor in
