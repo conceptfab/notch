@@ -41,6 +41,7 @@ final class ShelfStore: ObservableObject, ShelfStoring {
     private var saveTask: Task<Void, Never>?
     private var inflightWrite: Task<String?, Never>?
     private var loadTask: Task<Void, Never>?
+    private var cleanupTask: Task<Void, Never>?
     private let saveDebounce: Duration = .milliseconds(200)
 
     var items: [ShelfItem] { slots.compactMap(\.item) }
@@ -225,10 +226,12 @@ final class ShelfStore: ObservableObject, ShelfStoring {
     /// Removes items whose bookmark no longer resolves to an existing file.
     /// Items added while validation is in flight are preserved.
     func cleanupInvalidItems() {
-        Task { @MainActor [weak self] in
+        cleanupTask?.cancel()
+        cleanupTask = Task { @MainActor [weak self] in
             guard let self else { return }
             let snapshot = self.items
             let validIDs = await Self.validateInParallel(snapshot)
+            guard !Task.isCancelled else { return }
             let snapshotIDs = Set(snapshot.map(\.id))
             // Keep validated items, plus anything added since the snapshot.
             self.slots = self.reslot(self.slots.map { slot in
@@ -238,6 +241,7 @@ final class ShelfStore: ObservableObject, ShelfStoring {
                 }
                 return ShelfSlot(id: slot.id)
             })
+            self.cleanupTask = nil
         }
     }
 
@@ -324,6 +328,7 @@ final class ShelfStore: ObservableObject, ShelfStoring {
     /// Must be called from the main actor.
     nonisolated func flushPendingSaveSync() {
         MainActor.assumeIsolated {
+            cleanupTask?.cancel()
             let hadSaveTask = saveTask != nil
             saveTask?.cancel()
             saveTask = nil
