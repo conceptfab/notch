@@ -114,7 +114,7 @@ struct ContentView: View {
         if reduceMotion {
             return .easeInOut(duration: 0.14)
         }
-        return .spring(response: 0.32, dampingFraction: 0.86, blendDuration: 0.08)
+        return .spring(response: 0.32, dampingFraction: 0.86)
     }
 
     var body: some View {
