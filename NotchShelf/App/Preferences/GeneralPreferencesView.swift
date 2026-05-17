@@ -16,15 +16,15 @@ struct GeneralPreferencesView: View {
                             Text("Auto-hide delay")
                         }
                         .labelsHidden()
-                        .controlSize(.mini)
-                        .frame(width: 132)
+                        .controlSize(.small)
+                        .frame(width: PreferencesPanelMetrics.autoHideSliderWidth)
                         .accessibilityValue(Text(delayText))
 
                         Text(String(format: "%.2fs", autoHideDelaySeconds))
-                            .font(.system(.caption, design: .monospaced))
+                            .font(.system(.callout, design: .monospaced).weight(.medium))
                             .monospacedDigit()
-                            .foregroundStyle(.secondary)
-                            .frame(width: 50, alignment: .trailing)
+                            .foregroundStyle(.primary)
+                            .frame(width: PreferencesPanelMetrics.autoHideValueWidth, alignment: .trailing)
                     }
                 }
 

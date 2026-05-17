@@ -27,6 +27,15 @@ struct ContentView: View {
         }
     }
 
+    private var contentSize: CGSize {
+        switch windowModel.expansion {
+        case .collapsed:
+            return CGSize(width: collapsedShapeWidth, height: collapsedShapeHeight)
+        case .expanded:
+            return expandedContentSize
+        }
+    }
+
     private var collapsedShapeWidth: CGFloat {
         geometry.notchWidth + geometry.notchHeight * 2
     }
@@ -38,17 +47,34 @@ struct ContentView: View {
     private var expandedShapeSize: CGSize {
         let rowCapacity = renderedRowCapacity
         let rowCount = renderedRowCount
-        let rowHeight = CGFloat(rowCount) * ShelfMetrics.itemHeight
-            + CGFloat(Swift.max(rowCount - 1, 0)) * ShelfMetrics.itemSpacing
-        let chromeHeight = ShelfMetrics.shelfTopChromeHeight
-            + ShelfMetrics.shelfPanelBottomPadding
-        let height = chromeHeight + rowHeight
+        let height = ShelfMetrics.shelfTopChromeHeight
+            + ShelfMetrics.slotGridOutlineTop
+            + ShelfMetrics.slotGridOutlineHeight(rowCount: rowCount)
+            + ShelfMetrics.slotGridOutlineBottom
 
         let rowWidth = shelfPanelWidth(for: rowCapacity)
             + ShelfMetrics.shelfOuterHorizontalPadding * 2
         return CGSize(
             width: Swift.min(ShelfMetrics.expandedSize.width, Swift.max(geometry.notchWidth, rowWidth)),
             height: Swift.min(ShelfMetrics.expandedSize.height, height)
+        )
+    }
+
+    private var expandedContentSize: CGSize {
+        let rowCapacity = renderedRowCapacity
+        let rowCount = renderedRowCount
+        let rowHeight = CGFloat(rowCount) * ShelfMetrics.itemHeight
+            + CGFloat(Swift.max(rowCount - 1, 0)) * ShelfMetrics.itemSpacing
+        let height = ShelfMetrics.shelfTopChromeHeight
+            + ShelfMetrics.contentPadding * 2
+            + rowHeight
+            + ShelfMetrics.shelfPanelBottomPadding
+
+        let rowWidth = shelfPanelWidth(for: rowCapacity)
+            + ShelfMetrics.shelfOuterHorizontalPadding * 2
+        return CGSize(
+            width: Swift.min(ShelfMetrics.expandedSize.width, Swift.max(geometry.notchWidth, rowWidth)),
+            height: Swift.min(ShelfMetrics.windowSize.height, height)
         )
     }
 
@@ -106,7 +132,8 @@ struct ContentView: View {
 
     var body: some View {
         let currentShapeSize = shapeSize
-        let expandedContentSize = expandedShapeSize
+        let currentContentSize = contentSize
+        let revealContentSize = expandedContentSize
         ZStack(alignment: .top) {
             if isStartupGlowVisible {
                 StartupGlowView(
@@ -134,31 +161,25 @@ struct ContentView: View {
                             .frame(height: 1)
                             .padding(.horizontal, currentTopCornerRadius)
                     }
+                    .frame(width: currentShapeSize.width, height: currentShapeSize.height)
 
                     ShelfRevealContent(
                         preferencesButtonTopPadding: preferencesButtonTopPadding,
                         hiddenOffset: ShelfMetrics.shelfTopChromeHeight,
-                        contentHeight: expandedContentSize.height,
+                        contentHeight: revealContentSize.height,
                         panelWidth: shelfPanelWidth(for: renderedRowCapacity),
                         reduceMotion: reduceMotion,
                         clearShelf: clearShelf,
                         showPreferences: showPreferences
                     )
                     .environmentObject(windowModel)
-                    .frame(width: expandedContentSize.width,
-                           height: expandedContentSize.height,
+                    .frame(width: revealContentSize.width,
+                           height: revealContentSize.height,
                            alignment: .top)
                     .zIndex(1)
 
                 }
-                .frame(width: currentShapeSize.width, height: currentShapeSize.height)
-                .clipShape(
-                    NotchShelfShape(
-                        topCornerRadius: currentTopCornerRadius,
-                        bottomCornerRadius: windowModel.expansion == .expanded
-                            ? ShelfMetrics.bottomCornerRadius : 8
-                    )
-                )
+                .frame(width: currentShapeSize.width, height: currentContentSize.height, alignment: .top)
                 .animation(shelfAnimation, value: animationSignature)
                 .onHover(perform: handleHover)
                 .zIndex(1)

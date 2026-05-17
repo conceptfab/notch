@@ -185,9 +185,9 @@ struct ShelfItemView: View {
 
     private var copyModeButton: some View {
         Button(action: onToggleKeepsItemAfterExternalDrop) {
-            Image(systemName: "plus.circle.fill")
+            Image(systemName: keepsItemAfterExternalDrop ? "plus.circle.fill" : "plus.circle")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(keepsItemAfterExternalDrop ? Color.accentColor : .black.opacity(0.9))
+                .foregroundStyle(keepsItemAfterExternalDrop ? Color.accentColor : .white.opacity(0.78))
                 .frame(width: ShelfMetrics.itemToggleHeight, height: ShelfMetrics.itemToggleHeight)
                 .contentShape(Circle())
         }

@@ -226,22 +226,10 @@ struct StackFileListPanelPresenter: NSViewRepresentable {
             guard let window = anchorView.window else {
                 return NSRect(origin: .zero, size: size)
             }
-            // Anchor the panel to the bottom edge of the visible NotchShelfShape,
-            // centered on the shape's horizontal axis. Falls back to the anchor
-            // view's bottom if shapeSize is not yet known (first-frame race).
-            let shapeBottomScreenY: CGFloat
-            let shapeMidXScreen: CGFloat
-            if windowModel.shapeSize.height > 0 {
-                shapeBottomScreenY = window.frame.maxY - windowModel.shapeSize.height
-                shapeMidXScreen = window.frame.midX
-            } else {
-                let anchorRect = anchorView.convert(anchorView.bounds, to: nil)
-                let screenRect = window.convertToScreen(anchorRect)
-                shapeBottomScreenY = screenRect.minY - 9
-                shapeMidXScreen = screenRect.midX
-            }
-            let x = shapeMidXScreen - size.width / 2
-            let y = shapeBottomScreenY - 4 - size.height
+            let anchorRect = anchorView.convert(anchorView.bounds, to: nil)
+            let screenRect = window.convertToScreen(anchorRect)
+            let x = screenRect.midX - size.width / 2
+            let y = screenRect.minY - ShelfMetrics.stackListPanelVerticalGap - size.height
             return NSRect(x: x, y: y, width: size.width, height: size.height)
         }
 

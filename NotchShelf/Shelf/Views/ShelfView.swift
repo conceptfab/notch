@@ -28,6 +28,19 @@ struct ShelfView: View {
         )
     }
 
+    private var rowCount: Int {
+        let rows = Int(ceil(Double(Swift.max(store.visibleSlots.count, rowCapacity)) / Double(rowCapacity)))
+        return Swift.max(rows, 1)
+    }
+
+    private var outlinedHeight: CGFloat {
+        ShelfMetrics.slotGridOutlineHeight(rowCount: rowCount)
+    }
+
+    private var outlinedWidth: CGFloat {
+        ShelfMetrics.slotGridOutlineWidth(columnCount: rowCapacity)
+    }
+
     var body: some View {
         panel
             .onDrop(of: [.fileURL], isTargeted: $localDropTargeting) { providers in
@@ -60,15 +73,23 @@ struct ShelfView: View {
     }
 
     private var panel: some View {
-        RoundedRectangle(cornerRadius: 16)
-            .stroke(
-                dropZoneColor,
-                style: StrokeStyle(lineWidth: isVisuallyTargeted ? 2.5 : 2, lineCap: .round, dash: [7])
-            )
-            .overlay { content.padding(ShelfMetrics.contentPadding) }
-            .contentShape(Rectangle())
-            .animation(.easeInOut(duration: 0.12), value: isVisuallyTargeted)
-            .onTapGesture { selection.clear() }
+        ZStack(alignment: .topLeading) {
+            content
+                .padding(ShelfMetrics.contentPadding)
+
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(
+                    dropZoneColor,
+                    style: StrokeStyle(lineWidth: isVisuallyTargeted ? 2.5 : 2, lineCap: .round, dash: [7])
+                )
+                .frame(width: outlinedWidth, height: outlinedHeight)
+                .padding(.top, ShelfMetrics.slotGridOutlineTop)
+                .padding(.leading, ShelfMetrics.slotGridOutlineLeading)
+                .allowsHitTesting(false)
+        }
+        .contentShape(Rectangle())
+        .animation(.easeInOut(duration: 0.12), value: isVisuallyTargeted)
+        .onTapGesture { selection.clear() }
     }
 
     private var content: some View {

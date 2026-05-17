@@ -13,14 +13,14 @@ struct ShelfPreferencesView: View {
             showsIndicators: true
         ) {
             PreferencesSection("Slots") {
-                PreferenceStepperRow(
+                PreferenceSliderRow(
                     "Slots",
                     value: $slotCount,
                     in: ShelfMetrics.minimumSlotCount...ShelfMetrics.maximumSlotCount
                 )
 
                 PreferenceDivider()
-                PreferenceStepperRow(
+                PreferenceSliderRow(
                     "Additional rows",
                     value: $additionalRowCount,
                     in: 0...ShelfMetrics.maximumAdditionalRowCount
@@ -40,7 +40,7 @@ struct ShelfPreferencesView: View {
             }
 
             PreferencesSection("Stack list") {
-                PreferenceStepperRow(
+                PreferenceSliderRow(
                     "Switch to grid above",
                     value: $stackListGridThreshold,
                     in: 3...20,

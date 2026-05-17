@@ -12,7 +12,7 @@ struct PreferenceToggleRow: View {
     var body: some View {
         PreferenceRow(title) {
             Toggle(title, isOn: $isOn)
-                .toggleStyle(.switch)
+                .toggleStyle(PreferenceSwitchToggleStyle(accessibilityLabel: title))
                 .labelsHidden()
         }
     }
