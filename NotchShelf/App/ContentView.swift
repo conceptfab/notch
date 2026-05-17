@@ -117,20 +117,6 @@ struct ContentView: View {
         return .spring(response: 0.32, dampingFraction: 0.86, blendDuration: 0.08)
     }
 
-    private struct AnimationSignature: Hashable {
-        let expansion: ShelfWindowModel.Expansion
-        let itemCount: Int
-        let totalFileCount: Int
-    }
-
-    private var animationSignature: AnimationSignature {
-        AnimationSignature(
-            expansion: windowModel.expansion,
-            itemCount: store.items.count,
-            totalFileCount: store.totalFileCount
-        )
-    }
-
     var body: some View {
         let currentShapeSize = shapeSize
         let currentContentSize = contentSize
@@ -180,7 +166,7 @@ struct ContentView: View {
 
                 }
                 .frame(width: currentShapeSize.width, height: currentContentSize.height, alignment: .top)
-                .animation(shelfAnimation, value: animationSignature)
+                .animation(shelfAnimation, value: windowModel.expansion)
                 .onContinuousHover(coordinateSpace: .local) { phase in
                     handleHover(phase, surfaceSize: currentShapeSize)
                 }
