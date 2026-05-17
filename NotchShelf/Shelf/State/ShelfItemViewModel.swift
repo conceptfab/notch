@@ -3,20 +3,18 @@ import Foundation
 import ObjectiveC
 import SwiftUI
 
-/// Per-item view model: thumbnail, icon, click handling, double-click open, and a
-/// minimal context menu.
+/// Per-item view model: icon, click handling, double-click open, and a minimal
+/// context menu.
 @MainActor
 final class ShelfItemViewModel: ObservableObject {
     @Published private(set) var item: ShelfItem
     @Published private(set) var viewData: ShelfItemViewData
     @Published private(set) var icon: NSImage = NSWorkspace.shared.icon(for: .data)
-    @Published var thumbnail: NSImage?
     @Published var isDropTargeted: Bool = false
 
     private let store: ShelfStoring
     private let selection: SelectionStoring
     private let defaults: UserDefaults
-    private var thumbnailTask: Task<Void, Never>?
 
     init(
         item: ShelfItem,
@@ -37,7 +35,6 @@ final class ShelfItemViewModel: ObservableObject {
         self.item = item
         self.viewData = ShelfItemViewData.build(from: item)
         self.icon = Self.icon(for: item)
-        thumbnail = nil
     }
 
     var isSelected: Bool { selection.isSelected(item.id) }
@@ -49,32 +46,6 @@ final class ShelfItemViewModel: ObservableObject {
             }
         }
         return NSWorkspace.shared.icon(for: .data)
-    }
-
-    func loadThumbnailIfNeeded() {
-        guard thumbnail == nil, thumbnailTask == nil else { return }
-        loadThumbnail()
-    }
-
-    func loadThumbnail() {
-        thumbnailTask?.cancel()
-        guard let url = item.fileURL else {
-            thumbnailTask = nil
-            return
-        }
-        let itemID = item.id
-        thumbnailTask = Task { @MainActor [weak self] in
-            let image = await ThumbnailService.shared.thumbnail(
-                for: url, size: CGSize(width: 56, height: 56)
-            )
-            guard !Task.isCancelled else { return }
-            guard let self, self.item.id == itemID else { return }
-            self.thumbnail = image
-        }
-    }
-
-    deinit {
-        thumbnailTask?.cancel()
     }
 
     func handleClick(event: NSEvent, view: NSView) {

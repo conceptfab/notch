@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// A single shelf item card: thumbnail, name, selection styling, and an AppKit drag
+/// A single shelf item card: icon, selection styling, and an AppKit drag
 /// source for dragging the file back out into Finder.
 struct ShelfItemView: View {
     let item: ShelfItem
