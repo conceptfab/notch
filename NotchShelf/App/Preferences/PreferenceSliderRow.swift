@@ -5,6 +5,7 @@ struct PreferenceSliderRow: View {
     @Binding var value: Int
     let range: ClosedRange<Int>
     let valueText: (Int) -> String
+    @State private var doubleValue: Double
 
     init(
         _ title: String,
@@ -16,13 +17,14 @@ struct PreferenceSliderRow: View {
         _value = value
         self.range = range
         self.valueText = valueText
+        _doubleValue = State(initialValue: Double(value.wrappedValue))
     }
 
     var body: some View {
         PreferenceRow(title) {
             HStack(spacing: 12) {
                 Slider(
-                    value: doubleValue,
+                    value: $doubleValue,
                     in: Double(range.lowerBound)...Double(range.upperBound),
                     step: 1
                 ) {
@@ -40,17 +42,16 @@ struct PreferenceSliderRow: View {
                     .frame(width: PreferencesPanelMetrics.preferenceValueWidth, alignment: .trailing)
             }
         }
-    }
-
-    private var doubleValue: Binding<Double> {
-        Binding(
-            get: { Double(value) },
-            set: { newValue in
-                value = Swift.min(
-                    Swift.max(Int(newValue.rounded()), range.lowerBound),
-                    range.upperBound
-                )
-            }
-        )
+        .onChange(of: doubleValue) { _, newValue in
+            let clamped = Swift.min(
+                Swift.max(Int(newValue.rounded()), range.lowerBound),
+                range.upperBound
+            )
+            if value != clamped { value = clamped }
+        }
+        .onChange(of: value) { _, newValue in
+            let asDouble = Double(newValue)
+            if doubleValue != asDouble { doubleValue = asDouble }
+        }
     }
 }
