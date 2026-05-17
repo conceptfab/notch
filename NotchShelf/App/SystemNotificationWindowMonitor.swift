@@ -24,6 +24,8 @@ final class SystemNotificationWindowMonitor {
     private let interval: TimeInterval
     private let onNotificationShown: @MainActor () -> Void
     private var timer: Timer?
+    private var pollTask: Task<Void, Never>?
+    private var isRunning = false
     private var visibleWindowIDs = Set<CGWindowID>()
 
     init(interval: TimeInterval = 0.35, onNotificationShown: @escaping @MainActor () -> Void) {
@@ -33,17 +35,26 @@ final class SystemNotificationWindowMonitor {
 
     func start() {
         stop()
+        isRunning = true
         visibleWindowIDs = currentNotificationWindowIDs()
         timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
-                self?.poll()
+                guard let self, self.isRunning else { return }
+                self.pollTask?.cancel()
+                self.pollTask = Task { @MainActor [weak self] in
+                    guard let self, !Task.isCancelled else { return }
+                    self.poll()
+                }
             }
         }
     }
 
     func stop() {
+        isRunning = false
         timer?.invalidate()
         timer = nil
+        pollTask?.cancel()
+        pollTask = nil
         visibleWindowIDs.removeAll()
     }
 
