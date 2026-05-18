@@ -16,6 +16,11 @@ final class SystemEventGlowCoordinator {
     private var systemNotificationWindowMonitor: SystemNotificationWindowMonitor?
     private var lastGlowDate = Date.distantPast
     private let rateLimit: TimeInterval
+    private static let distributedNotificationNames = [
+        "com.apple.notificationcenterui.banner",
+        "com.apple.notificationcenterui.customalerts",
+        "com.apple.notificationcenterui.customalerts-alive"
+    ]
 
     init(
         defaults: UserDefaults = .standard,
@@ -65,11 +70,7 @@ final class SystemEventGlowCoordinator {
         ]
 
         let distributedCenter = DistributedNotificationCenter.default()
-        distributedEventObservers = [
-            "com.apple.notificationcenterui.banner",
-            "com.apple.notificationcenterui.customalerts",
-            "com.apple.notificationcenterui.customalerts-alive"
-        ].map { name in
+        distributedEventObservers = Self.distributedNotificationNames.map { name in
             distributedCenter.addObserver(
                 forName: Notification.Name(name),
                 object: nil,
@@ -80,21 +81,6 @@ final class SystemEventGlowCoordinator {
                 }
             }
         }
-        distributedEventObservers.append(
-            distributedCenter.addObserver(
-                forName: nil,
-                object: nil,
-                queue: .main
-            ) { [weak self] notification in
-                let notificationName = notification.name.rawValue
-                Task { @MainActor [weak self] in
-                    guard !notificationName.isEmpty,
-                          Self.isLikelyNotificationDistributedEvent(notificationName)
-                    else { return }
-                    self?.triggerGlowIfEnabled(reason: notificationName)
-                }
-            }
-        )
 
         let monitor = SystemNotificationWindowMonitor { [weak self] in
             self?.triggerGlowIfEnabled(reason: "notification-window")
@@ -123,14 +109,6 @@ final class SystemEventGlowCoordinator {
 
         systemNotificationWindowMonitor?.stop()
         systemNotificationWindowMonitor = nil
-    }
-
-    static func isLikelyNotificationDistributedEvent(_ name: String) -> Bool {
-        let lowercasedName = name.lowercased()
-        return lowercasedName.contains("notificationcenter")
-            || lowercasedName.contains("usernotification")
-            || lowercasedName.contains("customalerts")
-            || lowercasedName.contains("banner")
     }
 
     func triggerGlowIfEnabled(reason: String) {

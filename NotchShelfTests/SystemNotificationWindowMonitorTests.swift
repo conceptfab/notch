@@ -167,12 +167,3 @@ import Testing
         alpha: 1.0
     ) == false)
 }
-
-@MainActor @Test func distributedNotificationFallbackAcceptsNotificationCenterNames() {
-    #expect(SystemEventGlowCoordinator.isLikelyNotificationDistributedEvent("com.apple.notificationcenterui.banner"))
-    #expect(SystemEventGlowCoordinator.isLikelyNotificationDistributedEvent("com.apple.UserNotificationCenter.delivered"))
-}
-
-@MainActor @Test func distributedNotificationFallbackRejectsUnrelatedNames() {
-    #expect(SystemEventGlowCoordinator.isLikelyNotificationDistributedEvent("com.apple.HIToolbox.beginMenuTracking") == false)
-}

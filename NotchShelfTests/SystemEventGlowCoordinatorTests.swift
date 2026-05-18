@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import NotchShelf
 
@@ -34,15 +35,27 @@ struct SystemEventGlowCoordinatorTests {
     }
 
     @Test
-    func acceptsNotificationCenterDistributedNames() {
-        #expect(SystemEventGlowCoordinator.isLikelyNotificationDistributedEvent("com.apple.notificationcenterui.banner"))
-        #expect(SystemEventGlowCoordinator.isLikelyNotificationDistributedEvent("com.apple.usernotificationcenter.foo"))
-        #expect(SystemEventGlowCoordinator.isLikelyNotificationDistributedEvent("BannerArrival"))
+    func startedCoordinatorTriggersForDistributedNotification() async throws {
+        let defaults = makeTestUserDefaults()
+        defaults.set(true, forKey: UserDefaultsKey.glowOnSystemEvents)
+        let notificationName = "com.apple.notificationcenterui.banner"
+        var glowReasons: [String] = []
+        let coordinator = SystemEventGlowCoordinator(defaults: defaults, rateLimit: 0) { reason in
+            glowReasons.append(reason)
+        }
+        coordinator.start()
+        defer { coordinator.stop() }
+
+        DistributedNotificationCenter.default().post(
+            name: Notification.Name(notificationName),
+            object: nil
+        )
+
+        for _ in 0..<10 where !glowReasons.contains(notificationName) {
+            try await Task.sleep(for: .milliseconds(100))
+        }
+
+        #expect(glowReasons.contains(notificationName))
     }
 
-    @Test
-    func rejectsUnrelatedDistributedNames() {
-        #expect(SystemEventGlowCoordinator.isLikelyNotificationDistributedEvent("com.apple.dock.changed") == false)
-        #expect(SystemEventGlowCoordinator.isLikelyNotificationDistributedEvent("") == false)
-    }
 }

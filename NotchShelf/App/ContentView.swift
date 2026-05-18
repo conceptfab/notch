@@ -14,6 +14,7 @@ struct ContentView: View {
     @State private var didPlayStartupGlow = false
     @State private var startupGlowFinishedAt: Date?
     @State private var glowTask: Task<Void, Never>?
+    @State private var pendingGlowReplayTask: Task<Void, Never>?
 
     private var geometry: NotchGeometry { NotchGeometry.current() }
 
@@ -197,11 +198,17 @@ struct ContentView: View {
             windowModel.shapeSize = newSize
         }
         .onChange(of: windowModel.glowPulse) { _, _ in
-            // Suppress system-event glow while the startup glow is still mid-cycle.
-            if let finish = startupGlowFinishedAt, Date() < finish {
-                return
+            switch StartupGlowLockoutPolicy.decision(
+                now: Date(),
+                startupGlowFinishedAt: startupGlowFinishedAt
+            ) {
+            case .playNow:
+                pendingGlowReplayTask?.cancel()
+                pendingGlowReplayTask = nil
+                playGlow()
+            case .replayAfter(let delay):
+                schedulePendingGlowReplay(after: delay)
             }
-            playGlow()
         }
     }
 
@@ -276,6 +283,17 @@ struct ContentView: View {
             withAnimation(.easeOut(duration: ShelfAnimations.Glow.outDuration)) {
                 isStartupGlowVisible = false
             }
+        }
+    }
+
+    private func schedulePendingGlowReplay(after seconds: TimeInterval) {
+        pendingGlowReplayTask?.cancel()
+        let milliseconds = Int((seconds * 1_000).rounded(.up))
+        pendingGlowReplayTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(milliseconds))
+            guard !Task.isCancelled else { return }
+            pendingGlowReplayTask = nil
+            playGlow()
         }
     }
 
