@@ -19,6 +19,14 @@ struct RGBAColorTests {
         #expect(defaultColor.alpha == 1.0)
     }
 
+    @Test func defaultGlowMatchesCurrentBlueAccent() {
+        let defaultColor = RGBAColor.defaultGlow
+        #expect(defaultColor.red == 0.09)
+        #expect(defaultColor.green == 0.34)
+        #expect(defaultColor.blue == 1.0)
+        #expect(defaultColor.alpha == 1.0)
+    }
+
     @Test func componentsHasExactlyFourValues() {
         let color = RGBAColor(red: 0.1, green: 0.2, blue: 0.3, alpha: 0.4)
         #expect(color.components.count == 4)

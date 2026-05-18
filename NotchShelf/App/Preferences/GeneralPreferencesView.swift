@@ -6,6 +6,9 @@ struct GeneralPreferencesView: View {
     @AppStorage(UserDefaultsKey.copyOnDrag) private var copyOnDrag = false
     @AppStorage(UserDefaultsKey.launchAtLogin) private var launchAtLogin = false
     @AppStorage(UserDefaultsKey.glowOnSystemEvents) private var glowOnSystemEvents = true
+    @AppStorage(UserDefaultsKey.playSoundOnSystemEventGlow) private var playSoundOnSystemEventGlow = false
+
+    @State private var glowColor: Color = RGBAColor.defaultGlow.color
 
     var body: some View {
         PreferencesPage {
@@ -35,6 +38,19 @@ struct GeneralPreferencesView: View {
                     "Flash notch glow on system notifications and events",
                     isOn: $glowOnSystemEvents
                 )
+
+                PreferenceDivider()
+                PreferenceRow("Glow color") {
+                    ColorPicker("Glow color", selection: $glowColor, supportsOpacity: true)
+                        .labelsHidden()
+                        .frame(width: 54)
+                }
+
+                PreferenceDivider()
+                PreferenceToggleRow(
+                    "Play sound with system-event glow",
+                    isOn: $playSoundOnSystemEventGlow
+                )
             }
 
             PreferencesSection {
@@ -56,6 +72,28 @@ struct GeneralPreferencesView: View {
                 .frame(minHeight: PreferencesPanelMetrics.rowMinHeight)
             }
         }
+        .onAppear {
+            loadGlowColor()
+        }
+        .onChange(of: glowColor) { _, newValue in
+            persist(glowColor: newValue)
+        }
     }
 
+    private func loadGlowColor() {
+        let components = UserDefaults.standard.array(forKey: UserDefaultsKey.glowColor) as? [Double]
+            ?? RGBAColor.defaultGlow.components
+        glowColor = RGBAColor(components: components, fallback: .defaultGlow).color
+    }
+
+    private func persist(glowColor color: Color) {
+        guard let nsColor = NSColor(color).usingColorSpace(.sRGB) else { return }
+        let rgba = RGBAColor(
+            red: Double(nsColor.redComponent),
+            green: Double(nsColor.greenComponent),
+            blue: Double(nsColor.blueComponent),
+            alpha: Double(nsColor.alphaComponent)
+        )
+        UserDefaults.standard.set(rgba.components, forKey: UserDefaultsKey.glowColor)
+    }
 }

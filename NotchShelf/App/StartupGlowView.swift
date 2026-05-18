@@ -4,6 +4,7 @@ import SwiftUI
 struct StartupGlowView: View {
     let topCornerRadius: CGFloat
     let bottomCornerRadius: CGFloat
+    let glowColor: Color
 
     var body: some View {
         ZStack {
@@ -23,9 +24,9 @@ struct StartupGlowView: View {
         .stroke(
             LinearGradient(
                 colors: [
-                    Color(red: 0.09, green: 0.34, blue: 1.0).opacity(opacity),
-                    Color(red: 0.0, green: 0.62, blue: 1.0).opacity(opacity * 0.75),
-                    Color(red: 0.09, green: 0.34, blue: 1.0).opacity(opacity)
+                    glowColor.opacity(opacity),
+                    glowColor.opacity(opacity * 0.75),
+                    glowColor.opacity(opacity)
                 ],
                 startPoint: .leading,
                 endPoint: .trailing

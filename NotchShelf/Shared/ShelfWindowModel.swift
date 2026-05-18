@@ -21,8 +21,11 @@ final class ShelfWindowModel: ObservableObject {
     @Published var shapeSize: CGSize = .zero
     /// Incremented by app-level event handlers when the notch should emit a brief glow.
     @Published private(set) var glowPulse: Int = 0
+    /// Incremented when the next system-event glow should play an optional sound.
+    @Published private(set) var systemEventGlowSoundPulse: Int = 0
 
     private var collapseTask: Task<Void, Never>?
+    private var pendingGlowSound = false
 
     func expand() {
         collapseTask?.cancel()
@@ -44,8 +47,17 @@ final class ShelfWindowModel: ObservableObject {
         dragTargeting = isTargeting
     }
 
-    func requestGlow() {
+    func requestGlow(playSound: Bool = false) {
         glowPulse += 1
+        if playSound {
+            pendingGlowSound = true
+            systemEventGlowSoundPulse += 1
+        }
+    }
+
+    func consumePendingGlowSound() -> Bool {
+        defer { pendingGlowSound = false }
+        return pendingGlowSound
     }
 
     /// Collapses after `seconds` unless cancelled first, for example by `expand()`.

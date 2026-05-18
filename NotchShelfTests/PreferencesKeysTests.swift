@@ -16,11 +16,14 @@ struct PreferencesKeysTests {
         #expect(suite.double(forKey: UserDefaultsKey.autoHideDelaySeconds) == 1.5)
         #expect(suite.bool(forKey: UserDefaultsKey.launchAtLogin) == false)
         #expect(suite.bool(forKey: UserDefaultsKey.glowOnSystemEvents) == true)
+        #expect(suite.bool(forKey: UserDefaultsKey.playSoundOnSystemEventGlow) == false)
         #expect(suite.integer(forKey: UserDefaultsKey.minSlotCount) == ShelfMetrics.defaultSlotCount)
         #expect(suite.integer(forKey: UserDefaultsKey.maxSlotCount) == ShelfMetrics.defaultAdditionalRowCount)
         #expect(suite.integer(forKey: UserDefaultsKey.stackListGridThreshold) == 5)
         let storedColor = suite.array(forKey: UserDefaultsKey.dropZoneColor) as? [Double]
         #expect(storedColor == [0.0, 0.88, 0.84, 1.0])
+        let storedGlowColor = suite.array(forKey: UserDefaultsKey.glowColor) as? [Double]
+        #expect(storedGlowColor == RGBAColor.defaultGlow.components)
     }
 
     @Test
@@ -41,12 +44,26 @@ struct PreferencesKeysTests {
     }
 
     @Test
+    func registerPreferenceDefaultsInstallsGlowColor() {
+        let suiteName = "PreferencesKeysTests.\(UUID().uuidString)"
+        let suite = UserDefaults(suiteName: suiteName)!
+        defer { suite.removePersistentDomain(forName: suiteName) }
+
+        registerPreferenceDefaults(in: suite)
+
+        let stored = suite.array(forKey: UserDefaultsKey.glowColor) as? [Double]
+        #expect(stored == RGBAColor.defaultGlow.components)
+    }
+
+    @Test
     func keysAreStable() {
         // Keys are persisted on disk; accidental renames are silent data loss.
         #expect(UserDefaultsKey.copyOnDrag == "copyOnDrag")
         #expect(UserDefaultsKey.autoHideDelaySeconds == "autoHideDelaySeconds")
         #expect(UserDefaultsKey.launchAtLogin == "launchAtLogin")
         #expect(UserDefaultsKey.glowOnSystemEvents == "glowOnSystemEvents")
+        #expect(UserDefaultsKey.playSoundOnSystemEventGlow == "playSoundOnSystemEventGlow")
+        #expect(UserDefaultsKey.glowColor == "glowColor")
         #expect(UserDefaultsKey.minSlotCount == "minSlotCount")
         #expect(UserDefaultsKey.maxSlotCount == "maxSlotCount")
         #expect(UserDefaultsKey.stackListGridThreshold == "stackListGridThreshold")

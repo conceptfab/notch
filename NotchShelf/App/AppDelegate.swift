@@ -67,7 +67,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupGlowCoordinator() {
         let coordinator = SystemEventGlowCoordinator { [weak self] _ in
-            self?.windowModel.requestGlow()
+            let playSound = UserDefaults.standard.bool(forKey: UserDefaultsKey.playSoundOnSystemEventGlow)
+            self?.windowModel.requestGlow(playSound: playSound)
         }
         coordinator.start()
         glowCoordinator = coordinator

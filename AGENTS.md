@@ -1,13 +1,13 @@
 <claude-mem-context>
 # Memory Context
 
-# [notch] recent context, 2026-05-17 9:34pm GMT+2
+# [notch] recent context, 2026-05-18 8:55pm GMT+2
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (19,537t read) | 981,015t work | 98% savings
+Stats: 50 obs (20,820t read) | 988,068t work | 98% savings
 
 ### May 16, 2026
 S1512 Restore status icons (tray icon + file count badge) visible on collapsed shelf notch — completed with 3 iterative commits (May 16 at 1:28 PM)
@@ -18,19 +18,9 @@ S1560 Create a test script that triggers system events that the NotchShelf app r
 S1582 Move stack and plus icons outside the main application window boundary (NotchShelf macOS app) (May 16 at 10:59 PM)
 ### May 17, 2026
 S1617 Code audit of NotchShelf macOS SwiftUI app before merging notchshelf-mvp → stable branch (May 17 at 1:57 PM)
-4339 7:29p ✅ Full NotchShelf test suite passes — 108 tests across both XCTest and Swift Testing frameworks
-4340 7:33p 🟣 NotchShelf: Precision hover activation with onContinuousHover
-4341 " 🔴 NotchShelf: Drag catch region outsets tightened significantly
-4380 8:30p 🔵 Notch App Repository State Before Stable Branch Migration
-4381 " 🔵 notchshelf-mvp vs stable: 49 Files, 1726 Insertions Awaiting Audit
-4382 8:31p 🔵 13-Commit Development History Between Common Ancestor and notchshelf-mvp HEAD
-4383 " 🟣 SystemNotificationWindowMonitor: CGWindow Polling for Notification Banner Detection
-4384 " 🟣 AppDelegate: Multi-Source System Event Glow with 0.8s Debounce
 4385 8:32p 🔄 ContentView: onHover → onContinuousHover with Geometric Hit-Testing for Collapsed State
 4386 " 🔄 SlotCountPolicy Extracted as Pure Enum; ShelfStore Gains Multi-Row Dynamic Expansion
 4387 " 🔄 Modular Preferences UI Framework: 9 New Composable Components
-4388 " 🔵 Audit Flags: Legacy ObservableObject, Manual animatableData, Binding(get:set:) in View Code
-4389 " 🔄 ShelfDragOperationPolicy: keepAfterExternalDrop Parameter Added for Move vs Copy Control
 4390 8:33p 🔄 ShelfMetrics: Window Size Doubled, Drag Outsets Dramatically Reduced
 4391 " 🔄 ShelfItemView: Position-Based Layout with slotLayer/slotControlRow; Thumbnail Removed from Render Path
 4392 " 🟣 SystemNotificationWindowMonitor: 13-Case Swift Testing Suite
@@ -71,6 +61,17 @@ S1620 Execute plan_poprawek.md — post-audit SwiftUI/architecture refactor for 
 4424 " 🟣 AutoHidePolicyTests written as TDD red step
 4425 9:09p 🔄 SystemEventGlowCoordinator Extracted from AppDelegate
 4426 " 🟣 Startup Glow Lockout for System-Event Pulse in ContentView
+### May 18, 2026
+4716 8:37p 🔵 Notch macOS App: System Events Not Firing — Debugging Session Started
+4717 " 🔵 NotchShelf System Event Glow Architecture Mapped — Root Cause Investigation In Progress
+4720 8:38p 🔵 Root Cause Investigation: Glow Preference Is ON, App Running — Cause Unknown After Code Audit
+4725 8:39p 🔵 Confirmed: NotchShelf Receives Zero System-Events Log Output — DistributedNotifications Blocked by Sandbox
+4727 8:40p 🔵 CGWindowList Monitor Works; DistributedNotificationCenter Blocked — Glow Fires Only on Real Notification Banners
+4729 " 🔵 All 119 Tests Pass — Glow Logic Correct in Isolation; Real Detection Gap in Sandboxed App
+4730 8:54p 🟣 Sound Effect + Glow Color Customization Feature Request
+4731 " 🔵 Notch Project: Sound + Glow Feature Brainstorming Approach
+4732 " 🔵 NotchShelf Glow Effect & Preferences Architecture
+4733 8:55p 🔵 NotchShelf Glow Playback & Color Persistence Implementation Details
 
-Access 981k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 988k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>

@@ -10,6 +10,7 @@ struct RGBAColor: Equatable, Hashable, Sendable {
     let alpha: Double
 
     static let defaultDropZone = RGBAColor(red: 0.0, green: 0.88, blue: 0.84, alpha: 1.0)
+    static let defaultGlow = RGBAColor(red: 0.09, green: 0.34, blue: 1.0, alpha: 1.0)
 
     init(red: Double, green: Double, blue: Double, alpha: Double) {
         self.red = Self.clamp(red)
@@ -18,9 +19,9 @@ struct RGBAColor: Equatable, Hashable, Sendable {
         self.alpha = Self.clamp(alpha)
     }
 
-    init(components: [Double]) {
+    init(components: [Double], fallback: RGBAColor = .defaultDropZone) {
         guard components.count == 4 else {
-            self = .defaultDropZone
+            self = fallback
             return
         }
         self.init(

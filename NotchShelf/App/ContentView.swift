@@ -10,11 +10,13 @@ struct ContentView: View {
     @Environment(\.openSettings) private var openSettings
     @ObservedObject private var store = ShelfStore.shared
     @AppStorage(UserDefaultsKey.minSlotCount) private var configuredSlotCount = ShelfMetrics.defaultSlotCount
+    @AppStorage(UserDefaultsKey.playSoundOnSystemEventGlow) private var playSoundOnSystemEventGlow = false
     @State private var isStartupGlowVisible = false
     @State private var didPlayStartupGlow = false
     @State private var startupGlowFinishedAt: Date?
     @State private var glowTask: Task<Void, Never>?
     @State private var pendingGlowReplayTask: Task<Void, Never>?
+    @State private var glowRGBA: RGBAColor = ContentView.loadGlowColor()
 
     private var geometry: NotchGeometry { NotchGeometry.current() }
 
@@ -126,7 +128,8 @@ struct ContentView: View {
             StartupGlowView(
                 topCornerRadius: currentTopCornerRadius,
                 bottomCornerRadius: windowModel.expansion == .expanded
-                    ? ShelfMetrics.bottomCornerRadius : 8
+                    ? ShelfMetrics.bottomCornerRadius : 8,
+                glowColor: glowRGBA.color
             )
                 .frame(width: currentShapeSize.width, height: currentShapeSize.height)
                 .opacity(isStartupGlowVisible ? 1 : 0)
@@ -198,6 +201,7 @@ struct ContentView: View {
             windowModel.shapeSize = newSize
         }
         .onChange(of: windowModel.glowPulse) { _, _ in
+            let shouldPlaySound = windowModel.consumePendingGlowSound()
             switch StartupGlowLockoutPolicy.decision(
                 now: Date(),
                 startupGlowFinishedAt: startupGlowFinishedAt
@@ -205,10 +209,14 @@ struct ContentView: View {
             case .playNow:
                 pendingGlowReplayTask?.cancel()
                 pendingGlowReplayTask = nil
-                playGlow()
+                playGlow(playSound: shouldPlaySound)
             case .replayAfter(let delay):
-                schedulePendingGlowReplay(after: delay)
+                schedulePendingGlowReplay(after: delay, playSound: shouldPlaySound)
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in
+            let next = Self.loadGlowColor()
+            if next != glowRGBA { glowRGBA = next }
         }
     }
 
@@ -248,11 +256,14 @@ struct ContentView: View {
         // Lock out system-event pulses until the startup glow's full envelope ends.
         let envelopeMillis: Double = reduceMotion ? 700 : 1_200
         startupGlowFinishedAt = Date().addingTimeInterval(envelopeMillis / 1_000)
-        playGlow()
+        playGlow(playSound: false)
     }
 
-    private func playGlow() {
+    private func playGlow(playSound: Bool) {
         glowTask?.cancel()
+        if playSound && playSoundOnSystemEventGlow {
+            SystemGlowSoundPlayer.play()
+        }
 
         if reduceMotion {
             isStartupGlowVisible = true
@@ -286,15 +297,21 @@ struct ContentView: View {
         }
     }
 
-    private func schedulePendingGlowReplay(after seconds: TimeInterval) {
+    private func schedulePendingGlowReplay(after seconds: TimeInterval, playSound: Bool) {
         pendingGlowReplayTask?.cancel()
         let milliseconds = Int((seconds * 1_000).rounded(.up))
         pendingGlowReplayTask = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(milliseconds))
             guard !Task.isCancelled else { return }
             pendingGlowReplayTask = nil
-            playGlow()
+            playGlow(playSound: playSound)
         }
+    }
+
+    private static func loadGlowColor() -> RGBAColor {
+        let components = UserDefaults.standard.array(forKey: UserDefaultsKey.glowColor) as? [Double]
+            ?? RGBAColor.defaultGlow.components
+        return RGBAColor(components: components, fallback: .defaultGlow)
     }
 
     private func clearShelf() {
