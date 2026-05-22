@@ -6,23 +6,23 @@ cd "$ROOT_DIR"
 
 BUNDLE_ID="com.notchshelf.NotchShelf"
 DEFAULT_EVENT_NAME="com.apple.notificationcenterui.banner"
-MODE="${1:-notification}"
+MODE="${1:-distributed}"
 EVENT_NAME="${2:-$DEFAULT_EVENT_NAME}"
 MODULE_CACHE_PATH="${SWIFT_MODULE_CACHE_PATH:-/tmp/notchshelf-swift-module-cache}"
-NOTIFICATION_TITLE="${NOTIFICATION_TITLE:-NotchShelf system event test}"
-NOTIFICATION_MESSAGE="${NOTIFICATION_MESSAGE:-This is a real macOS notification banner. NotchShelf should glow now.}"
+NOTIFICATION_TITLE="${NOTIFICATION_TITLE:-NotchShelf visible notification test}"
+NOTIFICATION_MESSAGE="${NOTIFICATION_MESSAGE:-Manual visible notification test for NotchShelf.}"
 
 usage() {
   cat <<USAGE
-Usage: scripts/trigger-system-event.sh [notification|distributed] [distributed-notification-name]
+Usage: scripts/trigger-system-event.sh [distributed|notification] [distributed-notification-name]
 
-Shows a visible macOS notification by default, then posts a global distributed
-notification that NotchShelf listens for. This gives a visible system message and
-a deterministic app reaction in one command.
+Posts a synthetic DistributedNotificationCenter event by default.
+Use the notification mode only when you intentionally want a visible macOS
+notification banner during manual testing.
 
 Modes:
-  notification  Show a real macOS notification, then post the distributed event.
   distributed   Post a synthetic DistributedNotificationCenter event.
+  notification  Show a visible macOS notification, then post the distributed event.
 
 Default distributed event:
   $DEFAULT_EVENT_NAME
@@ -32,10 +32,10 @@ without the app-observable distributed event.
 
 Examples:
   scripts/trigger-system-event.sh
-  scripts/trigger-system-event.sh notification
   scripts/trigger-system-event.sh distributed com.apple.notificationcenterui.customalerts
-  NOTIFICATION_MESSAGE="Hello from NotchShelf test" scripts/trigger-system-event.sh
-  REAL_NOTIFICATION_ONLY=1 scripts/trigger-system-event.sh
+  scripts/trigger-system-event.sh notification
+  NOTIFICATION_MESSAGE="Hello from NotchShelf test" scripts/trigger-system-event.sh notification
+  REAL_NOTIFICATION_ONLY=1 scripts/trigger-system-event.sh notification
   ENABLE_PREF=0 scripts/trigger-system-event.sh distributed com.apple.usernotifications.test.banner
 USAGE
 }

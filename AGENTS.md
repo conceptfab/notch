@@ -1,13 +1,13 @@
 <claude-mem-context>
 # Memory Context
 
-# [notch] recent context, 2026-05-18 8:55pm GMT+2
+# [notch] recent context, 2026-05-22 8:35pm GMT+2
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (20,820t read) | 988,068t work | 98% savings
+Stats: 50 obs (19,523t read) | 516,744t work | 96% savings
 
 ### May 16, 2026
 S1512 Restore status icons (tray icon + file count badge) visible on collapsed shelf notch — completed with 3 iterative commits (May 16 at 1:28 PM)
@@ -18,34 +18,10 @@ S1560 Create a test script that triggers system events that the NotchShelf app r
 S1582 Move stack and plus icons outside the main application window boundary (NotchShelf macOS app) (May 16 at 10:59 PM)
 ### May 17, 2026
 S1617 Code audit of NotchShelf macOS SwiftUI app before merging notchshelf-mvp → stable branch (May 17 at 1:57 PM)
-4385 8:32p 🔄 ContentView: onHover → onContinuousHover with Geometric Hit-Testing for Collapsed State
-4386 " 🔄 SlotCountPolicy Extracted as Pure Enum; ShelfStore Gains Multi-Row Dynamic Expansion
-4387 " 🔄 Modular Preferences UI Framework: 9 New Composable Components
-4390 8:33p 🔄 ShelfMetrics: Window Size Doubled, Drag Outsets Dramatically Reduced
-4391 " 🔄 ShelfItemView: Position-Based Layout with slotLayer/slotControlRow; Thumbnail Removed from Render Path
-4392 " 🟣 SystemNotificationWindowMonitor: 13-Case Swift Testing Suite
-4393 " 🔴 Additional Audit Flags: Deprecated APIs and swiftui-pro Violations
-4394 8:34p ⚖️ Architecture Review: Ready for Stable Merge — No Critical Blockers Found
-4395 " ⚖️ SwiftUI Review: Mergeable to Stable with Two Pre-Merge Fixes Required
 S1618 Fix (popraw) glow animation in NotchShelf macOS app — ContentView.swift startup glow refactor (May 17 at 8:38 PM)
-4396 8:39p 🔴 StartupGlowView: conditional rendering replaced with opacity-based visibility
-4397 8:40p 🔴 Glow pulse animation: snap opacity to zero before re-triggering to prevent stuck intermediate state
-4398 " ✅ NotchShelf Debug build and full test suite pass after glow animation fixes
 S1619 NotchShelf macOS app — post-audit code improvement plan created before merging to stable branch (May 17 at 8:40 PM)
-4399 8:41p 🔵 NotchShelf repository root structure
-4400 8:42p 🔵 ShelfStore bookmark validation uses bounded concurrency with max 8 parallel tasks
-4401 " 🔵 NotchShelf Preferences UI structure: 3-tab panel with General, Shelf, and About views
-4402 " 🔵 AppDelegate system event glow architecture: three notification centers + window monitor with 0.8s debounce
-4403 " 🔵 SystemNotificationWindowMonitor polls CGWindowList at 350ms intervals to detect new notification banners
-4404 8:48p ⚖️ Swift/SwiftUI App Code Audit Before Stable Branch Transition
-4405 8:50p 🔵 NotchShelf Post-Audit Improvement Plan Loaded
 S1620 Execute plan_poprawek.md — post-audit SwiftUI/architecture refactor for NotchShelf macOS app (May 17 at 8:51 PM)
-4406 8:55p 🔵 plan_poprawek.md — 5-task correction plan for Notch app
-4407 8:56p 🔵 NotchShelf plan_poprawek.md — full 10-task Swift/macOS post-audit correction plan
-4408 8:57p 🔵 NotchShelf pre-change source state confirmed and xcodebuild environment issues detected
-4409 " 🔵 NotchShelf plan_poprawek.md Phase 4-6 tasks fully read (Tasks 10-20)
 4410 8:58p 🔵 NotchShelf Post-MVP Refactoring Plan Loaded (plan_poprawek.md)
-4411 " 🔵 NotchShelf plan_poprawek.md — All 20 Tasks Enumerated
 4412 8:59p 🔵 NotchShelf Confirmed Build Configuration and Test Baseline
 4413 9:00p 🔵 NotchShelf plan_poprawek.md — Multi-Phase Refactor Plan Structure
 4414 " 🔵 xcodebuild Fails — DerivedData Permission Denied in Sandbox
@@ -72,6 +48,31 @@ S1620 Execute plan_poprawek.md — post-audit SwiftUI/architecture refactor for 
 4731 " 🔵 Notch Project: Sound + Glow Feature Brainstorming Approach
 4732 " 🔵 NotchShelf Glow Effect & Preferences Architecture
 4733 8:55p 🔵 NotchShelf Glow Playback & Color Persistence Implementation Details
+4734 " 🔵 PreferencesKeys Test Suite: Key Stability Testing Pattern
+4735 " 🔵 NotchShelf Test Patterns & Preferences UI Components
+4736 8:56p 🟣 TDD RED Phase: Failing Tests Written for Sound + Glow Color Keys
+4737 " 🔵 TDD RED Confirmed: ShelfWindowModel Missing systemEventGlowSoundPulse and requestGlow(playSound:)
+4738 " 🟣 RGBAColor: Added defaultGlow Static and Fallback Parameter to init(components:)
+4739 8:57p 🟣 ShelfWindowModel and PreferencesKeys: Sound + Glow Color Production API Added
+4740 " 🟣 Sound + Glow Color Wired Into Production: AppDelegate, StartupGlowView, SystemGlowSoundPlayer
+4741 " 🟣 ContentView: Sound + Glow Color Fully Wired — All Layers Connected
+4742 " 🟣 GeneralPreferencesView: Glow Color Picker and Sound Toggle Added to UI
+4743 8:58p 🔵 Sound + Glow Color Feature: Complete Change Surface
+4744 " 🟣 TDD GREEN Phase Complete: All 12 Tests Pass for Sound + Glow Color Feature
+4745 " 🟣 Full Test Suite Passes: 121 Tests, 0 Failures — Sound + Glow Color Feature Complete
+4746 8:59p 🟣 Sound + Glow Color Feature: Pre-Commit Verification Complete — Ready to Commit
+### May 20, 2026
+4932 3:49p 🔵 Test notification message located in trigger-system-event.sh
+4933 3:50p 🔵 trigger-system-event.sh: dual-mode notification test harness for NotchShelf
+4937 3:55p ⚖️ System Event Notifications Switched from Message Popups to Visual Flash
+4940 " 🔵 NotchShelf Already Has System Event Glow Infrastructure
+4942 " 🔵 NotchShelf Test Infrastructure Uses xcodegen + xcodebuild
+4943 " 🟣 TDD Red Phase: Shell Contract Test for trigger-system-event.sh Default Mode
+4946 3:56p 🔴 trigger-system-event.sh Default Changed from Notification Spam to Silent Distributed Mode
+4949 " 🔄 trigger-system-event.sh Help Examples Corrected for New Default Mode
+4950 3:57p 🟣 Full Test Suite Passes: 121 Swift Tests + Shell Contract — All Green
+4951 " 🔵 scripts/test-trigger-system-event.sh Is Untracked — Needs git add Before Commit
+4957 3:59p 🔵 NotchShelf Debug Build Succeeds After Script Changes
 
-Access 988k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 517k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>

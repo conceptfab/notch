@@ -15,6 +15,7 @@ if ! command -v xcodegen >/dev/null 2>&1; then
 fi
 
 xcodegen generate
+"$ROOT_DIR/scripts/test-trigger-system-event.sh"
 xcodebuild test \
   -project "$PROJECT_PATH" \
   -scheme "$SCHEME" \
