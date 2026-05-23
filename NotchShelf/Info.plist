@@ -17,11 +17,11 @@
     <key>CFBundleVersion</key>
     <string>$(CURRENT_PROJECT_VERSION)</string>
     <key>CFBundleGetInfoString</key>
-    <string>NotchShelf $(MARKETING_VERSION), &#169; 2026 Michal Kleniewski</string>
+    <string>NotchShelf $(MARKETING_VERSION), &#169; 2026 conceptfab.com</string>
     <key>NSHumanReadableDescription</key>
     <string>A shelf that lives in the macOS notch for quick file drag-and-drop.</string>
     <key>NSHumanReadableCopyright</key>
-    <string>Copyright &#169; 2026 Michal Kleniewski. All rights reserved.</string>
+    <string>Copyright &#169; 2026 conceptfab.com. All rights reserved.</string>
     <key>LSMinimumSystemVersion</key>
     <string>$(MACOSX_DEPLOYMENT_TARGET)</string>
     <key>LSUIElement</key>

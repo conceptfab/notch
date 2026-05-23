@@ -13,6 +13,9 @@ struct PreferencesRootView: View {
                 AboutPreferencesView()
             }
         }
-        .frame(width: 500, height: 410)
+        .frame(
+            width: PreferencesPanelMetrics.windowWidth,
+            height: PreferencesPanelMetrics.windowHeight
+        )
     }
 }

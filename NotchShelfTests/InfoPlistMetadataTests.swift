@@ -10,23 +10,24 @@ final class InfoPlistMetadataTests: XCTestCase {
         XCTAssertEqual(bundleIdentifier, "dev.conceptfab.notchshelf")
     }
 
-    func testCopyrightIsAsciiAndMatchesClank() throws {
+    func testCopyrightUsesConceptFabBranding() throws {
         let copyright = try XCTUnwrap(info["NSHumanReadableCopyright"] as? String)
         XCTAssertEqual(
             copyright,
-            "Copyright \u{00a9} 2026 Michal Kleniewski. All rights reserved."
+            "Copyright \u{00a9} 2026 conceptfab.com. All rights reserved."
         )
         XCTAssertFalse(
-            copyright.contains("Micha\u{0142}"),
-            "copyright must use ASCII 'Michal' to match Clank"
+            copyright.contains("Kleniewski"),
+            "user-facing metadata must use the ConceptFab brand, not a personal name"
         )
     }
 
-    func testGetInfoStringContainsVersionAndAsciiAuthor() throws {
+    func testGetInfoStringContainsVersionAndConceptFabBrand() throws {
         let getInfo = try XCTUnwrap(info["CFBundleGetInfoString"] as? String)
         let version = try XCTUnwrap(info["CFBundleShortVersionString"] as? String)
         XCTAssertTrue(getInfo.contains(version))
-        XCTAssertTrue(getInfo.contains("Michal Kleniewski"), "must use ASCII author name")
+        XCTAssertTrue(getInfo.contains("conceptfab.com"))
+        XCTAssertFalse(getInfo.contains("Kleniewski"))
     }
 
     func testHumanReadableDescriptionIsPresent() throws {

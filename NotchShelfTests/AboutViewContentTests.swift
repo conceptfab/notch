@@ -28,4 +28,8 @@ final class AboutViewContentTests: XCTestCase {
     func testAboutTaglineIsNonEmpty() {
         XCTAssertFalse(AboutPreferencesView.tagline.isEmpty)
     }
+
+    func testPreferencesWindowHasRoomForCompleteAboutContent() {
+        XCTAssertGreaterThanOrEqual(PreferencesPanelMetrics.windowHeight, 600)
+    }
 }

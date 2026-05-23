@@ -11,9 +11,10 @@ final class BundleResourceTests: XCTestCase {
         let contents = try String(contentsOf: url, encoding: .utf8)
         XCTAssertTrue(contents.hasPrefix("MIT License"))
         XCTAssertTrue(
-            contents.contains("Michal Kleniewski"),
-            "LICENSE.txt must use ASCII author name to match Clank"
+            contents.contains("conceptfab.com"),
+            "LICENSE.txt must use the public ConceptFab brand"
         )
+        XCTAssertFalse(contents.contains("Kleniewski"))
     }
 
     func testBuyMeACoffeeImageIsBundled() throws {
