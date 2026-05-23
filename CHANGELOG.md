@@ -6,22 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.0.0] - 2026-05-22
+## [1.0.1] - 2026-05-23
 
-Initial public release candidate.
+Direct-download distribution readiness release.
 
 ### Added
 
 - ConceptFab branding: bundle ID `dev.conceptfab.notchshelf`, About view
   aligned with sibling app Clank, and a Buy Me a Coffee link.
-- Notch-attached shelf for dropping and retrieving files via drag-and-drop.
-- Collapsed-notch tray icon and file count badge.
-- Expand on hover near the notch; auto-collapse with configurable delay.
-- System-event glow with optional sound and customizable color.
-- Preferences: General, Shelf, About.
-- Launch at login via `SMAppService`.
-- Reduce Motion support.
-- macOS App Sandbox with security-scoped bookmark persistence.
+- Ad-hoc signed DMG distribution pipeline with bundled install guide, license,
+  and SHA-256 checksum.
+
+### Fixed
+
+- Release bundles no longer expose the debugger entitlement
+  `com.apple.security.get-task-allow`.
 
 ### Known limitations
 
@@ -30,3 +29,18 @@ Initial public release candidate.
   follow a Developer ID Application certificate purchase.
 - File-moving behavior is still recorded as unresolved in `TODO.md`; verify
   drag-out/move behavior before announcing this release publicly.
+
+## [1.0.0] - 2026-05-15
+
+Initial tagged stable build.
+
+### Added
+
+- Notch-attached shelf for dropping and retrieving files via drag-and-drop.
+- Collapsed-notch tray icon and file count badge.
+- Expand on hover near the notch; auto-collapse with configurable delay.
+- System-event glow with optional sound and customizable color.
+- Preferences: General, Shelf, About.
+- Launch at login via `SMAppService`.
+- Reduce Motion support.
+- macOS App Sandbox with security-scoped bookmark persistence.

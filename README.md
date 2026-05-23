@@ -6,7 +6,7 @@ need it.
 
 Website: [notchshelf.conceptfab.com](https://notchshelf.conceptfab.com/)
 
-Current version: `1.0.0`
+Current version: `1.0.1`
 
 ## What It Does
 
