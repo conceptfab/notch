@@ -16,6 +16,7 @@ fi
 
 xcodegen generate
 "$ROOT_DIR/scripts/test-trigger-system-event.sh"
+"$ROOT_DIR/scripts/test-release-scripts.sh"
 xcodebuild test \
   -project "$PROJECT_PATH" \
   -scheme "$SCHEME" \
