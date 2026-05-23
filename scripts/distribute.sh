@@ -12,7 +12,9 @@ cd "$ROOT_DIR"
 RELEASE_DIR="${RELEASE_DIR:-dist}"
 
 echo "==> Cleaning prior release artifacts..."
-rm -rf "$RELEASE_DIR" .build-release
+mkdir -p "$RELEASE_DIR"
+rm -rf .build-release "$RELEASE_DIR/NotchShelf.app"
+rm -f "$RELEASE_DIR"/NotchShelf-*.dmg "$RELEASE_DIR"/NotchShelf-*.dmg.sha256
 
 echo "==> [1/4] Running tests..."
 scripts/test.sh

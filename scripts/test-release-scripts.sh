@@ -24,6 +24,14 @@ assert_contains() {
   fi
 }
 
+assert_not_contains() {
+  local path="$1" needle="$2" label="$3"
+  if grep -qF -- "$needle" "$path"; then
+    echo "FAIL: $label - '$path' must not contain: $needle"
+    failures=$((failures + 1))
+  fi
+}
+
 # release.sh contract
 assert_exec scripts/release.sh
 assert_contains scripts/release.sh 'CODE_SIGN_IDENTITY="-"' 'release.sh signs ad-hoc'
@@ -44,6 +52,7 @@ assert_contains scripts/distribute.sh 'scripts/test.sh' 'distribute.sh runs test
 assert_contains scripts/distribute.sh 'scripts/release.sh' 'distribute.sh builds Release'
 assert_contains scripts/distribute.sh 'scripts/package-dmg.sh' 'distribute.sh packages a DMG'
 assert_contains scripts/distribute.sh 'shasum -a 256' 'distribute.sh writes SHA-256 checksum'
+assert_not_contains scripts/distribute.sh 'rm -rf "$RELEASE_DIR"' 'distribute.sh preserves unrelated release-directory files'
 
 if (( failures > 0 )); then
   echo
