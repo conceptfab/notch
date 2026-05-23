@@ -2,7 +2,7 @@ import CoreGraphics
 
 enum PreferencesPanelMetrics {
     static let windowWidth: CGFloat = 500
-    static let windowHeight: CGFloat = 600
+    static let windowHeight: CGFloat = 520
     static let contentWidth: CGFloat = 520
     static let sectionCornerRadius: CGFloat = 10
     static let rowHorizontalPadding: CGFloat = 16
