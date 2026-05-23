@@ -1,17 +1,15 @@
 <claude-mem-context>
 # Memory Context
 
-# [notch] recent context, 2026-05-22 8:35pm GMT+2
+# [notch] recent context, 2026-05-23 2:07pm GMT+2
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (19,523t read) | 516,744t work | 96% savings
+Stats: 50 obs (17,155t read) | 159,648t work | 89% savings
 
 ### May 16, 2026
-S1512 Restore status icons (tray icon + file count badge) visible on collapsed shelf notch — completed with 3 iterative commits (May 16 at 1:28 PM)
-S1513 Restore status icons (tray icon + file count badge) on collapsed shelf notch — 4-commit iterative fix completed (May 16 at 1:29 PM)
 S1514 Restore status icons on collapsed shelf notch — now in active visual debugging phase with red background overlay (May 16 at 1:32 PM)
 S1515 Restore status icons on collapsed shelf notch — active visual debugging, root cause still unconfirmed (May 16 at 1:33 PM)
 S1560 Create a test script that triggers system events that the NotchShelf app reacts to (notch glow) (May 16 at 1:34 PM)
@@ -20,59 +18,61 @@ S1582 Move stack and plus icons outside the main application window boundary (No
 S1617 Code audit of NotchShelf macOS SwiftUI app before merging notchshelf-mvp → stable branch (May 17 at 1:57 PM)
 S1618 Fix (popraw) glow animation in NotchShelf macOS app — ContentView.swift startup glow refactor (May 17 at 8:38 PM)
 S1619 NotchShelf macOS app — post-audit code improvement plan created before merging to stable branch (May 17 at 8:40 PM)
-S1620 Execute plan_poprawek.md — post-audit SwiftUI/architecture refactor for NotchShelf macOS app (May 17 at 8:51 PM)
-4410 8:58p 🔵 NotchShelf Post-MVP Refactoring Plan Loaded (plan_poprawek.md)
-4412 8:59p 🔵 NotchShelf Confirmed Build Configuration and Test Baseline
-4413 9:00p 🔵 NotchShelf plan_poprawek.md — Multi-Phase Refactor Plan Structure
-4414 " 🔵 xcodebuild Fails — DerivedData Permission Denied in Sandbox
-4415 " 🔄 NotchShelf Phase 1 Tasks 1-3 Applied: SwiftUI Preferences Quick Fixes
-4416 " ✅ NotchShelf Phase 1 Tasks 1-3 Build Confirmed: ** BUILD SUCCEEDED **
-4417 9:01p ✅ NotchShelf Phase 1 Tasks 1-3: Tests Green, Ready to Commit
-4418 " 🔄 Task 1 Committed: .tabItem → Tab API Migration
-4419 " 🔄 Tasks 2 & 3 Committed: Reduce Motion Fix and Binding Refactor
-4420 " 🔵 GeneralPreferencesView Auto-Hide Slider Uses Unique Metric Constants
-4421 " 🟣 Task 4: PreferenceDoubleSliderRow Created and GeneralPreferencesView Refactored
-4422 9:03p 🔄 Extracted PreferenceDoubleSliderRow reusable component
-4423 " 🔵 Duplicate inline autoHideDelaySeconds logic in AppDelegate and ContentView
-4424 " 🟣 AutoHidePolicyTests written as TDD red step
-4425 9:09p 🔄 SystemEventGlowCoordinator Extracted from AppDelegate
-4426 " 🟣 Startup Glow Lockout for System-Event Pulse in ContentView
-### May 18, 2026
-4716 8:37p 🔵 Notch macOS App: System Events Not Firing — Debugging Session Started
-4717 " 🔵 NotchShelf System Event Glow Architecture Mapped — Root Cause Investigation In Progress
-4720 8:38p 🔵 Root Cause Investigation: Glow Preference Is ON, App Running — Cause Unknown After Code Audit
-4725 8:39p 🔵 Confirmed: NotchShelf Receives Zero System-Events Log Output — DistributedNotifications Blocked by Sandbox
-4727 8:40p 🔵 CGWindowList Monitor Works; DistributedNotificationCenter Blocked — Glow Fires Only on Real Notification Banners
-4729 " 🔵 All 119 Tests Pass — Glow Logic Correct in Isolation; Real Detection Gap in Sandboxed App
-4730 8:54p 🟣 Sound Effect + Glow Color Customization Feature Request
-4731 " 🔵 Notch Project: Sound + Glow Feature Brainstorming Approach
-4732 " 🔵 NotchShelf Glow Effect & Preferences Architecture
-4733 8:55p 🔵 NotchShelf Glow Playback & Color Persistence Implementation Details
-4734 " 🔵 PreferencesKeys Test Suite: Key Stability Testing Pattern
-4735 " 🔵 NotchShelf Test Patterns & Preferences UI Components
-4736 8:56p 🟣 TDD RED Phase: Failing Tests Written for Sound + Glow Color Keys
-4737 " 🔵 TDD RED Confirmed: ShelfWindowModel Missing systemEventGlowSoundPulse and requestGlow(playSound:)
-4738 " 🟣 RGBAColor: Added defaultGlow Static and Fallback Parameter to init(components:)
-4739 8:57p 🟣 ShelfWindowModel and PreferencesKeys: Sound + Glow Color Production API Added
-4740 " 🟣 Sound + Glow Color Wired Into Production: AppDelegate, StartupGlowView, SystemGlowSoundPlayer
-4741 " 🟣 ContentView: Sound + Glow Color Fully Wired — All Layers Connected
-4742 " 🟣 GeneralPreferencesView: Glow Color Picker and Sound Toggle Added to UI
-4743 8:58p 🔵 Sound + Glow Color Feature: Complete Change Surface
-4744 " 🟣 TDD GREEN Phase Complete: All 12 Tests Pass for Sound + Glow Color Feature
-4745 " 🟣 Full Test Suite Passes: 121 Tests, 0 Failures — Sound + Glow Color Feature Complete
-4746 8:59p 🟣 Sound + Glow Color Feature: Pre-Commit Verification Complete — Ready to Commit
-### May 20, 2026
-4932 3:49p 🔵 Test notification message located in trigger-system-event.sh
-4933 3:50p 🔵 trigger-system-event.sh: dual-mode notification test harness for NotchShelf
-4937 3:55p ⚖️ System Event Notifications Switched from Message Popups to Visual Flash
-4940 " 🔵 NotchShelf Already Has System Event Glow Infrastructure
-4942 " 🔵 NotchShelf Test Infrastructure Uses xcodegen + xcodebuild
-4943 " 🟣 TDD Red Phase: Shell Contract Test for trigger-system-event.sh Default Mode
-4946 3:56p 🔴 trigger-system-event.sh Default Changed from Notification Spam to Silent Distributed Mode
-4949 " 🔄 trigger-system-event.sh Help Examples Corrected for New Default Mode
-4950 3:57p 🟣 Full Test Suite Passes: 121 Swift Tests + Shell Contract — All Green
-4951 " 🔵 scripts/test-trigger-system-event.sh Is Untracked — Needs git add Before Commit
-4957 3:59p 🔵 NotchShelf Debug Build Succeeds After Script Changes
+S1620 Execute plan_poprawek.md — post-audit SwiftUI/architecture refactor for NotchShelf macOS app (May 17 at 8:48 PM)
+S1792 NotchShelf distribution readiness plan — prepare a 15-task implementation plan to make the app shippable as a direct-download .dmg (ad-hoc signed, no Developer ID) (May 17 at 8:51 PM)
+### May 22, 2026
+S1793 NotchShelf distribution readiness plan finalized — permanent pipeline designation added, awaiting execution mode choice (May 22 at 11:53 PM)
+### May 23, 2026
+5511 1:29p 🔵 BundleResourceTests Red Run: LICENSE.txt and buy-me-a-coffee.png Not Yet Bundled in App
+5512 " 🟣 NotchShelf/Resources/ Directory Created with LICENSE.txt and buy-me-a-coffee.png
+5513 " 🔵 xcodegen Auto-Discovers Resources in NotchShelf/Resources/ Without project.yml Changes
+5514 1:30p 🟣 AboutViewContentTests Added to Drive Static URL and Metadata Properties on AboutPreferencesView
+5515 " 🔵 AboutViewContentTests Red Run: Compile Errors Confirm 5 Static Properties Missing from AboutPreferencesView
+5516 " 🟣 AboutPreferencesView Fully Rewritten with ConceptFab Branding, Static URLs, and Bundled Resource Loading
+5517 1:31p 🔴 AboutViewContentTests Green; @MainActor Added to Fix Swift 6 Concurrency Warning on Static Properties
+5518 " ✅ AboutViewContentTests and AboutPreferencesView Committed Clean — No Warnings
+5519 " ✅ Distribution Readiness Steps 1–3 Complete: Docs, ConceptFab Identity, Resources, About View All Landed
+5520 " 🟣 Shell Contract Test Suite Created for Release Scripts Pipeline
+5521 1:32p 🔵 Release Scripts Contract Test Red Run: 13 Failures Confirm All 3 Scripts Missing
+5522 " 🟣 Release Pipeline Scripts Implemented: release.sh, package-dmg.sh, distribute.sh
+5523 1:33p 🟣 Release Scripts Contract Tests Pass: All 13 Assertions Green After Scripts Created
+5524 " 🔵 Full Test Suite Passes with All Shell Contracts and Swift Tests Combined
+5525 " 🔵 Release Build Produces Universal Binary Despite arm64-Only LSArchitecturePriority Setting
+5526 1:34p 🔵 Release Build Contains get-task-allow Entitlement — Debug-Only Entitlement Must Be Stripped for Distribution
+5527 " 🔵 get-task-allow Root Cause: CODE_SIGN_INJECT_BASE_ENTITLEMENTS=YES Injects Debug Entitlement into Release Build
+5528 " 🔵 DMG Smoke Test Passed: Correct Contents — Apps Symlink, INSTALL.md, LICENSE, NotchShelf.app
+5529 " 🟣 Two New Contract Assertions Added to test-release-scripts.sh to Guard get-task-allow Fix
+5530 1:35p 🔴 get-task-allow Fixed: CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO Added to Release Config in project.yml and release.sh
+5531 " 🔴 get-task-allow Entitlement Confirmed Absent from Release Build After CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO Fix
+5532 " ✅ Final Distribution Audit Running: Full Test Suite and DMG Re-Package with Fixed Entitlements
+5533 " ✅ Final Distribution Audit Complete: Full Test Suite Green and Fixed DMG Verified
+5534 1:36p ✅ Distribution Pipeline Committed as b4a7930: 10 Commits Total on codex/distribution-readiness
+5535 " ✅ Distribution Readiness Plan Steps 1–4 Complete; Step 5 (Audit and Finalize) Now In-Progress
+5536 1:37p 🔵 v1.0.0 Tag Pre-Exists on Repo — Tagged May 15 by CONCEPTFAB Before Distribution Readiness Work
+5537 " 🟣 Full scripts/distribute.sh Pipeline Completed: NotchShelf-1.0.0.dmg and SHA-256 Checksum Produced
+5541 1:58p 🔵 Wrong Email Displayed in UI Window — Should Be conceptfab.com
+5542 " 🔵 Root Cause Found: Info.plist Copyright Shows "Michal Kleniewski", Not conceptfab.com
+5543 1:59p 🔵 Full Scope of "Michal Kleniewski" Personal Name Across NotchShelf Codebase
+5544 " 🔵 NotchShelf at v1.0.1 Tag on codex/distribution-readiness Branch
+5545 " 🔴 Test Compilation Failure: PreferencesPanelMetrics.windowHeight Does Not Exist
+5546 " 🔴 Info.plist Branding Updated to conceptfab.com + Preferences Window Height Increased
+5547 2:00p 🔴 All Tests Green: conceptfab.com Branding Verified in Built App Bundle
+5548 " 🟣 NotchShelf Relaunched with conceptfab.com Branding — App Confirmed Running
+5549 " 🔴 BundleResourceTests Updated to Assert conceptfab.com Brand in LICENSE.txt
+5550 " 🔵 TDD RED Confirmed: BundleResourceTests Fails on LICENSE.txt Personal Name
+5551 2:01p 🔴 LICENSE Files Updated: "Michal Kleniewski" Replaced with "conceptfab.com" Across All Files
+5552 " ✅ Full Branding Sweep Confirmed: 9 Files Changed, "Kleniewski" Absent from All Source Files
+5553 " 🔴 Full Test Suite Green: conceptfab.com Branding Complete in NotchShelf
+5554 2:02p 🔴 Committed: conceptfab.com Branding Replaces Personal Name Across All NotchShelf Metadata
+5555 " ✅ NotchShelf v1.0.1 Committed with ConceptFab Branding on Distribution-Readiness Branch
+5556 " 🔵 NotchShelf codex/distribution-readiness Branch Commit History
+5557 2:03p 🟣 NotchShelf v1.0.1 DMG Successfully Built and Verified with ConceptFab Branding
+5558 " 🔵 NotchShelf 1.0.1 DMG Installs and Passes Codesign Verification
+5559 " 🔵 Branding Fix Did NOT Propagate Into DMG — Personal Name Still in Installed App
+5560 2:04p 🟣 NotchShelf 1.0.1 DMG Release Verified and Installed
+5561 2:06p 🔴 NotchShelf About View Preferences Window Height Tightened
+5562 " ✅ NotchShelf 1.0.1 DMG Built and Verified Successfully
+5563 2:07p 🔵 NotchShelf 1.0.1 Release App Passes All Distribution Checks
 
-Access 517k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 160k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>
