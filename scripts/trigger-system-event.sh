@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
-BUNDLE_ID="com.notchshelf.NotchShelf"
+BUNDLE_ID="dev.conceptfab.notchshelf"
 DEFAULT_EVENT_NAME="com.apple.notificationcenterui.banner"
 MODE="${1:-distributed}"
 EVENT_NAME="${2:-$DEFAULT_EVENT_NAME}"

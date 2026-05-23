@@ -1,6 +1,6 @@
 name: NotchShelf
 options:
-  bundleIdPrefix: com.notchshelf
+  bundleIdPrefix: dev.conceptfab
   deploymentTarget:
     macOS: "26.0"
   createIntermediateGroups: true
@@ -21,7 +21,7 @@ targets:
       base:
         INFOPLIST_FILE: NotchShelf/Info.plist
         CODE_SIGN_ENTITLEMENTS: NotchShelf/NotchShelf.entitlements
-        PRODUCT_BUNDLE_IDENTIFIER: com.notchshelf.NotchShelf
+        PRODUCT_BUNDLE_IDENTIFIER: dev.conceptfab.notchshelf
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ENABLE_HARDENED_RUNTIME: YES
         ENABLE_APP_SANDBOX: YES
@@ -34,7 +34,7 @@ targets:
       - target: NotchShelf
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.notchshelf.NotchShelfTests
+        PRODUCT_BUNDLE_IDENTIFIER: dev.conceptfab.notchshelf.tests
         GENERATE_INFOPLIST_FILE: YES
 schemes:
   NotchShelf:

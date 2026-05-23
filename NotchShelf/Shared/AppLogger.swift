@@ -2,7 +2,7 @@ import os.log
 
 /// Centralized `os.Logger` namespace for filtering NotchShelf logs in Console.app.
 enum AppLogger {
-    private static let subsystem = "com.notchshelf.NotchShelf"
+    private static let subsystem = "dev.conceptfab.notchshelf"
 
     static let bookmark = Logger(subsystem: subsystem, category: "bookmark")
     static let persistence = Logger(subsystem: subsystem, category: "persistence")
