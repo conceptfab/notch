@@ -82,12 +82,37 @@ final class SystemEventGlowCoordinator {
             }
         }
 
-        let monitor = SystemNotificationWindowMonitor { [weak self] in
-            self?.triggerGlowIfEnabled(reason: "notification-window")
-        }
-        monitor.start()
-        systemNotificationWindowMonitor = monitor
+        appEventObservers.append(
+            NotificationCenter.default.addObserver(
+                forName: UserDefaults.didChangeNotification,
+                object: defaults,
+                queue: .main
+            ) { [weak self] _ in
+                MainActor.assumeIsolated { self?.refreshWindowMonitor() }
+            }
+        )
+
+        refreshWindowMonitor()
     }
+
+    /// Starts or stops the notification-window poll to match the
+    /// `glowOnSystemEvents` preference. Idempotent. Internal for tests.
+    func refreshWindowMonitor() {
+        let enabled = defaults.bool(forKey: UserDefaultsKey.glowOnSystemEvents)
+        if enabled, systemNotificationWindowMonitor == nil {
+            let monitor = SystemNotificationWindowMonitor { [weak self] in
+                self?.triggerGlowIfEnabled(reason: "notification-window")
+            }
+            monitor.start()
+            systemNotificationWindowMonitor = monitor
+        } else if !enabled, let monitor = systemNotificationWindowMonitor {
+            monitor.stop()
+            systemNotificationWindowMonitor = nil
+        }
+    }
+
+    /// Test seam: whether the window poll is currently running.
+    var isMonitoringNotificationWindows: Bool { systemNotificationWindowMonitor != nil }
 
     func stop() {
         let workspaceCenter = NSWorkspace.shared.notificationCenter

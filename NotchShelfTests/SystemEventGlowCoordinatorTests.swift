@@ -58,4 +58,35 @@ struct SystemEventGlowCoordinatorTests {
         #expect(glowReasons.contains(notificationName))
     }
 
+    @MainActor @Test func glowCoordinatorDoesNotMonitorWindowsWhenSystemEventGlowDisabled() {
+        let defaults = makeTestUserDefaults()
+        defaults.set(false, forKey: UserDefaultsKey.glowOnSystemEvents)
+        let coordinator = SystemEventGlowCoordinator(defaults: defaults) { _ in }
+        coordinator.start()
+        #expect(coordinator.isMonitoringNotificationWindows == false)
+        coordinator.stop()
+    }
+
+    @MainActor @Test func glowCoordinatorMonitorsWindowsWhenSystemEventGlowEnabled() {
+        let defaults = makeTestUserDefaults()
+        defaults.set(true, forKey: UserDefaultsKey.glowOnSystemEvents)
+        let coordinator = SystemEventGlowCoordinator(defaults: defaults) { _ in }
+        coordinator.start()
+        #expect(coordinator.isMonitoringNotificationWindows == true)
+        coordinator.stop()
+    }
+
+    @MainActor @Test func glowCoordinatorStopsMonitoringWhenPreferenceTurnedOff() {
+        let defaults = makeTestUserDefaults()
+        defaults.set(true, forKey: UserDefaultsKey.glowOnSystemEvents)
+        let coordinator = SystemEventGlowCoordinator(defaults: defaults) { _ in }
+        coordinator.start()
+        #expect(coordinator.isMonitoringNotificationWindows == true)
+
+        defaults.set(false, forKey: UserDefaultsKey.glowOnSystemEvents)
+        coordinator.refreshWindowMonitor()
+        #expect(coordinator.isMonitoringNotificationWindows == false)
+        coordinator.stop()
+    }
+
 }
