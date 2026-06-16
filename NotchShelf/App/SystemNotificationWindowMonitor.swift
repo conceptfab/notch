@@ -1,5 +1,4 @@
 import AppKit
-import CoreGraphics
 
 /// Detects visible macOS notification banners when Notification Center does not
 /// publish a public app-level notification for the event.

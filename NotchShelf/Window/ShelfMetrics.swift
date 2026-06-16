@@ -63,7 +63,6 @@ enum ShelfMetrics {
         + slotInnerSpacingBottom
         + slotGridOutlineBottom
         + itemToggleHeight / 2
-    static let itemBodyHeight: CGFloat = itemHeight - itemToggleHeight - 2
     static let itemSpacing: CGFloat = 6
     /// Extra margin outside the shelf view. The expanded shape's straight side is
     /// inset by topCornerRadiusExpanded, so this keeps the visible black frame at 8 px.
@@ -111,11 +110,6 @@ enum ShelfMetrics {
         let extraSlots = Swift.max(value - base, 0)
         let migratedRows = Int(ceil(Double(extraSlots) / Double(base)))
         return Swift.min(Swift.max(migratedRows, 0), maximumAdditionalRowCount)
-    }
-
-    static func maximumVisibleSlotCount(baseSlotCount: Int, additionalRows: Int) -> Int {
-        normalizedSlotCount(baseSlotCount)
-            * (1 + normalizedAdditionalRowCount(additionalRows, baseSlotCount: baseSlotCount))
     }
 
     static func slotGridOutlineWidth(columnCount: Int) -> CGFloat {
