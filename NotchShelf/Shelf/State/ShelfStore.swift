@@ -32,8 +32,14 @@ final class ShelfStore: ObservableObject, ShelfStoring {
     private let defaults: UserDefaults
 
     @Published private(set) var slots: [ShelfSlot] = [] {
-        didSet { schedulePersistenceSave() }
+        didSet {
+            guard slots != oldValue else { return }
+            schedulePersistenceSave()
+        }
     }
+
+    /// Test hook: number of times a debounced persistence save was scheduled.
+    private(set) var scheduledSaveCount = 0
 
     @Published var isLoading: Bool = false
     @Published private(set) var lastError: String?
@@ -287,6 +293,7 @@ final class ShelfStore: ObservableObject, ShelfStoring {
     }
 
     private func schedulePersistenceSave() {
+        scheduledSaveCount += 1
         saveTask?.cancel()
         let persistence = self.persistence
         let debounce = saveDebounce

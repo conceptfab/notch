@@ -268,3 +268,30 @@ private func makeFileItem(named name: String = "f.txt") throws -> ShelfItem {
     #expect(store.lastError != nil)
     #expect(store.lastError != nil)
 }
+
+@MainActor @Test func addSchedulesExactlyOneSave() throws {
+    let store = storeWithTempPersistence()
+    let before = store.scheduledSaveCount
+    let a = try makeFileItem(named: "a.txt")
+    store.add([a])
+    #expect(store.scheduledSaveCount == before + 1)
+}
+
+@MainActor @Test func clearAllOnEmptyShelfSchedulesNoSave() {
+    let store = storeWithTempPersistence()
+    let before = store.scheduledSaveCount
+    store.clearAll()
+    #expect(store.scheduledSaveCount == before)
+}
+
+@MainActor @Test func redundantKeepFlagWriteSchedulesNoSave() throws {
+    let store = storeWithTempPersistence()
+    let a = try makeFileItem(named: "a.txt")
+    store.add([a])
+    let slotID = store.slots.first { $0.item != nil }!.id
+
+    store.setKeepsItemAfterExternalDrop(true, forSlotID: slotID) // real change
+    let afterFirst = store.scheduledSaveCount
+    store.setKeepsItemAfterExternalDrop(true, forSlotID: slotID) // no-op
+    #expect(store.scheduledSaveCount == afterFirst)
+}
