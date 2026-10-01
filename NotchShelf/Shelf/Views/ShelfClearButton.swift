@@ -11,7 +11,7 @@ struct ShelfClearButton: View {
                 .aspectRatio(contentMode: .fit)
                 .foregroundStyle(.white.opacity(0.88))
                 .frame(width: 16, height: 16)
-                .frame(width: 28, height: 28)
+                .frame(width: ShelfMetrics.bottomBarButtonSize, height: ShelfMetrics.bottomBarButtonSize)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

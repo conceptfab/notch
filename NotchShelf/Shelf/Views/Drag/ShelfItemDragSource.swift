@@ -32,6 +32,7 @@ struct DraggableClickHandler: NSViewRepresentable {
     final class DraggableClickView: NSView, NSDraggingSource {
         var item: ShelfItem?
         weak var viewModel: ShelfItemViewModel?
+        private var draggingViewModel: ShelfItemViewModel?
         var dragPreviewImage: NSImage?
         var onClick: ((NSEvent, NSView) -> Void)?
         var onRightClick: ((NSEvent, NSView) -> Void)?
@@ -122,6 +123,7 @@ struct DraggableClickHandler: NSViewRepresentable {
         }
 
         private func removeDraggedItemsFromShelf(after operation: NSDragOperation) {
+            let model = draggingViewModel ?? viewModel
             for item in draggedItems {
                 let keepAfterExternalDrop = draggedItemIDsToKeepAfterExternalDrop.contains(item.id)
                 guard ShelfDragOperationPolicy.shouldRemoveFromShelf(
@@ -131,9 +133,9 @@ struct DraggableClickHandler: NSViewRepresentable {
                 ) else {
                     continue
                 }
-                viewModel?.removeFromShelf(item)
+                model?.removeFromShelf(item)
             }
-            viewModel?.clearSelection()
+            model?.clearSelection()
         }
 
         private func pasteboardItem(displayName: String) -> NSPasteboardItem? {
@@ -162,7 +164,10 @@ struct DraggableClickHandler: NSViewRepresentable {
         }
 
         func draggingSession(_ session: NSDraggingSession, willBeginAt screenPoint: NSPoint) {
-            viewModel?.beginExternalDrag()
+            // Held strongly for the session: if SwiftUI tears the item view down mid-drag,
+            // `endedAt` must still clear the shared drag flag and remove moved files.
+            draggingViewModel = viewModel
+            draggingViewModel?.beginExternalDrag()
         }
 
         func draggingSession(
@@ -174,7 +179,8 @@ struct DraggableClickHandler: NSViewRepresentable {
                 AppLogger.drag.notice("Drag session ended with .move operation")
             }
             removeDraggedItemsFromShelf(after: operation)
-            viewModel?.endExternalDrag()
+            (draggingViewModel ?? viewModel)?.endExternalDrag()
+            draggingViewModel = nil
             for url in draggedURLs { url.stopAccessingSecurityScopedResource() }
             draggedURLs.removeAll()
             draggedItems.removeAll()

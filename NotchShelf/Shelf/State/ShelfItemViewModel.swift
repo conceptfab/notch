@@ -9,7 +9,6 @@ final class ShelfItemViewModel: ObservableObject {
     @Published private(set) var item: ShelfItem
     @Published private(set) var viewData: ShelfItemViewData
     @Published private(set) var icon: NSImage = NSWorkspace.shared.icon(for: .data)
-    @Published var isDropTargeted: Bool = false
 
     private let store: ShelfStoring
     private let selection: SelectionStoring

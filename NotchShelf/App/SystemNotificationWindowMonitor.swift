@@ -23,7 +23,6 @@ final class SystemNotificationWindowMonitor {
     private let interval: TimeInterval
     private let onNotificationShown: @MainActor () -> Void
     private var timer: Timer?
-    private var pollTask: Task<Void, Never>?
     private var isRunning = false
     private var visibleWindowIDs = Set<CGWindowID>()
 
@@ -36,24 +35,22 @@ final class SystemNotificationWindowMonitor {
         stop()
         isRunning = true
         visibleWindowIDs = currentNotificationWindowIDs()
-        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in
+        // Scheduled from the main actor, so the timer fires on the main run loop.
+        let timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
                 guard let self, self.isRunning else { return }
-                self.pollTask?.cancel()
-                self.pollTask = Task { @MainActor [weak self] in
-                    guard let self, !Task.isCancelled else { return }
-                    self.poll()
-                }
+                self.poll()
             }
         }
+        // Lets macOS coalesce wakeups with other timers; banners stay on screen for seconds.
+        timer.tolerance = interval * 0.3
+        self.timer = timer
     }
 
     func stop() {
         isRunning = false
         timer?.invalidate()
         timer = nil
-        pollTask?.cancel()
-        pollTask = nil
         visibleWindowIDs.removeAll()
     }
 
@@ -91,11 +88,17 @@ final class SystemNotificationWindowMonitor {
             return false
         }
 
+        let layer = (windowInfo[kCGWindowLayer as String] as? NSNumber)?.intValue ?? 0
+        let alpha = (windowInfo[kCGWindowAlpha as String] as? NSNumber)?.doubleValue ?? 1.0
+        // Cheap geometry filter first: the owning-app lookup below goes through
+        // LaunchServices and this runs for every on-screen window several times a second.
+        guard couldBeNotificationWindow(bounds: bounds, layer: layer, alpha: alpha) else {
+            return false
+        }
+
         let app = NSRunningApplication(processIdentifier: pidNumber.int32Value)
         let bundleIdentifier = app?.bundleIdentifier
         let ownerName = windowInfo[kCGWindowOwnerName as String] as? String
-        let layer = (windowInfo[kCGWindowLayer as String] as? NSNumber)?.intValue ?? 0
-        let alpha = (windowInfo[kCGWindowAlpha as String] as? NSNumber)?.doubleValue ?? 1.0
         return isLikelyNotificationWindow(
             bundleIdentifier: bundleIdentifier,
             ownerName: ownerName,
@@ -130,6 +133,18 @@ final class SystemNotificationWindowMonitor {
             return true
         }
 
+        return hasBannerSize(bounds: bounds)
+    }
+
+    /// Necessary (not sufficient) condition for `isLikelyNotificationWindow`, using only
+    /// window geometry: every accepted window is either banner-sized or a compositor window.
+    static func couldBeNotificationWindow(bounds: [String: Any], layer: Int, alpha: Double) -> Bool {
+        guard alpha > 0.05, layer >= 0 else { return false }
+        return hasBannerSize(bounds: bounds)
+            || isLikelyNotificationCompositorWindow(bounds: bounds, layer: layer)
+    }
+
+    private static func hasBannerSize(bounds: [String: Any]) -> Bool {
         let width = (bounds["Width"] as? NSNumber)?.doubleValue ?? 0
         let height = (bounds["Height"] as? NSNumber)?.doubleValue ?? 0
         return (180...620).contains(width) && (40...260).contains(height)

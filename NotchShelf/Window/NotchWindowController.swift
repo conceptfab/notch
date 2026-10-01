@@ -38,6 +38,7 @@ final class NotchWindowController: NSObject {
     func reposition() {
         guard let screen = NotchGeometry.notchScreen else { return }
         let geometry = NotchGeometry.current()
+        windowModel.updateNotchGeometry(geometry)
         let frame = screen.frame
         let size = ShelfMetrics.windowSize
         let origin = NSPoint(

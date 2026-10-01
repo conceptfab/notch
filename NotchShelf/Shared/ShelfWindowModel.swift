@@ -14,15 +14,11 @@ final class ShelfWindowModel: ObservableObject {
     @Published var dragTargeting: Bool = false
     /// Pulsed to `true` by the shelf drop handler so the drag pipeline knows a drop landed.
     @Published var dropEvent: Bool = false
-    /// Current visible shape size (width/height of the rendered NotchShelfShape).
-    /// Published by `ContentView` whenever it recomputes layout. Consumed by
-    /// `StackFileListPanelPresenter` so the stack drawer can anchor itself just
-    /// below the shape, matching its width.
-    @Published var shapeSize: CGSize = .zero
+    /// Notch rectangle of the notch screen. Refreshed by `NotchWindowController` when
+    /// screen parameters change, so views and the drag monitor don't query `NSScreen`.
+    @Published private(set) var notchGeometry: NotchGeometry = NotchGeometry.current()
     /// Incremented by app-level event handlers when the notch should emit a brief glow.
     @Published private(set) var glowPulse: Int = 0
-    /// Incremented when the next system-event glow should play an optional sound.
-    @Published private(set) var systemEventGlowSoundPulse: Int = 0
 
     private var collapseTask: Task<Void, Never>?
     private var pendingGlowSound = false
@@ -42,6 +38,11 @@ final class ShelfWindowModel: ObservableObject {
         expansion = .collapsed
     }
 
+    func updateNotchGeometry(_ geometry: NotchGeometry) {
+        guard notchGeometry != geometry else { return }
+        notchGeometry = geometry
+    }
+
     func setDragTargeting(_ isTargeting: Bool) {
         guard dragTargeting != isTargeting else { return }
         dragTargeting = isTargeting
@@ -51,7 +52,6 @@ final class ShelfWindowModel: ObservableObject {
         glowPulse += 1
         if playSound {
             pendingGlowSound = true
-            systemEventGlowSoundPulse += 1
         }
     }
 

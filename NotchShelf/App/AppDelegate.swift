@@ -37,9 +37,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard !ShelfSelection.shared.isDragging else { return .zero }
             switch self.windowModel.expansion {
             case .collapsed:
-                return NotchGeometry.current().dragCatchRegion()
+                return self.windowModel.notchGeometry.dragCatchRegion()
             case .expanded:
-                return (self.windowController?.panelFrame ?? NotchGeometry.current().notchRect)
+                return (self.windowController?.panelFrame ?? self.windowModel.notchGeometry.notchRect)
                     .insetBy(
                         dx: -ShelfMetrics.dragExitHorizontalOutset,
                         dy: -ShelfMetrics.dragExitVerticalOutset

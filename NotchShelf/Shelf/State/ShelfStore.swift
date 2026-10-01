@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 
 /// Pure policy for how many slots the shelf should expose. Extracted from
@@ -41,13 +42,16 @@ final class ShelfStore: ObservableObject, ShelfStoring {
     /// Test hook: number of times a debounced persistence save was scheduled.
     private(set) var scheduledSaveCount = 0
 
-    @Published var isLoading: Bool = false
     @Published private(set) var lastError: String?
+    /// Slots per row, mirrored from preferences so layout re-renders when only the
+    /// column count changes (the slot total can stay the same).
+    @Published private(set) var columnCount: Int
 
     private var saveTask: Task<Void, Never>?
     private var inflightWrite: Task<String?, Never>?
     private var loadTask: Task<Void, Never>?
     private var cleanupTask: Task<Void, Never>?
+    private var defaultsObserver: AnyCancellable?
     private let saveDebounce: Duration = .milliseconds(200)
 
     var items: [ShelfItem] { slots.compactMap(\.item) }
@@ -76,6 +80,10 @@ final class ShelfStore: ObservableObject, ShelfStoring {
         Self.paddedSlots(slots, target: visibleSlotCount)
     }
 
+    var rowCount: Int {
+        Swift.max(Int(ceil(Double(visibleSlotCount) / Double(Swift.max(columnCount, 1)))), 1)
+    }
+
     /// Deferred bookmark refreshes, applied off the current run loop turn so we never
     /// mutate `items` while SwiftUI is reading it.
     private var pendingBookmarkUpdates: [ShelfItem.ID: Data] = [:]
@@ -99,6 +107,23 @@ final class ShelfStore: ObservableObject, ShelfStoring {
         let loaded = Self.paddedSlots(raw, target: target)
         // Assigning to the backing storage bypasses didSet on initial load.
         _slots = Published(initialValue: loaded)
+        _columnCount = Published(initialValue: baseSlotCount)
+
+        defaultsObserver = NotificationCenter.default
+            .publisher(for: UserDefaults.didChangeNotification, object: defaults)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                MainActor.assumeIsolated { self?.applySlotPreferences() }
+            }
+    }
+
+    /// Re-pads the stored slots when the slot preferences change, so placeholder
+    /// slots keep stable IDs instead of being minted on every `visibleSlots` read.
+    func applySlotPreferences() {
+        let columns = baseSlotCount
+        if columnCount != columns { columnCount = columns }
+        let next = reslot(slots)
+        if next != slots { slots = next }
     }
 
     /// Appends new items, skipping any whose `identityKey` already exists.
@@ -145,7 +170,7 @@ final class ShelfStore: ObservableObject, ShelfStoring {
     func remove(_ item: ShelfItem) {
         var updated = slots
         for idx in updated.indices where updated[idx].item?.id == item.id {
-            updated[idx].item = nil
+            updated[idx] = ShelfSlot(id: updated[idx].id)
         }
         slots = reslot(updated)
     }
@@ -158,7 +183,7 @@ final class ShelfStore: ObservableObject, ShelfStoring {
         var updated = slots
         switch remaining.count {
         case 0:
-            updated[idx].item = nil
+            updated[idx] = ShelfSlot(id: updated[idx].id)
         case 1:
             updated[idx].item = ShelfItem(id: item.id, bookmarkData: remaining[0])
         default:
@@ -207,15 +232,15 @@ final class ShelfStore: ObservableObject, ShelfStoring {
         }
     }
 
-    /// Loads dropped providers into the shelf asynchronously. Cancels any in-flight load.
+    /// Loads dropped providers into the shelf asynchronously. Drops are applied in order;
+    /// a new drop never discards one that is still loading.
     func load(_ providers: [NSItemProvider]) {
         load(providers, intoSlot: nil)
     }
 
     func load(_ providers: [NSItemProvider], intoSlot slotIndex: Int?) {
         guard !providers.isEmpty else { return }
-        loadTask?.cancel()
-        isLoading = true
+        let previousLoad = loadTask
         // Wrap in a nonisolated(unsafe) box so Swift 6 does not flag the
         // NSItemProvider (non-Sendable) transfer across the actor boundary.
         // NSItemProvider is thread-safe in practice; the providers are only
@@ -223,59 +248,72 @@ final class ShelfStore: ObservableObject, ShelfStoring {
         nonisolated(unsafe) let sendableProviders = providers
         loadTask = Task { @MainActor [weak self] in
             let dropped = await ShelfDropService.items(from: sendableProviders)
-            guard !Task.isCancelled else { return }
+            await previousLoad?.value
             self?.add(dropped, atSlot: slotIndex)
-            self?.isLoading = false
         }
     }
 
-    /// Removes items whose bookmark no longer resolves to an existing file.
-    /// Items added while validation is in flight are preserved.
+    /// Removes files whose bookmark no longer resolves to an existing file. Stacks
+    /// lose only their missing files. Items changed or added while validation is in
+    /// flight are preserved.
     func cleanupInvalidItems() {
         cleanupTask?.cancel()
         cleanupTask = Task { @MainActor [weak self] in
             guard let self else { return }
-            let snapshot = self.items
-            let validIDs = await Self.validateInParallel(snapshot)
+            let snapshot = Dictionary(uniqueKeysWithValues: self.items.map { ($0.id, $0) })
+            let refs = snapshot.values.flatMap { item in
+                item.allBookmarkData.map { BookmarkRef(itemID: item.id, data: $0) }
+            }
+            let validRefs = await Self.validateInParallel(refs)
             guard !Task.isCancelled else { return }
-            let snapshotIDs = Set(snapshot.map(\.id))
-            // Keep validated items, plus anything added since the snapshot.
             self.slots = self.reslot(self.slots.map { slot in
-                guard let item = slot.item else { return slot }
-                if validIDs.contains(item.id) || !snapshotIDs.contains(item.id) {
-                    return slot
+                guard let item = slot.item, snapshot[item.id] == item else { return slot }
+                let valid = item.allBookmarkData.filter {
+                    validRefs.contains(BookmarkRef(itemID: item.id, data: $0))
                 }
-                return ShelfSlot(id: slot.id)
+                switch valid.count {
+                case item.allBookmarkData.count:
+                    return slot
+                case 0:
+                    return ShelfSlot(id: slot.id)
+                case 1:
+                    var pruned = slot
+                    pruned.item = ShelfItem(id: item.id, bookmarkData: valid[0])
+                    return pruned
+                default:
+                    var pruned = slot
+                    pruned.item = ShelfItem(id: item.id, stackBookmarkData: valid)
+                    return pruned
+                }
             })
             self.cleanupTask = nil
         }
     }
 
-    private static func validateInParallel(_ snapshot: [ShelfItem]) async -> Set<ShelfItem.ID> {
+    private struct BookmarkRef: Hashable, Sendable {
+        let itemID: ShelfItem.ID
+        let data: Data
+    }
+
+    private static func validateInParallel(_ refs: [BookmarkRef]) async -> Set<BookmarkRef> {
         let maxConcurrency = 8
-        return await withTaskGroup(of: (ShelfItem.ID, Bool).self) { group in
-            var iterator = snapshot.makeIterator()
+        return await withTaskGroup(of: (BookmarkRef, Bool).self) { group in
+            var iterator = refs.makeIterator()
             var inFlight = 0
 
-            while inFlight < maxConcurrency, let item = iterator.next() {
-                group.addTask {
-                    let isValid = await Bookmark(data: item.bookmarkData).validate()
-                    return (item.id, isValid)
-                }
+            while inFlight < maxConcurrency, let ref = iterator.next() {
+                group.addTask { (ref, await Bookmark(data: ref.data).validate()) }
                 inFlight += 1
             }
 
-            var validIDs: Set<ShelfItem.ID> = []
-            while let (id, isValid) = await group.next() {
-                if isValid { validIDs.insert(id) }
+            var valid: Set<BookmarkRef> = []
+            while let (ref, isValid) = await group.next() {
+                if isValid { valid.insert(ref) }
                 if let next = iterator.next() {
-                    group.addTask {
-                        let isValid = await Bookmark(data: next.bookmarkData).validate()
-                        return (next.id, isValid)
-                    }
+                    group.addTask { (next, await Bookmark(data: next.data).validate()) }
                 }
             }
-            return validIDs
+            return valid
         }
     }
 
@@ -367,11 +405,13 @@ final class ShelfStore: ObservableObject, ShelfStoring {
         if slots.count == target { return slots }
 
         var visible = Array(slots.prefix(target))
-        for overflowItem in slots.dropFirst(target).compactMap(\.item) {
+        // Move whole overflow slots (not fresh wrappers) so IDs and copy-mode flags
+        // stay stable across repeated `visibleSlots` reads.
+        for overflowSlot in slots.dropFirst(target) where overflowSlot.item != nil {
             if let index = visible.firstIndex(where: { $0.item == nil }) {
-                visible[index].item = overflowItem
+                visible[index] = overflowSlot
             } else {
-                visible.append(ShelfSlot(item: overflowItem))
+                visible.append(overflowSlot)
             }
         }
         return visible

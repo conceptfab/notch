@@ -9,7 +9,6 @@ struct ContentView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.openSettings) private var openSettings
     @ObservedObject private var store = ShelfStore.shared
-    @AppStorage(UserDefaultsKey.minSlotCount) private var configuredSlotCount = ShelfMetrics.defaultSlotCount
     @AppStorage(UserDefaultsKey.playSoundOnSystemEventGlow) private var playSoundOnSystemEventGlow = false
     @State private var isStartupGlowVisible = false
     @State private var didPlayStartupGlow = false
@@ -18,27 +17,9 @@ struct ContentView: View {
     @State private var pendingGlowReplayTask: Task<Void, Never>?
     @State private var glowRGBA: RGBAColor = ContentView.loadGlowColor()
 
-    private var geometry: NotchGeometry { NotchGeometry.current() }
+    private var geometry: NotchGeometry { windowModel.notchGeometry }
 
     private var hasItems: Bool { !store.items.isEmpty }
-
-    private var shapeSize: CGSize {
-        switch windowModel.expansion {
-        case .collapsed:
-            return CGSize(width: collapsedShapeWidth, height: collapsedShapeHeight)
-        case .expanded:
-            return expandedShapeSize
-        }
-    }
-
-    private var contentSize: CGSize {
-        switch windowModel.expansion {
-        case .collapsed:
-            return CGSize(width: collapsedShapeWidth, height: collapsedShapeHeight)
-        case .expanded:
-            return expandedContentSize
-        }
-    }
 
     private var collapsedShapeWidth: CGFloat {
         geometry.notchWidth + geometry.notchHeight * 2
@@ -48,69 +29,27 @@ struct ContentView: View {
         geometry.notchHeight + ShelfMetrics.collapsedHeightExtension
     }
 
-    private var expandedShapeSize: CGSize {
-        let rowCapacity = renderedRowCapacity
-        let rowCount = renderedRowCount
-        let height = ShelfMetrics.shelfTopChromeHeight
-            + ShelfMetrics.slotGridOutlineTop
-            + ShelfMetrics.slotGridOutlineHeight(rowCount: rowCount)
-            + ShelfMetrics.slotGridOutlineBottom
-
-        let rowWidth = shelfPanelWidth(for: rowCapacity)
-            + ShelfMetrics.shelfOuterHorizontalPadding * 2
+    private func expandedShapeSize(for layout: ShelfLayout) -> CGSize {
+        let size = layout.shapeSize
         return CGSize(
-            width: Swift.min(ShelfMetrics.expandedSize.width, Swift.max(geometry.notchWidth, rowWidth)),
-            height: Swift.min(ShelfMetrics.expandedSize.height, height)
+            width: Swift.min(ShelfMetrics.expandedSize.width, size.width),
+            height: Swift.min(ShelfMetrics.expandedSize.height, size.height)
         )
     }
 
-    private var expandedContentSize: CGSize {
-        let rowCapacity = renderedRowCapacity
-        let rowCount = renderedRowCount
-        let rowHeight = CGFloat(rowCount) * ShelfMetrics.itemHeight
-            + CGFloat(Swift.max(rowCount - 1, 0)) * ShelfMetrics.itemSpacing
-        let height = ShelfMetrics.shelfTopChromeHeight
-            + ShelfMetrics.contentPadding * 2
-            + rowHeight
-            + ShelfMetrics.shelfPanelBottomPadding
-
-        let rowWidth = shelfPanelWidth(for: rowCapacity)
-            + ShelfMetrics.shelfOuterHorizontalPadding * 2
-        return CGSize(
-            width: Swift.min(ShelfMetrics.expandedSize.width, Swift.max(geometry.notchWidth, rowWidth)),
-            height: Swift.min(ShelfMetrics.windowSize.height, height)
+    private var shelfLayout: ShelfLayout {
+        ShelfLayout(
+            notchWidth: geometry.notchWidth,
+            notchHeight: geometry.notchHeight,
+            columnCount: store.columnCount,
+            rowCount: store.rowCount
         )
-    }
-
-    private var renderedSlotCount: Int {
-        Swift.max(store.visibleSlots.count, renderedRowCapacity)
-    }
-
-    private var renderedRowCapacity: Int {
-        ShelfMetrics.normalizedSlotCount(configuredSlotCount)
-    }
-
-    private var renderedRowCount: Int {
-        let rows = Int(ceil(Double(renderedSlotCount) / Double(renderedRowCapacity)))
-        return Swift.max(rows, 1)
-    }
-
-    private func shelfPanelWidth(for slotCount: Int) -> CGFloat {
-        let columns = ShelfMetrics.normalizedSlotCount(slotCount)
-        return CGFloat(columns) * ShelfMetrics.itemWidth
-            + CGFloat(Swift.max(columns - 1, 0)) * ShelfMetrics.itemSpacing
-            + ShelfMetrics.contentPadding * 2
-            + ShelfMetrics.gridHorizontalInset * 2
     }
 
     private var currentTopCornerRadius: CGFloat {
         windowModel.expansion == .expanded
             ? ShelfMetrics.topCornerRadiusExpanded
             : ShelfMetrics.topCornerRadius
-    }
-
-    private var preferencesButtonTopPadding: CGFloat {
-        4
     }
 
     private var shelfAnimation: Animation {
@@ -121,9 +60,11 @@ struct ContentView: View {
     }
 
     var body: some View {
-        let currentShapeSize = shapeSize
-        let currentContentSize = contentSize
-        let revealContentSize = expandedContentSize
+        let layout = shelfLayout
+        let revealContentSize = expandedShapeSize(for: layout)
+        let currentShapeSize = windowModel.expansion == .expanded
+            ? revealContentSize
+            : CGSize(width: collapsedShapeWidth, height: collapsedShapeHeight)
         ZStack(alignment: .top) {
             StartupGlowView(
                 topCornerRadius: currentTopCornerRadius,
@@ -154,10 +95,7 @@ struct ContentView: View {
                     .frame(width: currentShapeSize.width, height: currentShapeSize.height)
 
                     ShelfRevealContent(
-                        preferencesButtonTopPadding: preferencesButtonTopPadding,
-                        hiddenOffset: ShelfMetrics.shelfTopChromeHeight,
-                        contentHeight: revealContentSize.height,
-                        panelWidth: shelfPanelWidth(for: renderedRowCapacity),
+                        layout: layout,
                         reduceMotion: reduceMotion,
                         clearShelf: clearShelf,
                         showPreferences: showPreferences
@@ -169,7 +107,7 @@ struct ContentView: View {
                     .zIndex(1)
 
                 }
-                .frame(width: currentShapeSize.width, height: currentContentSize.height, alignment: .top)
+                .frame(width: currentShapeSize.width, height: currentShapeSize.height, alignment: .top)
                 .animation(shelfAnimation, value: windowModel.expansion)
                 .onContinuousHover(coordinateSpace: .local) { phase in
                     handleHover(phase, surfaceSize: currentShapeSize)
@@ -194,11 +132,7 @@ struct ContentView: View {
                alignment: .top)
         .background(Color.clear.allowsHitTesting(false))
         .onAppear {
-            windowModel.shapeSize = currentShapeSize
             playStartupGlow()
-        }
-        .onChange(of: currentShapeSize) { _, newSize in
-            windowModel.shapeSize = newSize
         }
         .onChange(of: windowModel.glowPulse) { _, _ in
             let shouldPlaySound = windowModel.consumePendingGlowSound()

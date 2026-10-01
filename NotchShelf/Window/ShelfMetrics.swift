@@ -1,79 +1,48 @@
 import CoreGraphics
 
-/// Fixed dimensions for the notch window and the expanded shelf.
+/// Fixed dimensions for the notch window and the expanded shelf. Sizes that depend on
+/// the physical notch (slot size, shelf width and height) live in `ShelfLayout`.
 enum ShelfMetrics {
-    /// Minimum number of shelf slots in the base row.
-    static let minimumSlotCount = 5
+    /// Minimum number of shelf slots in the base row. This many square slots span the notch width.
+    static let minimumSlotCount = 4
     static let maximumSlotCount = 10
     static let defaultSlotCount = minimumSlotCount
     static let maximumAdditionalRowCount = 3
     static let defaultAdditionalRowCount = 2
-    /// Larger icon size used inside shelf item slots (no name label below).
-    static let iconSizeLarge: CGFloat = 40
-    /// Square visual frame used for occupied and empty shelf slots.
-    static let slotFrameSize: CGFloat = iconSizeLarge + 12
-    /// File icon stays centered inside the slot frame.
-    static let slotIconVerticalOffset: CGFloat = 0
-    /// Vertical space between the file count label and the icon.
-    static let slotInnerSpacingTop: CGFloat = 2
-    /// Vertical space between the slot frame and the bottom toggle row.
-    static let slotInnerSpacingBottom: CGFloat = 4
-    /// Height of the file-count label row at the top of each slot.
-    static let slotCountLabelHeight: CGFloat = 12
-    /// Extra width on each side of the physical notch when the empty shelf opens.
-    static let sideExpansion: CGFloat = 60
-    /// The maximum expanded shelf shape's size.
-    static let expandedSize = CGSize(width: 1120, height: 420)
-    /// The panel stays fixed at this size and remains transparent outside the shape.
-    static let windowSize = CGSize(width: 1160, height: 440)
-    static let itemWidth: CGFloat = 56
-    /// Horizontal padding around the fixed grid inside the shelf view.
-    static let gridHorizontalInset: CGFloat = 2
-    static let contentPadding: CGFloat = 10
-    /// Horizontal inset from an item cell edge to the visible slot frame.
-    static let slotFrameHorizontalInset: CGFloat = (itemWidth - slotFrameSize) / 2
-    /// Breathing room between the slot frames and the dashed drop-zone outline.
-    static let slotGridOutlinePadding: CGFloat = 8
+    /// Bounds for the square slot frame derived from the notch width.
+    static let minimumSlotFrameSize: CGFloat = 28
+    static let maximumSlotFrameSize: CGFloat = 56
+    /// Icon edge as a fraction of the slot frame edge.
+    static let slotIconScale: CGFloat = 40.0 / 52.0
+    /// Slot frame corner radius as a fraction of the slot frame edge.
+    static let slotCornerRadiusScale: CGFloat = 12.0 / 52.0
+    /// Icon corner radius as a fraction of the icon edge.
+    static let iconCornerRadiusScale: CGFloat = 7.0 / 40.0
+    /// Horizontal gap between neighbouring slot frames.
+    static let slotColumnSpacing: CGFloat = 6
+    /// Vertical gap between a row's control strip and the next row of slot frames.
+    static let slotRowSpacing: CGFloat = slotColumnSpacing
+    /// Stack file-count badge pinned to the slot frame's top-trailing corner.
+    static let slotCountBadgeHeight: CGFloat = 14
+    /// How far the badge pokes past the slot corner; stays inside the outline padding.
+    static let slotCountBadgeOutset: CGFloat = 3
+    /// Vertical space between the slot frame and its copy/list control row.
+    static let slotControlSpacing: CGFloat = 3
+    static let itemToggleHeight: CGFloat = 16
+    /// Breathing room between the slot cells and the dashed drop-zone outline.
+    static let slotGridOutlinePadding: CGFloat = 6
     /// Visible black frame between the dashed outline and the shelf shape.
     static let visibleBlackFramePadding: CGFloat = 8
-    static let itemToggleHeight: CGFloat = 16
-    /// Gap from the item edge to the visual slot frame, matching the horizontal inset.
-    static let slotFrameInset: CGFloat = gridHorizontalInset + (itemWidth - slotFrameSize) / 2
-    static let slotGridOutlineLeading: CGFloat = contentPadding
-        + gridHorizontalInset
-        + slotFrameHorizontalInset
-        - slotGridOutlinePadding
-    static let slotGridOutlineTop: CGFloat = contentPadding
-        + slotFrameInset
-        - slotGridOutlinePadding
-    static let slotGridOutlineBottom: CGFloat = visibleBlackFramePadding
-    static let itemHeight: CGFloat = slotFrameSize
-        + slotFrameInset * 2
-        + slotGridOutlinePadding
-        + slotInnerSpacingBottom
-        + slotGridOutlineBottom
-        + itemToggleHeight
-    /// Shared vertical center for every slot frame inside an item cell.
-    /// Mirrors the horizontal slot inset so the blue shelf outline has even spacing.
-    static let slotFrameCenterY: CGFloat = slotFrameInset + slotFrameSize / 2
-    /// Copy/list controls sit below the visual slot frame.
-    static let slotControlCenterY: CGFloat = slotFrameCenterY
-        + slotFrameSize / 2
-        + slotGridOutlinePadding
-        + slotInnerSpacingBottom
-        + slotGridOutlineBottom
-        + itemToggleHeight / 2
-    static let itemSpacing: CGFloat = 6
-    /// Extra margin outside the shelf view. The expanded shape's straight side is
-    /// inset by topCornerRadiusExpanded, so this keeps the visible black frame at 8 px.
-    static let shelfOuterHorizontalPadding: CGFloat = topCornerRadiusExpanded
-        + visibleBlackFramePadding
-        - slotGridOutlineLeading
-    static let shelfPanelBottomPadding: CGFloat = 13
+    /// Bottom chrome row holding the Clear and Preferences buttons.
+    static let bottomBarSpacing: CGFloat = 2
+    static let bottomBarHeight: CGFloat = 28
+    static let bottomBarBottomPadding: CGFloat = 6
+    static let bottomBarButtonSize: CGFloat = 28
+    /// The maximum expanded shelf shape's size.
+    static let expandedSize = CGSize(width: 1120, height: 460)
+    /// The panel stays fixed at this size and remains transparent outside the shape.
+    static let windowSize = CGSize(width: 1160, height: 480)
     static let stackListPanelVerticalGap: CGFloat = 4
-    /// Vertical space reserved for the top chrome row (Clear button + Preferences button)
-    /// so the dashed shelf outline never crosses underneath either icon.
-    static let shelfTopChromeHeight: CGFloat = 48
     /// Corner radii for the continuous shape.
     static let topCornerRadius: CGFloat = 6
     /// Larger top corners when expanded, for more pronounced "ears".
@@ -110,20 +79,5 @@ enum ShelfMetrics {
         let extraSlots = Swift.max(value - base, 0)
         let migratedRows = Int(ceil(Double(extraSlots) / Double(base)))
         return Swift.min(Swift.max(migratedRows, 0), maximumAdditionalRowCount)
-    }
-
-    static func slotGridOutlineWidth(columnCount: Int) -> CGFloat {
-        let columns = Swift.max(columnCount, 1)
-        return CGFloat(columns) * itemWidth
-            + CGFloat(Swift.max(columns - 1, 0)) * itemSpacing
-            - slotFrameHorizontalInset * 2
-            + slotGridOutlinePadding * 2
-    }
-
-    static func slotGridOutlineHeight(rowCount: Int) -> CGFloat {
-        let rows = Swift.max(rowCount, 1)
-        return CGFloat(rows - 1) * (itemHeight + itemSpacing)
-            + slotFrameSize
-            + slotGridOutlinePadding * 2
     }
 }

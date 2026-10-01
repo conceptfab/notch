@@ -42,11 +42,11 @@ import Testing
     #expect(model.glowPulse == 1)
 }
 
-@MainActor @Test func windowModelSoundPulseIncrementsOnlyWhenRequested() {
+@MainActor @Test func windowModelPendingSoundIsSetOnlyWhenRequested() {
     let model = ShelfWindowModel()
-    #expect(model.systemEventGlowSoundPulse == 0)
     model.requestGlow()
-    #expect(model.systemEventGlowSoundPulse == 0)
+    #expect(model.consumePendingGlowSound() == false)
     model.requestGlow(playSound: true)
-    #expect(model.systemEventGlowSoundPulse == 1)
+    #expect(model.consumePendingGlowSound() == true)
+    #expect(model.consumePendingGlowSound() == false)
 }

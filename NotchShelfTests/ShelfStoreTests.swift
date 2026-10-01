@@ -295,3 +295,38 @@ private func makeFileItem(named name: String = "f.txt") throws -> ShelfItem {
     store.setKeepsItemAfterExternalDrop(true, forSlotID: slotID) // no-op
     #expect(store.scheduledSaveCount == afterFirst)
 }
+
+@MainActor @Test func storeRemoveResetsCopyModeOnFreedSlot() throws {
+    let store = storeWithTempPersistence()
+    let a = try makeFileItem(named: "a.txt")
+    store.add([a], atSlot: 0)
+    store.setKeepsItemAfterExternalDrop(true, forSlotID: store.slots[0].id)
+
+    store.remove(a)
+
+    #expect(store.slots[0].item == nil)
+    #expect(store.slots[0].keepsItemAfterExternalDrop == false)
+}
+
+@MainActor @Test func storeVisibleSlotsKeepStableIDsAcrossReads() throws {
+    let store = storeWithTempPersistence()
+    store.add([try makeFileItem(named: "a.txt")])
+
+    #expect(store.visibleSlots.map(\.id) == store.visibleSlots.map(\.id))
+}
+
+@MainActor @Test func storeRepadsSlotsWhenColumnPreferenceChanges() throws {
+    let defaults = makeTestUserDefaults()
+    let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+        .appendingPathComponent(UUID().uuidString, isDirectory: true)
+    let store = ShelfStore(persistence: ShelfPersistenceService(directory: dir), defaults: defaults)
+    #expect(store.columnCount == ShelfMetrics.minimumSlotCount)
+
+    defaults.set(6, forKey: UserDefaultsKey.minSlotCount)
+    store.applySlotPreferences()
+
+    #expect(store.columnCount == 6)
+    #expect(store.slots.count == 6)
+    #expect(store.visibleSlots.map(\.id) == store.slots.map(\.id))
+    #expect(store.rowCount == 1)
+}

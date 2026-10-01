@@ -17,57 +17,85 @@ import Testing
     #expect(ShelfMetrics.windowSize.height >= ShelfMetrics.expandedSize.height)
 }
 
-@Test func shelfMetricControlsSitBelowSlotFrame() {
-    let slotBottom = ShelfMetrics.slotFrameCenterY + ShelfMetrics.slotFrameSize / 2
-    let controlTop = ShelfMetrics.slotControlCenterY - ShelfMetrics.itemToggleHeight / 2
-    let controlBottom = ShelfMetrics.slotControlCenterY + ShelfMetrics.itemToggleHeight / 2
+@Test func minimumRowOfSquareSlotsSpansNotchWidth() {
+    for notchWidth in [189.0, 255.0] as [CGFloat] {
+        let layout = ShelfLayout(
+            notchWidth: notchWidth,
+            notchHeight: 38,
+            columnCount: ShelfMetrics.minimumSlotCount,
+            rowCount: 1
+        )
+        let usedWidth = layout.outlineSize.width + ShelfMetrics.visibleBlackFramePadding * 2
 
-    #expect(controlTop >= slotBottom + ShelfMetrics.slotInnerSpacingBottom)
-    #expect(controlBottom <= ShelfMetrics.itemHeight)
+        #expect(layout.bodyWidth == notchWidth)
+        #expect(usedWidth <= notchWidth)
+        // Rounding the slot edge down leaves less than one point per column unused.
+        #expect(notchWidth - usedWidth < CGFloat(ShelfMetrics.minimumSlotCount))
+    }
 }
 
-@Test func shelfOutlinePadsSlotFramesEvenly() {
-    let columns = ShelfMetrics.minimumSlotCount
-    let expectedWidth = CGFloat(columns) * ShelfMetrics.itemWidth
-        + CGFloat(columns - 1) * ShelfMetrics.itemSpacing
-        - ShelfMetrics.slotFrameHorizontalInset * 2
-        + ShelfMetrics.slotGridOutlinePadding * 2
-    let slotFrameTop = ShelfMetrics.contentPadding
-        + ShelfMetrics.slotFrameCenterY
-        - ShelfMetrics.slotFrameSize / 2
-    let slotFrameBottom = ShelfMetrics.contentPadding
-        + ShelfMetrics.slotFrameCenterY
-        + ShelfMetrics.slotFrameSize / 2
+@Test func slotSizeFollowsNotchWidth() {
+    let wide = ShelfLayout(notchWidth: 255, notchHeight: 44, columnCount: 4, rowCount: 1)
+    let narrow = ShelfLayout(notchWidth: 189, notchHeight: 32, columnCount: 4, rowCount: 1)
 
-    #expect(ShelfMetrics.slotGridOutlineWidth(columnCount: columns) == expectedWidth)
-    #expect(ShelfMetrics.slotGridOutlineHeight(rowCount: 1) == ShelfMetrics.slotFrameSize + ShelfMetrics.slotGridOutlinePadding * 2)
-    #expect(ShelfMetrics.slotGridOutlineTop + ShelfMetrics.slotGridOutlinePadding == slotFrameTop)
-    #expect(
-        ShelfMetrics.slotGridOutlineTop
-            + ShelfMetrics.slotGridOutlineHeight(rowCount: 1)
-            - ShelfMetrics.slotGridOutlinePadding
-        == slotFrameBottom
+    #expect(wide.slotSize == 52)
+    #expect(narrow.slotSize == 35)
+    #expect(wide.iconSize == 40)
+}
+
+@Test func slotSizeStaysWithinBounds() {
+    let tiny = ShelfLayout(notchWidth: 60, notchHeight: 32, columnCount: 4, rowCount: 1)
+    let huge = ShelfLayout(notchWidth: 600, notchHeight: 32, columnCount: 4, rowCount: 1)
+
+    #expect(tiny.slotSize == ShelfMetrics.minimumSlotFrameSize)
+    #expect(huge.slotSize == ShelfMetrics.maximumSlotFrameSize)
+}
+
+@Test func extraColumnsWidenShelfAtSameSlotSize() {
+    let base = ShelfLayout(notchWidth: 189, notchHeight: 32, columnCount: 4, rowCount: 1)
+    let wider = ShelfLayout(notchWidth: 189, notchHeight: 32, columnCount: 6, rowCount: 1)
+
+    #expect(wider.slotSize == base.slotSize)
+    #expect(wider.bodyWidth == wider.outlineSize.width + ShelfMetrics.visibleBlackFramePadding * 2)
+    #expect(wider.bodyWidth > base.bodyWidth)
+}
+
+@Test func slotControlsSitBelowSlotFrameInsideCell() {
+    let layout = ShelfLayout(notchWidth: 189, notchHeight: 32, columnCount: 4, rowCount: 1)
+    let slotBottom = layout.slotFrameCenterY + layout.slotSize / 2
+    let controlTop = layout.slotControlCenterY - ShelfMetrics.itemToggleHeight / 2
+    let controlBottom = layout.slotControlCenterY + ShelfMetrics.itemToggleHeight / 2
+
+    #expect(controlTop >= slotBottom)
+    #expect(controlBottom <= layout.cellHeight)
+}
+
+@Test func shelfContentStartsBelowNotchAndBottomBarFitsInsideShape() {
+    for rows in 1...(1 + ShelfMetrics.maximumAdditionalRowCount) {
+        let layout = ShelfLayout(notchWidth: 189, notchHeight: 32, columnCount: 4, rowCount: rows)
+        let outlineBottom = layout.outlineTop + layout.outlineSize.height
+        let barBottom = layout.bottomBarTop + ShelfMetrics.bottomBarHeight
+
+        #expect(layout.outlineTop >= layout.notchHeight)
+        #expect(layout.bottomBarTop >= outlineBottom)
+        #expect(barBottom <= layout.shapeSize.height)
+        #expect(layout.bottomBarWidth >= layout.gridWidth - layout.slotSize)
+    }
+}
+
+@Test func largestShelfFitsWithinExpandedBounds() {
+    let layout = ShelfLayout(
+        notchWidth: 600,
+        notchHeight: 44,
+        columnCount: ShelfMetrics.maximumSlotCount,
+        rowCount: 1 + ShelfMetrics.maximumAdditionalRowCount
     )
+
+    #expect(layout.shapeSize.width <= ShelfMetrics.expandedSize.width)
+    #expect(layout.shapeSize.height <= ShelfMetrics.expandedSize.height)
 }
 
-@Test func shelfBlackMarginsMatchAroundOutline() {
-    let sideMargin = ShelfMetrics.shelfOuterHorizontalPadding
-        + ShelfMetrics.slotGridOutlineLeading
-        - ShelfMetrics.topCornerRadiusExpanded
-
-    #expect(ShelfMetrics.slotGridOutlineBottom == sideMargin)
-    #expect(sideMargin == ShelfMetrics.visibleBlackFramePadding)
-}
-
-@Test func shelfControlsSitOutsideExpandedBlackShape() {
-    let blackShapeBottom = ShelfMetrics.shelfTopChromeHeight
-        + ShelfMetrics.slotGridOutlineTop
-        + ShelfMetrics.slotGridOutlineHeight(rowCount: 1)
-        + ShelfMetrics.slotGridOutlineBottom
-    let controlTop = ShelfMetrics.shelfTopChromeHeight
-        + ShelfMetrics.contentPadding
-        + ShelfMetrics.slotControlCenterY
-        - ShelfMetrics.itemToggleHeight / 2
-
-    #expect(controlTop >= blackShapeBottom)
+@Test func stackCountBadgeStaysInsideOutlineAndColumnGap() {
+    #expect(ShelfMetrics.slotCountBadgeOutset < ShelfMetrics.slotGridOutlinePadding)
+    #expect(ShelfMetrics.slotCountBadgeOutset * 2 <= ShelfMetrics.slotColumnSpacing)
 }

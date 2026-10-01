@@ -32,6 +32,7 @@ struct StackFileListPanelPresenter: NSViewRepresentable {
         private let viewModel: ShelfItemViewModel
         private let windowModel: ShelfWindowModel
         private var panel: NSPanel?
+        private var presentedItem: ShelfItem?
         private var localMonitor: Any?
         private var globalMonitor: Any?
 
@@ -49,7 +50,12 @@ struct StackFileListPanelPresenter: NSViewRepresentable {
 
             let panel = panel ?? makePanel()
             self.panel = panel
-            panel.contentViewController = makeContentController(for: item)
+            // Rebuild the hosted list only when the stack changes; replacing it on every
+            // SwiftUI update re-resolves bookmarks and detaches an in-flight drag source.
+            if panel.contentViewController == nil || presentedItem != item {
+                panel.contentViewController = makeContentController(for: item)
+                presentedItem = item
+            }
             let targetFrame = computeFrame(anchorView: anchorView, itemCount: item.allBookmarkData.count)
 
             if !panel.isVisible {
@@ -99,6 +105,7 @@ struct StackFileListPanelPresenter: NSViewRepresentable {
         func close() {
             panel?.orderOut(nil)
             panel = nil
+            presentedItem = nil
             removeOutsideClickMonitors()
         }
 

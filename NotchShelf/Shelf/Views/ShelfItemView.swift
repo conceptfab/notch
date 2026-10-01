@@ -5,25 +5,24 @@ import SwiftUI
 /// source for dragging the file back out into Finder.
 struct ShelfItemView: View {
     let item: ShelfItem
+    let isSelected: Bool
     let keepsItemAfterExternalDrop: Bool
     let onToggleKeepsItemAfterExternalDrop: () -> Void
     @EnvironmentObject var windowModel: ShelfWindowModel
-    @ObservedObject var selection = ShelfSelection.shared
+    @Environment(\.shelfLayout) private var layout
     @StateObject private var viewModel: ShelfItemViewModel
     @State private var cachedPreviewImage: NSImage?
-    @State private var debouncedDropTarget = false
-    @State private var dropTargetDebounceTask: Task<Void, Never>?
     @State private var dragPreviewTask: Task<Void, Never>?
     @State private var showingStackList = false
 
-    private var isSelected: Bool { viewModel.isSelected }
-
     init(
         item: ShelfItem,
+        isSelected: Bool = false,
         keepsItemAfterExternalDrop: Bool = false,
         onToggleKeepsItemAfterExternalDrop: @escaping () -> Void = {}
     ) {
         self.item = item
+        self.isSelected = isSelected
         self.keepsItemAfterExternalDrop = keepsItemAfterExternalDrop
         self.onToggleKeepsItemAfterExternalDrop = onToggleKeepsItemAfterExternalDrop
         _viewModel = StateObject(wrappedValue: ShelfItemViewModel(item: item))
@@ -31,11 +30,6 @@ struct ShelfItemView: View {
 
     var body: some View {
         contentWithStackPresenter
-    }
-
-    private struct ItemAnimationKey: Hashable {
-        let dropTarget: Bool
-        let isSelected: Bool
     }
 
     @ViewBuilder
@@ -68,23 +62,12 @@ struct ShelfItemView: View {
             )
 
             slotControlRow
-                .position(x: ShelfMetrics.itemWidth / 2, y: ShelfMetrics.slotControlCenterY)
+                .position(x: layout.slotSize / 2, y: layout.slotControlCenterY)
         }
-        .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemHeight)
+        .frame(width: layout.slotSize, height: layout.cellHeight)
         .contentShape(Rectangle())
         .help(viewModel.viewData.displayName)
-        .animation(
-            ShelfAnimations.itemHover,
-            value: ItemAnimationKey(dropTarget: debouncedDropTarget, isSelected: isSelected)
-        )
-        .onChange(of: viewModel.isDropTargeted) { _, targeted in
-            dropTargetDebounceTask?.cancel()
-            dropTargetDebounceTask = Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(50))
-                guard !Task.isCancelled else { return }
-                debouncedDropTarget = targeted
-            }
-        }
+        .animation(ShelfAnimations.itemHover, value: isSelected)
         .onAppear {
             refreshDragPreview()
         }
@@ -93,7 +76,6 @@ struct ShelfItemView: View {
             refreshDragPreview()
         }
         .onDisappear {
-            dropTargetDebounceTask?.cancel()
             dragPreviewTask?.cancel()
         }
     }
@@ -101,19 +83,18 @@ struct ShelfItemView: View {
     private var slotLayer: some View {
         ZStack {
             slotContent
-                .frame(width: ShelfMetrics.slotFrameSize, height: ShelfMetrics.slotFrameSize)
-                .position(x: ShelfMetrics.itemWidth / 2, y: ShelfMetrics.slotFrameCenterY)
+                .frame(width: layout.slotSize, height: layout.slotSize)
+                .position(x: layout.slotSize / 2, y: layout.slotFrameCenterY)
         }
-        .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemHeight)
+        .frame(width: layout.slotSize, height: layout.cellHeight)
     }
 
     @ViewBuilder
     private var slotContent: some View {
         if viewModel.viewData.isStack {
             framedIconView
-                .overlay(alignment: .top) {
-                    countLabel
-                        .offset(y: -ShelfMetrics.slotCountLabelHeight - ShelfMetrics.slotInnerSpacingTop)
+                .overlay(alignment: .topTrailing) {
+                    countBadge
                 }
         } else {
             framedIconView
@@ -121,59 +102,67 @@ struct ShelfItemView: View {
     }
 
     @ViewBuilder
-    private var countLabel: some View {
+    private var countBadge: some View {
         if viewModel.viewData.isStack {
-            Text("(\(viewModel.viewData.stackCount))")
-                .font(.system(size: 10, weight: .semibold, design: .rounded))
-                .foregroundStyle(.white.opacity(0.78))
-                .frame(height: ShelfMetrics.slotCountLabelHeight)
+            Text("\(viewModel.viewData.stackCount)")
+                .font(.system(size: 9, weight: .bold, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(.white)
+                .padding(.horizontal, 4)
+                .frame(minWidth: ShelfMetrics.slotCountBadgeHeight, minHeight: ShelfMetrics.slotCountBadgeHeight)
+                .background(Capsule().fill(Color.black.opacity(0.8)))
+                .overlay(Capsule().strokeBorder(.white.opacity(0.35), lineWidth: 1))
+                .offset(x: ShelfMetrics.slotCountBadgeOutset, y: -ShelfMetrics.slotCountBadgeOutset)
                 .accessibilityLabel("\(viewModel.viewData.stackCount) files")
         }
     }
 
     private var framedIconView: some View {
         iconView
-            .offset(y: ShelfMetrics.slotIconVerticalOffset)
-            .frame(width: ShelfMetrics.slotFrameSize,
-                   height: ShelfMetrics.slotFrameSize)
+            .frame(width: layout.slotSize, height: layout.slotSize)
             .background(backgroundView)
     }
 
     private var iconView: some View {
         ZStack {
             if viewModel.viewData.isStack {
-                RoundedRectangle(cornerRadius: 7)
+                RoundedRectangle(cornerRadius: layout.iconCornerRadius)
                     .fill(.white.opacity(0.16))
-                    .frame(width: ShelfMetrics.iconSizeLarge, height: ShelfMetrics.iconSizeLarge)
+                    .frame(width: layout.iconSize, height: layout.iconSize)
                     .offset(x: 4, y: -4)
-                RoundedRectangle(cornerRadius: 7)
+                RoundedRectangle(cornerRadius: layout.iconCornerRadius)
                     .fill(.white.opacity(0.22))
-                    .frame(width: ShelfMetrics.iconSizeLarge, height: ShelfMetrics.iconSizeLarge)
+                    .frame(width: layout.iconSize, height: layout.iconSize)
                     .offset(x: 2, y: -2)
             }
             Image(nsImage: viewModel.icon)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: ShelfMetrics.iconSizeLarge, height: ShelfMetrics.iconSizeLarge)
-                .clipShape(RoundedRectangle(cornerRadius: 7))
+                .frame(width: layout.iconSize, height: layout.iconSize)
+                .clipShape(RoundedRectangle(cornerRadius: layout.iconCornerRadius))
                 .shadow(color: .black.opacity(0.18), radius: 2, x: 0, y: 1)
         }
-        .frame(width: ShelfMetrics.iconSizeLarge + (viewModel.viewData.isStack ? 6 : 0),
-               height: ShelfMetrics.iconSizeLarge + (viewModel.viewData.isStack ? 6 : 0))
+        .frame(width: layout.iconSize + (viewModel.viewData.isStack ? 6 : 0),
+               height: layout.iconSize + (viewModel.viewData.isStack ? 6 : 0))
     }
 
     @ViewBuilder
     private var slotControlRow: some View {
         if viewModel.viewData.isStack {
-            HStack(spacing: 8) {
+            HStack(spacing: stackControlSpacing) {
                 stackListButton
                 copyModeButton
             }
-            .frame(width: ShelfMetrics.slotFrameSize, height: ShelfMetrics.itemToggleHeight)
+            .frame(width: layout.slotSize, height: ShelfMetrics.itemToggleHeight)
         } else {
             copyModeButton
-                .frame(width: ShelfMetrics.slotFrameSize, height: ShelfMetrics.itemToggleHeight)
+                .frame(width: layout.slotSize, height: ShelfMetrics.itemToggleHeight)
         }
+    }
+
+    /// Narrow slots squeeze the two stack controls together so they stay under the frame.
+    private var stackControlSpacing: CGFloat {
+        Swift.min(8, Swift.max(0, layout.slotSize - ShelfMetrics.itemToggleHeight * 2))
     }
 
     private var stackListButton: some View {
@@ -205,25 +194,22 @@ struct ShelfItemView: View {
     }
 
     private var backgroundView: some View {
-        RoundedRectangle(cornerRadius: 12, style: .continuous)
+        RoundedRectangle(cornerRadius: layout.slotCornerRadius, style: .continuous)
             .fill(backgroundColor)
             .stroke(strokeColor, lineWidth: strokeWidth)
     }
 
     private var backgroundColor: Color {
-        if debouncedDropTarget { return Color.accentColor.opacity(0.25) }
         if isSelected { return Color.accentColor.opacity(0.15) }
         return Color.clear
     }
 
     private var strokeColor: Color {
-        if debouncedDropTarget { return Color.accentColor.opacity(0.9) }
         if isSelected { return Color.accentColor.opacity(0.8) }
         return Color.clear
     }
 
     private var strokeWidth: CGFloat {
-        if debouncedDropTarget { return 3 }
         if isSelected { return 2 }
         return 1
     }

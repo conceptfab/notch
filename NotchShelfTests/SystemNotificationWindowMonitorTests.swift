@@ -167,3 +167,25 @@ import Testing
         alpha: 1.0
     ) == false)
 }
+
+@MainActor @Test func notificationWindowGeometryPrefilterNeverRejectsAcceptedWindows() {
+    let samples: [(x: Double, y: Double, w: Double, h: Double, layer: Int)] = [
+        (1100, 36, 360, 88, 25), (1100, 36, 408, 112, 0), (0, 0, 1512, 982, 25),
+        (10, 10, 100, 30, 25), (500, 500, 900, 700, 3), (400, 100, 300, 80, 21)
+    ]
+    for sample in samples {
+        let bounds: [String: Any] = [
+            "X": NSNumber(value: sample.x), "Y": NSNumber(value: sample.y),
+            "Width": NSNumber(value: sample.w), "Height": NSNumber(value: sample.h)
+        ]
+        for bundle in ["com.apple.notificationcenterui", "com.example.app"] as [String?] {
+            let accepted = SystemNotificationWindowMonitor.isLikelyNotificationWindow(
+                bundleIdentifier: bundle, bounds: bounds, layer: sample.layer, alpha: 1
+            )
+            let passesFilter = SystemNotificationWindowMonitor.couldBeNotificationWindow(
+                bounds: bounds, layer: sample.layer, alpha: 1
+            )
+            #expect(!accepted || passesFilter)
+        }
+    }
+}

@@ -31,6 +31,7 @@ struct StackFileDragHandler: NSViewRepresentable {
         var title = ""
         var previewImage = NSImage()
         weak var viewModel: ShelfItemViewModel?
+        private var draggingViewModel: ShelfItemViewModel?
 
         private var mouseDownEvent: NSEvent?
         private let dragThreshold: CGFloat = 3.0
@@ -105,7 +106,10 @@ struct StackFileDragHandler: NSViewRepresentable {
         }
 
         func draggingSession(_ session: NSDraggingSession, willBeginAt screenPoint: NSPoint) {
-            viewModel?.beginExternalDrag()
+            // Held strongly for the session: if SwiftUI tears the item view down mid-drag,
+            // `endedAt` must still clear the shared drag flag and remove moved files.
+            draggingViewModel = viewModel
+            draggingViewModel?.beginExternalDrag()
         }
 
         func draggingSession(
@@ -113,16 +117,18 @@ struct StackFileDragHandler: NSViewRepresentable {
             endedAt screenPoint: NSPoint,
             operation: NSDragOperation
         ) {
+            let model = draggingViewModel ?? viewModel
+            draggingViewModel = nil
             if let draggedSourceItem,
                ShelfDragOperationPolicy.shouldRemoveFromShelf(
                    after: operation,
                    context: lastDragContext,
-                   keepAfterExternalDrop: viewModel?.keepsItemAfterExternalDrop(draggedSourceItem) ?? false
+                   keepAfterExternalDrop: model?.keepsItemAfterExternalDrop(draggedSourceItem) ?? false
                ) {
-                viewModel?.removeFromStack(bookmarkData: draggedBookmarkData, from: draggedSourceItem)
-                viewModel?.clearSelection()
+                model?.removeFromStack(bookmarkData: draggedBookmarkData, from: draggedSourceItem)
+                model?.clearSelection()
             }
-            viewModel?.endExternalDrag()
+            model?.endExternalDrag()
             draggedURL?.stopAccessingSecurityScopedResource()
             draggedURL = nil
             draggedSourceItem = nil

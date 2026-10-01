@@ -5,6 +5,7 @@ struct ShelfSlotPlaceholderView: View {
     let isPanelTargeted: Bool
     let onDropFiles: ([NSItemProvider]) -> Bool
 
+    @Environment(\.shelfLayout) private var layout
     @State private var isTargeted = false
 
     private var isVisible: Bool { isTargeted || isPanelTargeted }
@@ -15,16 +16,16 @@ struct ShelfSlotPlaceholderView: View {
     var body: some View {
         ZStack {
             if isVisible {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                RoundedRectangle(cornerRadius: layout.slotCornerRadius * 2 / 3, style: .continuous)
                     .strokeBorder(
                         strokeColor,
                         style: StrokeStyle(lineWidth: isTargeted ? 2.5 : 1.5, lineCap: .round, dash: [8])
                     )
-                    .frame(width: ShelfMetrics.slotFrameSize, height: ShelfMetrics.slotFrameSize)
-                    .position(x: ShelfMetrics.itemWidth / 2, y: ShelfMetrics.slotFrameCenterY)
+                    .frame(width: layout.slotSize, height: layout.slotSize)
+                    .position(x: layout.slotSize / 2, y: layout.slotFrameCenterY)
             }
         }
-            .frame(width: ShelfMetrics.itemWidth, height: ShelfMetrics.itemHeight)
+            .frame(width: layout.slotSize, height: layout.cellHeight)
             .contentShape(Rectangle())
             .animation(.easeInOut(duration: 0.12), value: isTargeted)
             .animation(.easeInOut(duration: 0.12), value: isPanelTargeted)

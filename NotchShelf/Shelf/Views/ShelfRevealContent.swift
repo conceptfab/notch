@@ -5,13 +5,12 @@ import SwiftUI
 struct ShelfRevealContent: View {
     @EnvironmentObject private var windowModel: ShelfWindowModel
 
-    let preferencesButtonTopPadding: CGFloat
-    let hiddenOffset: CGFloat
-    let contentHeight: CGFloat
-    let panelWidth: CGFloat
+    let layout: ShelfLayout
     let reduceMotion: Bool
     let clearShelf: () -> Void
     let showPreferences: () -> Void
+
+    @State private var isDropTargeted = false
 
     private var isExpanded: Bool {
         windowModel.expansion == .expanded
@@ -19,7 +18,7 @@ struct ShelfRevealContent: View {
 
     private var revealOffset: CGFloat {
         guard !reduceMotion else { return 0 }
-        return isExpanded ? 0 : -hiddenOffset
+        return isExpanded ? 0 : -layout.outlineTop
     }
 
     private var revealOpacity: Double {
@@ -27,23 +26,29 @@ struct ShelfRevealContent: View {
     }
 
     private var revealMaskHeight: CGFloat {
+        let contentHeight = layout.shapeSize.height
         guard !reduceMotion else { return contentHeight }
         return isExpanded ? contentHeight : 0
     }
 
     var body: some View {
-        ZStack(alignment: .top) {
-            ShelfView()
-                .environmentObject(windowModel)
-                .frame(width: panelWidth)
-                .padding(.top, ShelfMetrics.shelfTopChromeHeight)
-                .padding(.bottom, ShelfMetrics.shelfPanelBottomPadding)
-                .zIndex(1)
+        VStack(spacing: 0) {
+            ShelfView(isPanelDropTargeted: isDropTargeted)
+                .padding(.top, layout.outlineTop)
 
-            topBar
-                .padding(.top, preferencesButtonTopPadding)
-                .zIndex(2)
+            bottomBar
+                .padding(.top, ShelfMetrics.bottomBarSpacing)
         }
+        .frame(width: layout.shapeSize.width, height: layout.shapeSize.height, alignment: .top)
+        // The whole expanded shape accepts drops, not just the dashed outline.
+        .contentShape(NotchShelfShape(
+            topCornerRadius: ShelfMetrics.topCornerRadiusExpanded,
+            bottomCornerRadius: ShelfMetrics.bottomCornerRadius
+        ))
+        .onDrop(of: [.fileURL], isTargeted: $isDropTargeted) { providers in
+            ShelfView.acceptDrop(providers, intoSlot: nil, windowModel: windowModel)
+        }
+        .environment(\.shelfLayout, layout)
         .offset(y: revealOffset)
         .opacity(revealOpacity)
         .mask {
@@ -57,23 +62,20 @@ struct ShelfRevealContent: View {
         .accessibilityHidden(!isExpanded)
     }
 
-    private var topBar: some View {
-        VStack {
-            HStack {
-                ShelfClearButton(action: clearShelf)
-                Spacer()
-                Button("Preferences", systemImage: "gearshape.fill", action: showPreferences)
-                    .labelStyle(.iconOnly)
-                    .buttonStyle(.plain)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.88))
-                    .frame(width: 28, height: 28)
-                    .contentShape(Rectangle())
-                    .help("Preferences")
-                    .accessibilityLabel("Preferences")
-            }
-            .frame(width: panelWidth)
-            Spacer()
+    private var bottomBar: some View {
+        HStack(spacing: 0) {
+            ShelfClearButton(action: clearShelf)
+            Spacer(minLength: 0)
+            Button("Preferences", systemImage: "gearshape.fill", action: showPreferences)
+                .labelStyle(.iconOnly)
+                .buttonStyle(.plain)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.88))
+                .frame(width: ShelfMetrics.bottomBarButtonSize, height: ShelfMetrics.bottomBarButtonSize)
+                .contentShape(Rectangle())
+                .help("Preferences")
+                .accessibilityLabel("Preferences")
         }
+        .frame(width: layout.bottomBarWidth, height: ShelfMetrics.bottomBarHeight)
     }
 }
