@@ -21,12 +21,16 @@ struct ContentView: View {
 
     private var hasItems: Bool { !store.items.isEmpty }
 
+    /// The collapsed body matches the notch width; only the top-corner ears reach past it.
     private var collapsedShapeWidth: CGFloat {
-        geometry.notchWidth + geometry.notchHeight * 2
+        geometry.notchWidth + ShelfMetrics.topCornerRadius * 2
     }
 
+    /// Grows a status strip below the notch while the shelf holds files.
     private var collapsedShapeHeight: CGFloat {
-        geometry.notchHeight + ShelfMetrics.collapsedHeightExtension
+        geometry.notchHeight + (hasItems
+            ? ShelfMetrics.collapsedStatusRowHeight
+            : ShelfMetrics.collapsedHeightExtension)
     }
 
     private func expandedShapeSize(for layout: ShelfLayout) -> CGSize {
@@ -120,7 +124,7 @@ struct ContentView: View {
                 CollapsedShelfStatusView(
                     fileCount: store.totalFileCount,
                     shelfWidth: collapsedShapeWidth,
-                    shelfHeight: collapsedShapeHeight
+                    notchHeight: geometry.notchHeight
                 )
                 .transition(.opacity)
                 .zIndex(10)

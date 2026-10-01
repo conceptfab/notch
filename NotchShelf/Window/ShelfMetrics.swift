@@ -50,8 +50,8 @@ enum ShelfMetrics {
     static let bottomCornerRadius: CGFloat = 28
     /// Extra collapsed notch height below the physical notch.
     static let collapsedHeightExtension: CGFloat = 5
-    /// Fixed width used by the collapsed shelf status icon.
-    static let collapsedStatusIconWidth: CGFloat = 26
+    /// Height of the file-count strip shown below the notch while collapsed.
+    static let collapsedStatusRowHeight: CGFloat = 18
     /// Extra horizontal reach that makes file drags near the notch open the shelf.
     static let dragCatchHorizontalOutset: CGFloat = 16
     /// Downward reach from the notch, so the shelf opens before the pointer is pixel-perfect.

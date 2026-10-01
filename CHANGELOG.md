@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The shelf now spans the notch width: at least 4 square slots sized from the
   physical notch, with Clear and Preferences moved to a bottom bar.
+- The collapsed notch stays notch-wide; the file count shows in a strip below
+  the notch instead of beside it.
 - Stack file counts are shown as a badge on the slot corner.
 - Dropping a file anywhere on the expanded shelf is accepted, not only inside
   the dashed outline.
