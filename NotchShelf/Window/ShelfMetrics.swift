@@ -52,6 +52,9 @@ enum ShelfMetrics {
     static let collapsedHeightExtension: CGFloat = 5
     /// Height of the file-count strip shown below the notch while collapsed.
     static let collapsedStatusRowHeight: CGFloat = 18
+    /// How far the glow outline sits outside the collapsed shape. The collapsed sides lie
+    /// on the physical notch edge, where the screen has no pixels to light.
+    static let collapsedGlowOutset: CGFloat = 4
     /// Extra horizontal reach that makes file drags near the notch open the shelf.
     static let dragCatchHorizontalOutset: CGFloat = 16
     /// Downward reach from the notch, so the shelf opens before the pointer is pixel-perfect.

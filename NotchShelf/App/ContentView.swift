@@ -69,6 +69,7 @@ struct ContentView: View {
         let currentShapeSize = windowModel.expansion == .expanded
             ? revealContentSize
             : CGSize(width: collapsedShapeWidth, height: collapsedShapeHeight)
+        let glowOutset = windowModel.expansion == .expanded ? 0 : ShelfMetrics.collapsedGlowOutset
         ZStack(alignment: .top) {
             StartupGlowView(
                 topCornerRadius: currentTopCornerRadius,
@@ -76,7 +77,8 @@ struct ContentView: View {
                     ? ShelfMetrics.bottomCornerRadius : 8,
                 glowColor: glowRGBA.color
             )
-                .frame(width: currentShapeSize.width, height: currentShapeSize.height)
+                .frame(width: currentShapeSize.width + glowOutset * 2,
+                       height: currentShapeSize.height + glowOutset)
                 .opacity(isStartupGlowVisible ? 1 : 0)
                 .allowsHitTesting(false)
                 .zIndex(20)

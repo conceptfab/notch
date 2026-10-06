@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The glow around the collapsed notch is visible again; it had slipped under
+  the camera housing when the collapsed shape narrowed to the notch width.
 - A second drop while the first is still loading no longer discards the first.
 - Launch cleanup removes only missing files from a stack instead of the whole stack.
 - Removing a file resets the slot's copy mode, so the next file dropped there
